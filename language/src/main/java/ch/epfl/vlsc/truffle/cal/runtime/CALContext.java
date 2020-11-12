@@ -2,7 +2,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
 import com.oracle.truffle.api.*;

@@ -1,6 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.local;
 
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;

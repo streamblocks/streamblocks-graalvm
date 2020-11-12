@@ -1,5 +1,8 @@
-package ch.epfl.vlsc.truffle.cal.nodes;
+package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALTypes;
+import ch.epfl.vlsc.truffle.cal.nodes.CALTypesGen;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
