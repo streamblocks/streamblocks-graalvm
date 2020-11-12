@@ -1,4 +1,4 @@
-package ch.epfl.vlsc.truffle.cal.nodes;
+package ch.epfl.vlsc.truffle.cal.types;
 
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
@@ -11,7 +11,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import java.math.BigInteger;
 
 @TypeSystem({long.class, boolean.class})
-public abstract class CALTypes {
+public abstract class Types {
 
     /**
      * Example of a manually specified type check that replaces the automatically generated type

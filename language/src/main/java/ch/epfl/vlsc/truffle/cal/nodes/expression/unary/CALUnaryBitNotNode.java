@@ -8,7 +8,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "~")
-public abstract class CALUnaryBitNotNode extends CALUnaryNode {
+public abstract class CALUnaryBitNotNode extends ExprUnaryNode {
 
     @Specialization(rewriteOn = ArithmeticException.class)
     protected long minus(long value) {

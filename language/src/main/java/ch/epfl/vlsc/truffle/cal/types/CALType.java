@@ -1,6 +1,7 @@
-package ch.epfl.vlsc.truffle.cal.runtime;
+package ch.epfl.vlsc.truffle.cal.types;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;

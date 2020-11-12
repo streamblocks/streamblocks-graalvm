@@ -6,12 +6,12 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-public abstract class CALShortCircuitNode extends CALExpressionNode {
+public abstract class ShortCircuitNode extends ExprNode {
 
     @Node.Child
-    private CALExpressionNode left;
+    private ExprNode left;
     @Node.Child
-    private CALExpressionNode right;
+    private ExprNode right;
 
     /**
      * Short circuits might be used just like a conditional statement it makes sense to profile the
@@ -19,7 +19,7 @@ public abstract class CALShortCircuitNode extends CALExpressionNode {
      */
     private final ConditionProfile evaluateRightProfile = ConditionProfile.createCountingProfile();
 
-    public CALShortCircuitNode(CALExpressionNode left, CALExpressionNode right) {
+    public ShortCircuitNode(ExprNode left, ExprNode right) {
         this.left = left;
         this.right = right;
     }

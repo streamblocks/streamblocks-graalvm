@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "not")
-public abstract class CALUnaryLogicalNode extends CALUnaryNode {
+public abstract class CALUnaryLogicalNode extends ExprUnaryNode {
     @Specialization
     protected boolean doBoolean(boolean value) {
         return !value;

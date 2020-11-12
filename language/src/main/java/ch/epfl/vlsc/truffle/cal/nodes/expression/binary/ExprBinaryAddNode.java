@@ -8,7 +8,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "+")
-public abstract class CALBinaryAddNode extends CALBinaryNode {
+public abstract class ExprBinaryAddNode extends CALBinaryNode {
 
     @Specialization(rewriteOn = ArithmeticException.class)
     protected long add(long left, long right) {

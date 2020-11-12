@@ -11,7 +11,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 @NodeInfo(language = "SL", description = "The abstract base node for all SL statements")
 @GenerateWrapper
-public abstract class CALStatementNode extends Node implements InstrumentableNode {
+public abstract class StmtNode extends Node implements InstrumentableNode {
     private static final int NO_SOURCE = -1;
     private static final int UNAVAILABLE_SOURCE = -2;
 
@@ -106,7 +106,7 @@ public abstract class CALStatementNode extends Node implements InstrumentableNod
     }
 
     public WrapperNode createWrapper(ProbeNode probe) {
-        return new CALStatementNodeWrapper(this, probe);
+        return new StmtNodeWrapper(this, probe);
     }
 
     /**

@@ -1,19 +1,19 @@
 package ch.epfl.vlsc.truffle.cal.nodes.contorlflow;
 
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
+import ch.epfl.vlsc.truffle.cal.nodes.StmtNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "return", description = "The node implementing a return statement")
-public final class CALReturnNode extends CALStatementNode {
+public final class SmtReturnNode extends StmtNode {
 
     @Node.Child
-    private CALExpressionNode valueNode;
+    private ExprNode valueNode;
 
-    public CALReturnNode(CALExpressionNode valueNode) {
+    public SmtReturnNode(ExprNode valueNode) {
         this.valueNode = valueNode;
     }
 
@@ -28,6 +28,6 @@ public final class CALReturnNode extends CALStatementNode {
              */
             result = CALNull.SINGLETON;
         }
-        throw new CALReturnException(result);
+        throw new ReturnException(result);
     }
 }

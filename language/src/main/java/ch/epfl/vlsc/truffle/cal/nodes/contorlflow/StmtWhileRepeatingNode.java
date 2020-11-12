@@ -1,8 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.nodes.contorlflow;
 
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.util.CALUnboxNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
+import ch.epfl.vlsc.truffle.cal.nodes.StmtNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprUnboxNodeGen;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -10,14 +10,14 @@ import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-public final class CALWhileRepeatingNode extends Node implements RepeatingNode {
+public final class StmtWhileRepeatingNode extends Node implements RepeatingNode {
 
 
     @Child
-    private CALExpressionNode conditionNode;
+    private ExprNode conditionNode;
 
     @Child
-    private CALStatementNode bodyNode;
+    private StmtNode bodyNode;
 
     /**
      * Profiling information, collected by the interpreter, capturing whether a {@code continue}
@@ -27,8 +27,8 @@ public final class CALWhileRepeatingNode extends Node implements RepeatingNode {
     private final BranchProfile continueTaken = BranchProfile.create();
     private final BranchProfile breakTaken = BranchProfile.create();
 
-    public CALWhileRepeatingNode(CALExpressionNode conditionNode, CALStatementNode bodyNode) {
-        this.conditionNode = CALUnboxNodeGen.create(conditionNode);
+    public StmtWhileRepeatingNode(ExprNode conditionNode, StmtNode bodyNode) {
+        this.conditionNode = ExprUnboxNodeGen.create(conditionNode);
         this.bodyNode = bodyNode;
     }
 
@@ -45,13 +45,13 @@ public final class CALWhileRepeatingNode extends Node implements RepeatingNode {
             /* Continue with next loop iteration. */
             return true;
 
-        } catch (CALContinueException ex) {
+        } catch (ContinueException ex) {
             /* In the interpreter, record profiling information that the loop uses continue. */
             continueTaken.enter();
             /* Continue with next loop iteration. */
             return true;
 
-        } catch (CALBreakException ex) {
+        } catch (BreakException ex) {
             /* In the interpreter, record profiling information that the loop uses break. */
             breakTaken.enter();
             /* Break out of the loop. */
@@ -78,7 +78,7 @@ public final class CALWhileRepeatingNode extends Node implements RepeatingNode {
 
     @Override
     public String toString() {
-        return CALStatementNode.formatSourceSection(this);
+        return StmtNode.formatSourceSection(this);
     }
 
 }

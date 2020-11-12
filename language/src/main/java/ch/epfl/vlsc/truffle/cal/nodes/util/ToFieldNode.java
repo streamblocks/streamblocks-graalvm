@@ -1,6 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.util;
 
-import ch.epfl.vlsc.truffle.cal.nodes.CALTypes;
+import ch.epfl.vlsc.truffle.cal.types.Types;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -15,9 +15,9 @@ import com.oracle.truffle.api.nodes.Node;
 import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
 
-@TypeSystemReference(CALTypes.class)
+@TypeSystemReference(Types.class)
 @GenerateUncached
-public abstract class CALToMemberNode extends Node {
+public abstract class ToFieldNode extends Node {
 
     static final int LIMIT = 5;
 

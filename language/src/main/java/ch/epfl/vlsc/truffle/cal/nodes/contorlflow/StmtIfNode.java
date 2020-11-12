@@ -1,35 +1,35 @@
 package ch.epfl.vlsc.truffle.cal.nodes.contorlflow;
 
 import ch.epfl.vlsc.truffle.cal.CALException;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.util.CALUnboxNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.StmtNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprUnboxNodeGen;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-public class CALIfNode  extends CALStatementNode {
+public class StmtIfNode extends StmtNode {
 
     /**
-     * The condition of the {@code if}. This in a {@link CALExpressionNode} because we require a
+     * The condition of the {@code if}. This in a {@link ExprNode} because we require a
      * result value. We do not have a node type that can only return a {@code boolean} value, so
      * {@link #evaluateCondition executing the condition} can lead to a type error.
      */
     @Node.Child
-    private CALExpressionNode conditionNode;
+    private ExprNode conditionNode;
 
     @Node.Child
-    private CALStatementNode thenPartNode;
+    private StmtNode thenPartNode;
 
     @Node.Child
-    private CALStatementNode elsePartNode;
+    private StmtNode elsePartNode;
 
 
     private final ConditionProfile condition = ConditionProfile.createCountingProfile();
 
-    public CALIfNode(CALExpressionNode conditionNode, CALStatementNode thenPartNode, CALStatementNode elsePartNode) {
-        this.conditionNode = CALUnboxNodeGen.create(conditionNode);
+    public StmtIfNode(ExprNode conditionNode, StmtNode thenPartNode, StmtNode elsePartNode) {
+        this.conditionNode = ExprUnboxNodeGen.create(conditionNode);
         this.thenPartNode = thenPartNode;
         this.elsePartNode = elsePartNode;
     }

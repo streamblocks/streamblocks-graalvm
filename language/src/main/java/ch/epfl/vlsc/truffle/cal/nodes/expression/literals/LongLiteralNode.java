@@ -1,16 +1,16 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.literals;
 
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 @NodeInfo(shortName = "const")
-public class CALLongLiteralNode extends CALExpressionNode {
+public class LongLiteralNode extends ExprNode {
 
     private final long value;
 
-    public CALLongLiteralNode(long value) {
+    public LongLiteralNode(long value) {
         this.value = value;
     }
 

@@ -1,8 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALTypes;
-import ch.epfl.vlsc.truffle.cal.nodes.CALTypesGen;
+import ch.epfl.vlsc.truffle.cal.nodes.StmtNode;
+import ch.epfl.vlsc.truffle.cal.types.Types;
+import ch.epfl.vlsc.truffle.cal.types.TypesGen;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -12,10 +12,10 @@ import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-@TypeSystemReference(CALTypes.class)
+@TypeSystemReference(Types.class)
 @NodeInfo(description = "The abstract base node for all expressions")
 @GenerateWrapper
-public abstract class CALExpressionNode extends CALStatementNode {
+public abstract class ExprNode extends StmtNode {
     private boolean hasExpressionTag;
 
     /**
@@ -25,7 +25,7 @@ public abstract class CALExpressionNode extends CALStatementNode {
     public abstract Object executeGeneric(VirtualFrame frame);
 
     /**
-     * When we use an expression at places where a {@link CALStatementNode statement} is already
+     * When we use an expression at places where a {@link StmtNode statement} is already
      * sufficient, the return value is just discarded.
      */
     @Override
@@ -35,7 +35,7 @@ public abstract class CALExpressionNode extends CALStatementNode {
 
     @Override
     public WrapperNode createWrapper(ProbeNode probe) {
-        return new CALExpressionNodeWrapper(this, probe);
+        return new ExprNodeWrapper(this, probe);
     }
 
     @Override
@@ -60,10 +60,10 @@ public abstract class CALExpressionNode extends CALStatementNode {
      */
 
     public long executeLong(VirtualFrame frame) throws UnexpectedResultException {
-        return CALTypesGen.expectLong(executeGeneric(frame));
+        return TypesGen.expectLong(executeGeneric(frame));
     }
 
     public boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException {
-        return CALTypesGen.expectBoolean(executeGeneric(frame));
+        return TypesGen.expectBoolean(executeGeneric(frame));
     }
 }

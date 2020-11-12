@@ -1,6 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
-import ch.epfl.vlsc.truffle.cal.nodes.util.CALToMemberNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ToFieldNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALUndefinedNameException;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -13,7 +13,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 @NodeChild("receiverNode")
 @NodeChild("nameNode")
 @NodeChild("valueNode")
-public abstract class CALWritePropertyNode extends CALExpressionNode {
+public abstract class ExprFieldWriteNode extends ExprNode {
 
     static final int LIBRARY_LIMIT = 3;
 
@@ -33,7 +33,7 @@ public abstract class CALWritePropertyNode extends CALExpressionNode {
     @Specialization(limit = "LIBRARY_LIMIT")
     protected Object writeObject(Object receiver, Object name, Object value,
                                  @CachedLibrary("receiver") InteropLibrary objectLibrary,
-                                 @Cached CALToMemberNode asMember) {
+                                 @Cached ToFieldNode asMember) {
         try {
             objectLibrary.writeMember(receiver, asMember.execute(name), value);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException e) {

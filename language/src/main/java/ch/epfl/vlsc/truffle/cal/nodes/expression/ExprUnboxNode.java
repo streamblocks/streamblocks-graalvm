@@ -1,7 +1,6 @@
-package ch.epfl.vlsc.truffle.cal.nodes.util;
+package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALTypes;
+import ch.epfl.vlsc.truffle.cal.types.Types;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.runtime.CALFunction;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
@@ -14,9 +13,9 @@ import com.oracle.truffle.api.library.CachedLibrary;
 
 import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
-@TypeSystemReference(CALTypes.class)
+@TypeSystemReference(Types.class)
 @NodeChild
-public abstract class CALUnboxNode extends CALExpressionNode {
+public abstract class ExprUnboxNode extends ExprNode {
 
     static final int LIMIT = 5;
 

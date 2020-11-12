@@ -1,12 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.literals;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALFunction;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-public final class CALFunctionLiteralNode extends CALExpressionNode {
+public final class FunctionLiteralNode extends ExprNode {
 
     /**
      * The name of the function.
@@ -17,7 +17,7 @@ public final class CALFunctionLiteralNode extends CALExpressionNode {
     @CompilerDirectives.CompilationFinal
     private CALFunction cachedFunction;
 
-    public CALFunctionLiteralNode(String functionName) {
+    public FunctionLiteralNode(String functionName) {
         this.functionName = functionName;
     }
 

@@ -1,16 +1,16 @@
 package ch.epfl.vlsc.truffle.cal.builtins;
 
 import ch.epfl.vlsc.truffle.cal.CALException;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-@NodeChild(value = "arguments", type = CALExpressionNode[].class)
+@NodeChild(value = "arguments", type = ExprNode[].class)
 @GenerateNodeFactory
-public abstract class CALBuiltinNode extends CALExpressionNode {
+public abstract class CALBuiltinNode extends ExprNode {
 
     @Override
     public final Object executeGeneric(VirtualFrame frame) {

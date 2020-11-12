@@ -41,6 +41,7 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.types.CALType;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;

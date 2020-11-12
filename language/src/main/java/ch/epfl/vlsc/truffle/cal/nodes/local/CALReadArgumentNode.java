@@ -1,11 +1,11 @@
 package ch.epfl.vlsc.truffle.cal.nodes.local;
 
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
-public class CALReadArgumentNode extends CALExpressionNode {
+public class CALReadArgumentNode extends ExprNode {
     /** The argument number, i.e., the index into the array of arguments. */
     private final int index;
 
