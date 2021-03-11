@@ -43,7 +43,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>simplelanguage-graalvm-component</artifactId>
   <parent>
-    <groupId>com.oracle</groupId>
+    <groupId>ch.epfl.vlsc</groupId>
     <artifactId>simplelanguage-parent</artifactId>
     <version>${graalvm.version}</version>
   </parent>

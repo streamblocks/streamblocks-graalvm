@@ -55,7 +55,7 @@ import org.graalvm.polyglot.Value;
 
 public final class SLMain {
 
-    private static final String SL = "sl";
+    private static final String SL = "cal";
 
     /**
      * The main entry point.
