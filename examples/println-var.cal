@@ -2,16 +2,16 @@ namespace test:
 
 
 	actor test() ==> :
-	
-	
-		action ==> 
+
+
+		action ==>
 		do
             world := "World";
 			println("Hello, ");
 			println(world);
 		end
-	
-	
+
+
 	end
 
 end

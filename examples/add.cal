@@ -1,20 +1,13 @@
 namespace test:
 
 import var system.io.itoa;
-    network Nats () ==> ():
-    entities
-        t = test();
-    structure
-        t --> ();
-    end
-
 	actor test() ==> :
 		action ==>
 		var
 			int a := 0
 		do
 			a := a + 1;
-			itoa(a);
+			println(a);
 		end
 	end
 end

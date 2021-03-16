@@ -1,5 +1,13 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
+
+import se.lth.cs.tycho.ir.entity.cal.CalActor;
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -20,11 +28,11 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtCallNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
-import se.lth.cs.tycho.ir.entity.cal.CalActor;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
@@ -33,34 +41,31 @@ import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
-public class BlockTransformer {
+public class ActorTransformer extends Transformer<ActorNode> {
 
-    Source source;
-    CALLanguage language;
+    CalActor actor;
+    String name;
+    private FrameDescriptor frameDescriptor;
+    private LexicalScope lexicalScope;
 
-    public BlockTransformer(CALLanguage language, Source source) {
-        this.source = source;
-        this.language = language;
+    public ActorTransformer(CALLanguage language, Source source, CalActor actor, String name) {
+        super(language, source);
+        this.actor = actor;
+        this.name = name;
+        frameDescriptor = new FrameDescriptor();
+        lexicalScope = new LexicalScope(null);
+
     }
 
-    public Map<String, RootCallTarget> transformActors(NamespaceDecl namespace) {
-        Map<String, RootCallTarget> nsFunctions = new HashMap<>();
-        for (GlobalEntityDecl entity : namespace.getEntityDecls()) {
-            if (entity.getEntity() instanceof CalActor) {
-                // FIXME getname
-                ActorNode actor = transformActor((CalActor) entity.getEntity(), namespace.getQID().toString());
-                nsFunctions.put(actor.getName(), Truffle.getRuntime().createCallTarget(actor));
-            }
-        }
-        return nsFunctions;
+    public ActorNode transform() {
+        ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
+        SourceSection actorSrc = source.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
+                actor.getToLineNumber());
+        return new ActorNode(language, frameDescriptor, actions, actorSrc, name);
     }
 
-    public ActorNode transformActor(CalActor actor, String name) {
-        // start a block and a rootcalltarget
-        // new lexical scope
-        // FIXME
-        return (new ActorTransformer(language, source, actor, name)).transform();
+    public ActionNode transformAction(Action action) {
+        return (new ActionTransformer(language, source, lexicalScope, action, frameDescriptor)).transform();
     }
-
 
 }
