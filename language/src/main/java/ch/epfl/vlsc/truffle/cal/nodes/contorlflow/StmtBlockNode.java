@@ -59,7 +59,7 @@ import com.oracle.truffle.api.nodes.NodeVisitor;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALScopedNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
 
 /**
  * A statement node that just executes a list of other statements.
@@ -81,7 +81,7 @@ public final class StmtBlockNode extends CALStatementNode implements BlockNode.E
      * All declared variables visible from this block (including all parent blocks). Variables
      * declared in this block only are from zero index up to {@link #parentBlockIndex} (exclusive).
      */
-    @CompilationFinal(dimensions = 1) private CALWriteLocalVariableNode[] writeNodesCache;
+    @CompilationFinal(dimensions = 1) private CALWriteFrameSlotNode[] writeNodesCache;
 
     /**
      * Index of the parent block's variables in the {@link #writeNodesCache list of variables}.
@@ -133,8 +133,8 @@ public final class StmtBlockNode extends CALStatementNode implements BlockNode.E
      * All declared local variables accessible in this block. Variables declared in parent blocks
      * are included.
      */
-    public CALWriteLocalVariableNode[] getDeclaredLocalVariables() {
-        CALWriteLocalVariableNode[] writeNodes = writeNodesCache;
+    public CALWriteFrameSlotNode[] getDeclaredLocalVariables() {
+        CALWriteFrameSlotNode[] writeNodes = writeNodesCache;
         if (writeNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             writeNodesCache = writeNodes = findDeclaredLocalVariables();
@@ -146,12 +146,12 @@ public final class StmtBlockNode extends CALStatementNode implements BlockNode.E
         return parentBlockIndex;
     }
 
-    private CALWriteLocalVariableNode[] findDeclaredLocalVariables() {
+    private CALWriteFrameSlotNode[] findDeclaredLocalVariables() {
         if (block == null) {
-            return new CALWriteLocalVariableNode[]{};
+            return new CALWriteFrameSlotNode[]{};
         }
         // Search for those write nodes, which declare variables
-        List<CALWriteLocalVariableNode> writeNodes = new ArrayList<>(4);
+        List<CALWriteFrameSlotNode> writeNodes = new ArrayList<>(4);
         int[] varsIndex = new int[]{0};
         NodeUtil.forEachChild(block, new NodeVisitor() {
             @Override
@@ -169,8 +169,8 @@ public final class StmtBlockNode extends CALStatementNode implements BlockNode.E
                     NodeUtil.forEachChild(node, this);
                 }
                 // Write to a variable is a declaration unless it exists already in a parent scope.
-                if (node instanceof CALWriteLocalVariableNode) {
-                    CALWriteLocalVariableNode wn = (CALWriteLocalVariableNode) node;
+                if (node instanceof CALWriteFrameSlotNode) {
+                    CALWriteFrameSlotNode wn = (CALWriteFrameSlotNode) node;
                     if (wn.isDeclaration()) {
                         writeNodes.add(wn);
                         varsIndex[0]++;
@@ -184,11 +184,11 @@ public final class StmtBlockNode extends CALStatementNode implements BlockNode.E
             }
         });
         Node parentBlock = findBlock();
-        CALWriteLocalVariableNode[] parentVariables = null;
+        CALWriteFrameSlotNode[] parentVariables = null;
         if (parentBlock instanceof StmtBlockNode) {
             parentVariables = ((StmtBlockNode) parentBlock).getDeclaredLocalVariables();
         }
-        CALWriteLocalVariableNode[] variables = writeNodes.toArray(new CALWriteLocalVariableNode[writeNodes.size()]);
+        CALWriteFrameSlotNode[] variables = writeNodes.toArray(new CALWriteFrameSlotNode[writeNodes.size()]);
         parentBlockIndex = variables.length;
         if (parentVariables == null || parentVariables.length == 0) {
             return variables;
@@ -196,7 +196,7 @@ public final class StmtBlockNode extends CALStatementNode implements BlockNode.E
             int parentVariablesIndex = ((StmtBlockNode) parentBlock).getParentBlockIndex();
             int visibleVarsIndex = getVisibleVariablesIndexOnEnter();
             int allVarsLength = variables.length + visibleVarsIndex + parentVariables.length - parentVariablesIndex;
-            CALWriteLocalVariableNode[] allVariables = Arrays.copyOf(variables, allVarsLength);
+            CALWriteFrameSlotNode[] allVariables = Arrays.copyOf(variables, allVarsLength);
             System.arraycopy(parentVariables, 0, allVariables, variables.length, visibleVarsIndex);
             System.arraycopy(parentVariables, parentVariablesIndex, allVariables, variables.length + visibleVarsIndex, parentVariables.length - parentVariablesIndex);
             return allVariables;

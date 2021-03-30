@@ -1,4 +1,4 @@
-package ch.epfl.vlsc.truffle.cal.nodes.contorlflow;
+package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALUndefinedNameException;
@@ -15,7 +15,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "call")
-public class StmtCallNode extends CALExpressionNode {
+public class CALInvokeNode extends CALExpressionNode {
 
     @Node.Child
     private CALExpressionNode functionNode;
@@ -24,7 +24,7 @@ public class StmtCallNode extends CALExpressionNode {
     @Node.Child
     private InteropLibrary library;
 
-    public StmtCallNode(CALExpressionNode functionNode, CALExpressionNode[] argumentNodes) {
+    public CALInvokeNode(CALExpressionNode functionNode, CALExpressionNode[] argumentNodes) {
         this.functionNode = functionNode;
         this.argumentNodes = argumentNodes;
         this.library = InteropLibrary.getFactory().createDispatched(3);

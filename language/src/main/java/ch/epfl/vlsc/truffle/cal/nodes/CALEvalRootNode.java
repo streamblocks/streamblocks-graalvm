@@ -68,15 +68,17 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 public final class CALEvalRootNode extends RootNode {
 
     private final Map<String, RootCallTarget> functions;
+    private final Map<String, RootCallTarget> actors;
     @CompilationFinal private boolean registered;
 
     @Child private DirectCallNode mainCallNode;
     private final CALLanguage language;
 
-    public CALEvalRootNode(CALLanguage language, RootCallTarget rootFunction, Map<String, RootCallTarget> functions) {
+    public CALEvalRootNode(CALLanguage language, RootCallTarget rootFunction, Map<String, RootCallTarget> functions, Map<String, RootCallTarget> actors) {
         super(language);
         this.language = language;
         this.functions = Collections.unmodifiableMap(functions);
+        this.actors = Collections.unmodifiableMap(actors);
         this.mainCallNode = rootFunction != null ? DirectCallNode.create(rootFunction) : null;
     }
 
@@ -111,7 +113,7 @@ public final class CALEvalRootNode extends RootNode {
             if (!registered) {
                 /* Function registration is a slow-path operation that must not be compiled. */
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                registerFunctions();
+                registerEntities();
                 registered = true;
             }
         } else {
@@ -121,7 +123,7 @@ public final class CALEvalRootNode extends RootNode {
              * typically happens when a polyglot Context was created with an explicit Engine or if
              * an internal context was created. See Context.Builder#engine for details.
              */
-            registerFunctions();
+            registerEntities();
         }
         if (mainCallNode == null) {
             /* The source code did not have a "main" function, so nothing to execute. */
@@ -137,8 +139,9 @@ public final class CALEvalRootNode extends RootNode {
     }
 
     @TruffleBoundary
-    private void registerFunctions() {
+    private void registerEntities() {
         lookupContextReference(CALLanguage.class).get().getFunctionRegistry().register(functions);
+        lookupContextReference(CALLanguage.class).get().getActorRegistry().register(actors);
     }
 
 }

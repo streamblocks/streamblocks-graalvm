@@ -1,6 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.types;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.runtime.CALActorInstance;
+import ch.epfl.vlsc.truffle.cal.runtime.CALFunction;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -27,7 +29,8 @@ public class CALType implements TruffleObject {
     public static final CALType STRING = new CALType("String", (l, v) -> l.isString(v));
     public static final CALType BOOLEAN = new CALType("Boolean", (l, v) -> l.isBoolean(v));
     public static final CALType OBJECT = new CALType("Object", (l, v) -> l.hasMembers(v));
-    public static final CALType FUNCTION = new CALType("Function", (l, v) -> l.isExecutable(v));
+    public static final CALType FUNCTION = new CALType("Function", (l, v) -> l.isExecutable(v) && v instanceof CALFunction);
+    public static final CALType ACTOR = new CALType("Function", (l, v) -> l.isExecutable(v) && v instanceof CALActorInstance);
 
     /*
      * This array is used when all types need to be checked in a certain order. While most interop

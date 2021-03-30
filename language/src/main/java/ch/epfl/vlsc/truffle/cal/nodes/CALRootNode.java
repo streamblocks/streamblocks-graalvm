@@ -4,7 +4,7 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import com.oracle.truffle.api.source.SourceSection;
 @NodeInfo(language = "CAL", description = "The root of all CAL execution trees")
 public class CALRootNode extends RootNode {
     /** The function body that is executed, and specialized during execution. */
-    @Child private CALExpressionNode bodyNode;
+    @Child private CALStatementNode bodyNode;
 
     /** The name of the function, for printing purposes only. */
     private final String name;
@@ -32,9 +32,9 @@ public class CALRootNode extends RootNode {
 
     private final SourceSection sourceSection;
     
-    @CompilerDirectives.CompilationFinal(dimensions = 1) private volatile CALWriteLocalVariableNode[] argumentNodesCache;
-
-    public CALRootNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode bodyNode, SourceSection sourceSection, String name) {
+    @CompilerDirectives.CompilationFinal(dimensions = 1) private volatile CALWriteFrameSlotNode[] argumentNodesCache;
+    // TODO FIXME bodyNode should maybe be expression
+    public CALRootNode(CALLanguage language, FrameDescriptor frameDescriptor, CALStatementNode bodyNode, SourceSection sourceSection, String name) {
         super(language, frameDescriptor);
         this.bodyNode = bodyNode;
         this.name = name;
@@ -49,11 +49,12 @@ public class CALRootNode extends RootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         assert lookupContextReference(CALLanguage.class).get() != null;
-        return bodyNode.executeGeneric(frame);
+        bodyNode.executeVoid(frame);
+        return null;
     }
 
     public CALExpressionNode getBodyNode() {
-        return bodyNode;
+        return null;//bodyNode;
     }
 
     @Override
@@ -75,8 +76,8 @@ public class CALRootNode extends RootNode {
         return "root " + name;
     }
 
-    public final CALWriteLocalVariableNode[] getDeclaredArguments() {
-        CALWriteLocalVariableNode[] argumentNodes = argumentNodesCache;
+    public final CALWriteFrameSlotNode[] getDeclaredArguments() {
+        CALWriteFrameSlotNode[] argumentNodes = argumentNodesCache;
         if (argumentNodes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             argumentNodesCache = argumentNodes = findArgumentNodes();
@@ -84,11 +85,11 @@ public class CALRootNode extends RootNode {
         return argumentNodes;
     }
 
-    private CALWriteLocalVariableNode[] findArgumentNodes() {
-        List<CALWriteLocalVariableNode> writeArgNodes = new ArrayList<>(4);
+    private CALWriteFrameSlotNode[] findArgumentNodes() {
+        List<CALWriteFrameSlotNode> writeArgNodes = new ArrayList<>(4);
         NodeUtil.forEachChild(this.getBodyNode(), new NodeVisitor() {
 
-            private CALWriteLocalVariableNode wn; // The current write node containing a CALot
+            private CALWriteFrameSlotNode wn; // The current write node containing a CALot
 
             @Override
             public boolean visit(Node node) {
@@ -96,8 +97,8 @@ public class CALRootNode extends RootNode {
                 if (node instanceof InstrumentableNode.WrapperNode) {
                     return NodeUtil.forEachChild(node, this);
                 }
-                if (node instanceof CALWriteLocalVariableNode) {
-                    wn = (CALWriteLocalVariableNode) node;
+                if (node instanceof CALWriteFrameSlotNode) {
+                    wn = (CALWriteFrameSlotNode) node;
                     boolean all = NodeUtil.forEachChild(node, this);
                     wn = null;
                     return all;
@@ -112,6 +113,6 @@ public class CALRootNode extends RootNode {
                 }
             }
         });
-        return writeArgNodes.toArray(new CALWriteLocalVariableNode[writeArgNodes.size()]);
+        return writeArgNodes.toArray(new CALWriteFrameSlotNode[writeArgNodes.size()]);
     }
 }

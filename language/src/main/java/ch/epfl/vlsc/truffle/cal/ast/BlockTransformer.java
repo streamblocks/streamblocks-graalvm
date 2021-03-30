@@ -17,9 +17,9 @@ import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtCallNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
@@ -52,6 +52,8 @@ public class BlockTransformer {
                 nsFunctions.put(actor.getName(), Truffle.getRuntime().createCallTarget(actor));
             }
         }
+        
+        // TODO try to instantiate here an actor
         return nsFunctions;
     }
 
@@ -59,7 +61,7 @@ public class BlockTransformer {
         // start a block and a rootcalltarget
         // new lexical scope
         // FIXME
-        return (new ActorTransformer(language, source, actor, name)).transform();
+        return (new ActorTransformer(language, source, actor, name, 0)).transform();
     }
 
 

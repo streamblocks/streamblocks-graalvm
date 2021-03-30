@@ -1,4 +1,4 @@
-package ch.epfl.vlsc.truffle.cal.nodes.expression;
+package ch.epfl.vlsc.truffle.cal.nodes.util;
 
 import ch.epfl.vlsc.truffle.cal.types.Types;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;

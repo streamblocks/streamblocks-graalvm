@@ -25,13 +25,14 @@ import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtCallNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
+import se.lth.cs.tycho.ir.decl.LocalVarDecl;
+import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
@@ -40,32 +41,35 @@ import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
-
-public class ActorTransformer extends Transformer<ActorNode> {
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+public class ActorTransformer extends ScopedTransformer<ActorNode> {
 
     CalActor actor;
     String name;
-    private FrameDescriptor frameDescriptor;
-    private LexicalScope lexicalScope;
 
-    public ActorTransformer(CALLanguage language, Source source, CalActor actor, String name) {
-        super(language, source);
+    public ActorTransformer(CALLanguage language, Source source, CalActor actor, String name, int depth) {
+        super(language, source, new LexicalScope(null), new FrameDescriptor(), depth);
         this.actor = actor;
         this.name = name;
-        frameDescriptor = new FrameDescriptor();
-        lexicalScope = new LexicalScope(null);
-
     }
 
     public ActorNode transform() {
+        CALExpressionNode[] headStatements = new CALExpressionNode[actor.getVarDecls().size()];
+        int i = 0;
+        for (LocalVarDecl varDecl : actor.getVarDecls()) {
+            headStatements[i] = transformVarDecl(varDecl);
+            i++;
+        }
+
+        StmtBlockNode head = new StmtBlockNode(headStatements);
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
         SourceSection actorSrc = source.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
                 actor.getToLineNumber());
-        return new ActorNode(language, frameDescriptor, actions, actorSrc, name);
+        return new ActorNode(language, frameDescriptor, actions, head, actorSrc, name);
     }
 
     public ActionNode transformAction(Action action) {
-        return (new ActionTransformer(language, source, lexicalScope, action, frameDescriptor)).transform();
+        return (new ActionTransformer(language, source, lexicalScope, action, frameDescriptor, depth)).transform();
     }
 
 }

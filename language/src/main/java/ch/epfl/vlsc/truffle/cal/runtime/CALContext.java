@@ -32,9 +32,9 @@ public class CALContext {
     private final BufferedReader input;
     private final PrintWriter output;
     private final CALFunctionRegistry functionRegistry;
+    private final CALActorRegistry actorRegistry;
     private final CALLanguage language;
     private final AllocationReporter allocationReporter;
-    private final Iterable<Scope> topScopes; // Cache the top scopes
 
 
     public CALContext(CALLanguage language, TruffleLanguage.Env env, List<NodeFactory<? extends CALBuiltinNode>> externalBuiltins) {
@@ -44,7 +44,7 @@ public class CALContext {
         this.language = language;
         this.allocationReporter = env.lookup(AllocationReporter.class);
         this.functionRegistry = new CALFunctionRegistry(language);
-        this.topScopes = Collections.singleton(Scope.newBuilder("global", functionRegistry.getFunctionsObject()).build());
+        this.actorRegistry = new CALActorRegistry(language);
         installBuiltins();
         for (NodeFactory<? extends CALBuiltinNode> builtin : externalBuiltins) {
             installBuiltin(builtin);
@@ -71,9 +71,11 @@ public class CALContext {
     public CALFunctionRegistry getFunctionRegistry() {
         return functionRegistry;
     }
-
-    public Iterable<Scope> getTopScopes() {
-        return topScopes;
+    /**
+     * Returns the registry of all actors that are currently defined.
+     */
+    public CALActorRegistry getActorRegistry() {
+        return actorRegistry;
     }
 
     private void installBuiltins() {

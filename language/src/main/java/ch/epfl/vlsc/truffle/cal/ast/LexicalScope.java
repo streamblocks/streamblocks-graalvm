@@ -7,7 +7,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 
 class LexicalScope {
     protected final LexicalScope outer;
-    protected final Map<String, FrameSlot> locals;
+    protected final Map<String, FrameSlotAndDepth> locals;
 
     LexicalScope(LexicalScope outer) {
         this.outer = outer;

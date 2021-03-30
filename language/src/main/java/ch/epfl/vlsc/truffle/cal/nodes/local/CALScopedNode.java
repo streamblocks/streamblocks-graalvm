@@ -300,7 +300,7 @@ public abstract class CALScopedNode extends Node {
          */
         @ExportMessage
         Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
-            CALWriteLocalVariableNode[] writeNodes = root.getDeclaredArguments();
+            CALWriteFrameSlotNode[] writeNodes = root.getDeclaredArguments();
             return new KeysArray(writeNodes, writeNodes.length, writeNodes.length);
         }
 
@@ -462,9 +462,9 @@ public abstract class CALScopedNode extends Node {
         }
 
         int findArgumentIndex(String member) {
-            CALWriteLocalVariableNode[] writeNodes = root.getDeclaredArguments();
+            CALWriteFrameSlotNode[] writeNodes = root.getDeclaredArguments();
             for (int i = 0; i < writeNodes.length; i++) {
-                CALWriteLocalVariableNode writeNode = writeNodes[i];
+                CALWriteFrameSlotNode writeNode = writeNodes[i];
                 if (member.equals(writeNode.getSlot().getIdentifier())) {
                     return i;
                 }
@@ -728,7 +728,7 @@ public abstract class CALScopedNode extends Node {
             static void doCached(VariablesObject receiver, String member, Object value,
                             @Cached("member") String cachedMember,
                             // We cache the member's write node for fast-path access
-                            @Cached(value = "receiver.findWriteNode(member)", adopt = false) CALWriteLocalVariableNode writeNode) throws UnknownIdentifierException, UnsupportedMessageException {
+                            @Cached(value = "receiver.findWriteNode(member)", adopt = false) CALWriteFrameSlotNode writeNode) throws UnknownIdentifierException, UnsupportedMessageException {
                 doWrite(receiver, cachedMember, writeNode, value);
             }
 
@@ -738,18 +738,18 @@ public abstract class CALScopedNode extends Node {
             @Specialization(replaces = "doCached")
             @TruffleBoundary
             static void doGeneric(VariablesObject receiver, String member, Object value) throws UnknownIdentifierException, UnsupportedMessageException {
-                CALWriteLocalVariableNode writeNode = receiver.findWriteNode(member);
+                CALWriteFrameSlotNode writeNode = receiver.findWriteNode(member);
                 doWrite(receiver, member, writeNode, value);
             }
 
-            private static void doWrite(VariablesObject receiver, String member, CALWriteLocalVariableNode writeNode, Object value) throws UnknownIdentifierException, UnsupportedMessageException {
+            private static void doWrite(VariablesObject receiver, String member, CALWriteFrameSlotNode writeNode, Object value) throws UnknownIdentifierException, UnsupportedMessageException {
                 if (writeNode == null) {
                     throw UnknownIdentifierException.create(member);
                 }
                 if (receiver.frame == null) {
                     throw UnsupportedMessageException.create();
                 }
-                writeNode.executeWrite((VirtualFrame) receiver.frame, value);
+                writeNode.write((VirtualFrame) receiver.frame, value);
             }
         }
 
@@ -760,7 +760,7 @@ public abstract class CALScopedNode extends Node {
         @ExportMessage
         @SuppressWarnings("static-method")
         Object getMembers(@SuppressWarnings("unused") boolean includeInternal,
-                        @Cached(value = "this.block.getDeclaredLocalVariables()", adopt = false, dimensions = 1, allowUncached = true) CALWriteLocalVariableNode[] writeNodes,
+                        @Cached(value = "this.block.getDeclaredLocalVariables()", adopt = false, dimensions = 1, allowUncached = true) CALWriteFrameSlotNode[] writeNodes,
                         @Cached(value = "this.getVisibleVariablesIndex()", allowUncached = true) int visibleVariablesIndex,
                         @Cached(value = "this.block.getParentBlockIndex()", allowUncached = true) int parentBlockIndex) {
             return new KeysArray(writeNodes, visibleVariablesIndex, parentBlockIndex);
@@ -777,7 +777,7 @@ public abstract class CALScopedNode extends Node {
         }
 
         FrameSlot findSlot(String member) {
-            CALWriteLocalVariableNode writeNode = findWriteNode(member);
+            CALWriteFrameSlotNode writeNode = findWriteNode(member);
             if (writeNode != null) {
                 return writeNode.getSlot();
             } else {
@@ -791,18 +791,18 @@ public abstract class CALScopedNode extends Node {
          * 
          * @param member the variable name
          */
-        CALWriteLocalVariableNode findWriteNode(String member) {
-            CALWriteLocalVariableNode[] writeNodes = block.getDeclaredLocalVariables();
+        CALWriteFrameSlotNode findWriteNode(String member) {
+            CALWriteFrameSlotNode[] writeNodes = block.getDeclaredLocalVariables();
             int parentBlockIndex = block.getParentBlockIndex();
             int index = getVisibleVariablesIndex();
             for (int i = 0; i < index; i++) {
-                CALWriteLocalVariableNode writeNode = writeNodes[i];
+                CALWriteFrameSlotNode writeNode = writeNodes[i];
                 if (member.equals(writeNode.getSlot().getIdentifier())) {
                     return writeNode;
                 }
             }
             for (int i = parentBlockIndex; i < writeNodes.length; i++) {
-                CALWriteLocalVariableNode writeNode = writeNodes[i];
+                CALWriteFrameSlotNode writeNode = writeNodes[i];
                 if (member.equals(writeNode.getSlot().getIdentifier())) {
                     return writeNode;
                 }
@@ -818,7 +818,7 @@ public abstract class CALScopedNode extends Node {
     @ExportLibrary(InteropLibrary.class)
     static final class KeysArray implements TruffleObject {
 
-        @CompilationFinal(dimensions = 1) private final CALWriteLocalVariableNode[] writeNodes;
+        @CompilationFinal(dimensions = 1) private final CALWriteFrameSlotNode[] writeNodes;
         private final int variableIndex;
         private final int parentBlockIndex;
 
@@ -833,7 +833,7 @@ public abstract class CALScopedNode extends Node {
          *            block's scope (from <code>parentBlockIndex</code> to the end of the
          *            <code>writeNodes</code> array).
          */
-        KeysArray(CALWriteLocalVariableNode[] writeNodes, int variableIndex, int parentBlockIndex) {
+        KeysArray(CALWriteFrameSlotNode[] writeNodes, int variableIndex, int parentBlockIndex) {
             this.writeNodes = writeNodes;
             this.variableIndex = variableIndex;
             this.parentBlockIndex = parentBlockIndex;
@@ -874,7 +874,7 @@ public abstract class CALScopedNode extends Node {
     }
 
     /**
-     * Representation of a variable based on a {@link CALWriteLocalVariableNode write node} that
+     * Representation of a variable based on a {@link CALWriteFrameSlotNode write node} that
      * declares the variable. It provides the variable name as a {@link Key#asString() string} and
      * the name node associated with the variable's write node as a {@link Key#getSourceLocation()
      * source location}.
@@ -882,9 +882,9 @@ public abstract class CALScopedNode extends Node {
     @ExportLibrary(InteropLibrary.class)
     static final class Key implements TruffleObject {
 
-        private final CALWriteLocalVariableNode writeNode;
+        private final CALWriteFrameSlotNode writeNode;
 
-        Key(CALWriteLocalVariableNode writeNode) {
+        Key(CALWriteFrameSlotNode writeNode) {
             this.writeNode = writeNode;
         }
 
