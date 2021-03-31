@@ -7,12 +7,16 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import se.lth.cs.tycho.ir.expr.ExprApplication;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
+import se.lth.cs.tycho.ir.expr.ExprLambda;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
@@ -26,7 +30,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         super(language, source);
         this.frameDescriptor = frameDescriptor;// new FrameDescriptor();
         // lexical scope must include parent scope
-        lexicalScope = new LexicalScope(parentScope);
+        lexicalScope = new LexicalScopeRW(parentScope);
         this.depth = depth + 1;
     }
 
@@ -46,12 +50,12 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(name, FrameSlotKind.Illegal);
         boolean newVariable = false;
         FrameSlotAndDepth slot;
-        if (!lexicalScope.locals.containsKey(name)) {
+        if (!lexicalScope.containsKey(name)) {
             newVariable = true;
-            slot = new FrameSlotAndDepth(frameSlot, depth);
-            lexicalScope.locals.put(name, slot);
+            slot = new FrameSlotAndDepthRW(frameSlot, depth);
+            lexicalScope.put(name, slot);
         } else {
-            slot = lexicalScope.locals.get(name);
+            slot = lexicalScope.get(name);
         }
         CALExpressionNode valueNode = transformExpr(value);
         CALExpressionNode nameNode = new StringLiteralNode(name);
@@ -82,7 +86,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             // we have to implement local variables and scopes
             String name = v.getVariable().getName();
             final CALExpressionNode result;
-            final FrameSlotAndDepth frameSlot = lexicalScope.locals.get(name);
+            final FrameSlotAndDepth frameSlot = lexicalScope.get(name);
             if (frameSlot != null) {
                 /* Read of a local variable. */
                 result = frameSlot.createReadNode(depth);
@@ -98,9 +102,23 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             return result;
         } else if (expr instanceof ExprBinaryOp) {
             return transformBinaryExpr((ExprBinaryOp) expr);
+        } else if (expr instanceof ExprLambda) {
+            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth)).transform();
+        } else if (expr instanceof ExprApplication) {
+            return transformExprApplication((ExprApplication) expr);
         } else {
             throw new Error("unknown expr " + expr.getClass().getName());
         }
+    }
+
+    public CALInvokeNode transformExprApplication(ExprApplication expr) {
+        CALExpressionNode[] args = new CALExpressionNode[expr.getArgs().size()];
+        int i = 0;
+        for (Expression arg : expr.getArgs()) {
+            args[i] = transformExpr(arg);
+        }
+        CALExpressionNode functionNode = transformExpr(expr.getFunction());
+        return new CALInvokeNode(functionNode, args);
     }
 
     public CALExpressionNode transformBinaryExpr(ExprBinaryOp expr) {
@@ -115,6 +133,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         switch (opeString) {
         case "+":
             result = CALBinaryAddNodeGen.create(left, right);
+            break;
+        case "*":
+            result = CALBinaryMulNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);

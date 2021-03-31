@@ -48,7 +48,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
     String name;
 
     public ActorTransformer(CALLanguage language, Source source, CalActor actor, String name, int depth) {
-        super(language, source, new LexicalScope(null), new FrameDescriptor(), depth);
+        super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth);
         this.actor = actor;
         this.name = name;
     }

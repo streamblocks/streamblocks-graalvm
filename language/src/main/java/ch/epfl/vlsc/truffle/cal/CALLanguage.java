@@ -2,8 +2,9 @@ package ch.epfl.vlsc.truffle.cal;
 
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepth;
+import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepthRW;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
@@ -85,7 +86,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         String actorInstanceName = "testActorInstance";
         FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, FrameSlotKind.Illegal);
-        FrameSlotAndDepth existingSlot = new FrameSlotAndDepth(frameSlot, 0);
+        FrameSlotAndDepthRW existingSlot = new FrameSlotAndDepthRW(frameSlot, 0);
         boolean newVariable = true;
         CALExpressionNode valueNode = call;
         CALExpressionNode nameNode = new StringLiteralNode(actorInstanceName);
@@ -98,7 +99,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         final CALExpressionNode callActor2 = new CALInvokeNode(instance, new CALExpressionNode[0]);
 
         CALStatementNode body = new StmtBlockNode(new CALExpressionNode[] { result, callActor, callActor2 });
-        RootNode toyRoot = new CALRootNode(this, frameDescriptor, body, source.createUnavailableSection(), "roooot");
+        RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body), source.createUnavailableSection(), "roooot");
         return Truffle.getRuntime().createCallTarget(
                 new CALEvalRootNode(
                     this, 

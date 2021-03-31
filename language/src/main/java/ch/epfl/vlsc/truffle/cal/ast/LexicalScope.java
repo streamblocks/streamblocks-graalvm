@@ -1,19 +1,10 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.api.frame.FrameSlot;
-
-class LexicalScope {
-    protected final LexicalScope outer;
-    protected final Map<String, FrameSlotAndDepth> locals;
-
-    LexicalScope(LexicalScope outer) {
-        this.outer = outer;
-        this.locals = new HashMap();
-        if (outer != null) {
-            locals.putAll(outer.locals);
-        }
-    }
+interface LexicalScope {
+    boolean containsKey(String name);
+    Map<String, FrameSlotAndDepth> getLocals();
+    FrameSlotAndDepth get(String name);
+    FrameSlotAndDepth put(String name, FrameSlotAndDepth value);
 }

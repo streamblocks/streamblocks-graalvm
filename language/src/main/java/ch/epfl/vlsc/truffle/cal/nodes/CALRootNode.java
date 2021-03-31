@@ -23,7 +23,7 @@ import com.oracle.truffle.api.source.SourceSection;
 @NodeInfo(language = "CAL", description = "The root of all CAL execution trees")
 public class CALRootNode extends RootNode {
     /** The function body that is executed, and specialized during execution. */
-    @Child private CALStatementNode bodyNode;
+    @Child private CALExpressionNode bodyNode;
 
     /** The name of the function, for printing purposes only. */
     private final String name;
@@ -34,7 +34,7 @@ public class CALRootNode extends RootNode {
     
     @CompilerDirectives.CompilationFinal(dimensions = 1) private volatile CALWriteFrameSlotNode[] argumentNodesCache;
     // TODO FIXME bodyNode should maybe be expression
-    public CALRootNode(CALLanguage language, FrameDescriptor frameDescriptor, CALStatementNode bodyNode, SourceSection sourceSection, String name) {
+    public CALRootNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode bodyNode, SourceSection sourceSection, String name) {
         super(language, frameDescriptor);
         this.bodyNode = bodyNode;
         this.name = name;
@@ -49,12 +49,11 @@ public class CALRootNode extends RootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         assert lookupContextReference(CALLanguage.class).get() != null;
-        bodyNode.executeVoid(frame);
-        return null;
+        return bodyNode.executeGeneric(frame);
     }
 
     public CALExpressionNode getBodyNode() {
-        return null;//bodyNode;
+        return bodyNode;
     }
 
     @Override
