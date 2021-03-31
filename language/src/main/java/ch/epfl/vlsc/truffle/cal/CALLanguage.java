@@ -10,6 +10,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Option;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
@@ -23,6 +24,13 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+
+import org.graalvm.options.OptionCategory;
+import org.graalvm.options.OptionDescriptors;
+import org.graalvm.options.OptionKey;
+import org.graalvm.options.OptionStability;
+import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.Language;
 
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.entity.cal.CalActor;
@@ -65,22 +73,22 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         counter++;
     }
 
+    @Option(help = "Actor to run", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "actor")
+    static final OptionKey<String> ActorToRun = new OptionKey<>("main");
+    
+    @Option(help = "Number of iterations", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "iterations")
+    static final OptionKey<Integer> Iterations = new OptionKey<>(1);
+    
     @Override
     protected CALContext createContext(Env env) {
         return new CALContext(this, env, new ArrayList<>(EXTERNAL_BUILTINS));
     }
 
-    @Override
-    protected CallTarget parse(ParsingRequest request) throws Exception {
-        Source source = request.getSource();
-        Path path = Paths.get(source.getURI());
-        CalParser parser = new CalParser(Files.newBufferedReader(path));
-        NamespaceDecl decl = parser.CompilationUnit();
-        BlockTransformer astTransformer = new BlockTransformer(this, source);
-        Map<String, RootCallTarget> actors = astTransformer.transformActors(decl);
-        RootCallTarget startNode = actors.get("test");
+    private RootCallTarget getRootCall(Map<String, RootCallTarget> actors, Source source) {
+        String actorName = getCurrentContext().getEnv().getOptions().get(CALLanguage.ActorToRun);
+        RootCallTarget startNode = actors.get(actorName);
         assert startNode != null;
-        CALExpressionNode actor = new ActorLiteralNode("test");
+        CALExpressionNode actor = new ActorLiteralNode(actorName);
         CALExpressionNode call = new CALInvokeNode(actor, new CALExpressionNode[0]);
         // Assign
         FrameDescriptor frameDescriptor = new FrameDescriptor();
@@ -95,18 +103,29 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
 
         // Call actor instance
         final CALExpressionNode instance = existingSlot.createReadNode(0);
-        final CALExpressionNode callActor = new CALInvokeNode(instance, new CALExpressionNode[0]);
-        final CALExpressionNode callActor2 = new CALInvokeNode(instance, new CALExpressionNode[0]);
+        int iterations = getCurrentContext().getEnv().getOptions().get(CALLanguage.Iterations);
+        CALExpressionNode[] bodyNodes = new CALExpressionNode[1+iterations]; 
+        bodyNodes[0] = result;
+        for (int i = 0; i < iterations; i++) {
+        	bodyNodes[i+1] = new CALInvokeNode(instance, new CALExpressionNode[0]);
+        }
+    
+        CALStatementNode body = new StmtBlockNode(bodyNodes);
+        RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body),
+                source.createUnavailableSection(), "root");
+        return Truffle.getRuntime().createCallTarget(toyRoot);
+    }
 
-        CALStatementNode body = new StmtBlockNode(new CALExpressionNode[] { result, callActor, callActor2 });
-        RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body), source.createUnavailableSection(), "roooot");
-        return Truffle.getRuntime().createCallTarget(
-                new CALEvalRootNode(
-                    this, 
-                    Truffle.getRuntime().createCallTarget(toyRoot), 
-                    new HashMap<>(), 
-                    actors
-                ));
+    @Override
+    protected CallTarget parse(ParsingRequest request) throws Exception {
+        Source source = request.getSource();
+        Path path = Paths.get(source.getURI());
+        CalParser parser = new CalParser(Files.newBufferedReader(path));
+        NamespaceDecl decl = parser.CompilationUnit();
+        BlockTransformer astTransformer = new BlockTransformer(this, source);
+        Map<String, RootCallTarget> actors = astTransformer.transformActors(decl);
+        return Truffle.getRuntime()
+                .createCallTarget(new CALEvalRootNode(this, getRootCall(actors, source), new HashMap<>(), actors));
     }
 
     public RootCallTarget lookupBuiltin(NodeFactory<? extends CALBuiltinNode> factory) {
@@ -186,6 +205,12 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
 
     public static void installBuiltin(NodeFactory<? extends CALBuiltinNode> builtin) {
         EXTERNAL_BUILTINS.add(builtin);
+    }
+    
+    @Override
+    protected OptionDescriptors getOptionDescriptors() {
+        // this class is generated by the annotation processor
+        return new CALLanguageOptionDescriptors();
     }
 
 }

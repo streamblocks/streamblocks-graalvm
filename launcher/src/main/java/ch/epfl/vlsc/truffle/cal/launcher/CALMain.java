@@ -38,7 +38,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.oracle.truffle.sl.launcher;
+package ch.epfl.vlsc.truffle.cal.launcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +53,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
-public final class SLMain {
+public final class CALMain {
 
     private static final String SL = "cal";
 
@@ -98,8 +98,10 @@ public final class SLMain {
 
         try {
             Value result = context.eval(source);
-            if (context.getBindings(SL).getMember("main") == null) {
-                err.println("No function main() defined in SL source file.");
+            String actorToCall = options.get("cal.actor") != null ? options.get("cal.actor") : "main";
+            //FIXME
+            if (context.getBindings(SL).getMember(actorToCall) == null) {
+                err.println("No actor "+actorToCall+" defined in CAL source file, please specify using --cal.actor=<actor name>.");
                 return 1;
             }
             if (!result.isNull()) {
