@@ -1,0 +1,16 @@
+namespace test:
+
+
+	actor test() ==> :
+	
+	
+		action ==> 
+		do
+			println("Hello, ");
+			println("World");
+		end
+	
+	
+	end
+
+end

@@ -9,9 +9,8 @@ jdk:
     - openjdk11
 
 env:
-    - GRAALVM_VERSION="20.3.0" GRAALVM_JAVA_VERSION="8"
-    - GRAALVM_VERSION="20.3.0" GRAALVM_JAVA_VERSION="11"
-    - GRAALVM_VERSION="NONE" SL_BUILD_NATIVE="false"
+    - GRAALVM_VERSION="20.3.0" GRAALVM_JAVA_VERSION="8" SL_BUILD_NATIVE="false"
+    - GRAALVM_VERSION="20.3.0" GRAALVM_JAVA_VERSION="11" SL_BUILD_NATIVE="false"
 
 matrix:
     exclude:
@@ -30,7 +29,6 @@ matrix:
           env: GRAALVM_VERSION="NONE" SL_BUILD_NATIVE="false"
 
 install:
-    - cd .. && mv simplelanguage "simple language" && cd "simple language"
     - |
         if [[ "$GRAALVM_VERSION" != "NONE" ]]; then
           if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then DOWNLOAD_OS_NAME="darwin"; fi
@@ -44,17 +42,13 @@ install:
           if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export JAVA_HOME=$(/usr/libexec/java_home); fi
         fi
 
+install_streamblocks:
+  - git clone https://github.com/streamblocks/streamblocks-tycho --depth 1 streamblocks-tycho
+  - cd streamblocks-tycho
+  - mvn -DskipTests install -pl 'compiler,core'
+  - cd ../
+
+
 script:
     - mvn package
-    - ./sl language/tests/Add.sl
-    - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then ./native/slnative language/tests/Add.sl; fi
-    - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then "$JAVA_HOME/bin/gu" install -L component/sl-component.jar ; fi
-    - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then "$JAVA_HOME/bin/sl" language/tests/Add.sl; fi
-    - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then "$JAVA_HOME/bin/slnative" language/tests/Add.sl; fi
-    - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then "$JAVA_HOME/bin/polyglot" --jvm --language sl --file language/tests/Add.sl; fi
-    - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then "$JAVA_HOME/bin/gu" remove sl; fi
-    - ./generate_parser.sh
-    - mvn package
-    - ./sl language/tests/Add.sl
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then shellcheck sl; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then (find . -name '*.sh' | grep -v graalvm | xargs shellcheck); fi
+    - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then mvn test; fi

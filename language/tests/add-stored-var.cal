@@ -1,0 +1,16 @@
+namespace test:
+
+import var system.io.itoa;
+	actor test() ==> :
+        int a := 0;
+		action ==>
+		var
+			int b := 0
+		do
+			a := a + 1;
+			println(a);
+			b := b + 1;
+			println(b);
+		end
+	end
+end
