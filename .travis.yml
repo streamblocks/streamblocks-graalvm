@@ -28,6 +28,13 @@ matrix:
           os: osx
           env: GRAALVM_VERSION="NONE" SL_BUILD_NATIVE="false"
 
+before_install:
+    - git clone https://github.com/streamblocks/streamblocks-tycho --depth 1 streamblocks-tycho
+    - cd streamblocks-tycho
+    - mvn -DskipTests install -pl 'compiler,core'
+    - mvn validate
+    - cd ../
+
 install:
     - |
         if [[ "$GRAALVM_VERSION" != "NONE" ]]; then
@@ -42,10 +49,6 @@ install:
           if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export JAVA_HOME=$(/usr/libexec/java_home); fi
         fi
 
-    - git clone https://github.com/streamblocks/streamblocks-tycho --depth 1 streamblocks-tycho
-    - cd streamblocks-tycho
-    - mvn -DskipTests install -pl 'compiler,core'
-    - cd ../
 
 
 script:
