@@ -54,5 +54,4 @@ install:
 
 
 script:
-    - mvn package
     - if [[ "$GRAALVM_VERSION" != "NONE" ]]; then mvn test; fi
