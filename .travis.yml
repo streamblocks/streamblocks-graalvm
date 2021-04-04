@@ -31,8 +31,7 @@ matrix:
 before_install:
     - git clone https://github.com/streamblocks/streamblocks-tycho --depth 1 streamblocks-tycho
     - cd streamblocks-tycho
-    - mvn -DskipTests install -pl 'compiler,core'
-    - mvn validate
+    - mvn -DskipTests install -pl '!app-test,!language-server,!platform-generic-c'
     - cd ../
 
 install:
