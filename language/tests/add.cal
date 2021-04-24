@@ -1,6 +1,5 @@
 namespace test:
 
-import var system.io.itoa;
 	actor test() ==> :
 		action ==>
 		var

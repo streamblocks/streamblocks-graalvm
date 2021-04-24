@@ -6,6 +6,9 @@ import ch.epfl.vlsc.truffle.cal.builtins.CALPrintlnBuiltin;
 import ch.epfl.vlsc.truffle.cal.builtins.CALPrintlnBuiltinFactory;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -86,7 +89,17 @@ public class CALContext {
         /* Register the builtin function in our function registry. */
         RootCallTarget target = language.lookupBuiltin(factory);
         String rootName = target.getRootNode().getName();
-        getFunctionRegistry().register(rootName, target);
+
+        int arity = factory.getNodeSignatures().get(0).size();
+        CALStatementNode[] readArguments = new CALStatementNode[arity];
+			for (int i = 0; i < readArguments.length; i++) {
+				readArguments[i] = new CALReadArgumentNode(i);
+			}
+        CALExpressionNode body = ((CALRootNode) target.getRootNode()).getBodyNode();
+        CALExpressionNode node = new ReturnsLastBodyNode(new StmtBlockNode(readArguments), body);
+        CALRootNode rootNode = new CALRootNode(language, new FrameDescriptor(), node, BUILTIN_SOURCE.createUnavailableSection(), rootName);
+        RootCallTarget newTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        getFunctionRegistry().register(rootName, newTarget);
     }
 
     public static NodeInfo lookupNodeInfo(Class<?> clazz) {

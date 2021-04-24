@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALUndefinedNameException;
+import ch.epfl.vlsc.truffle.cal.runtime.CALArguments;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;

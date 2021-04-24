@@ -1,6 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.nodes.local;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALArguments;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -21,10 +22,10 @@ public class CALReadArgumentNode extends CALExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] args = frame.getArguments();
-        if (index < args.length) {
-            return args[index];
+        if (index < CALArguments.getArgumentCount(frame)) {
+            return CALArguments.getArgument(frame, index);
         } else {
+            // TODO should we fail with an arity exception?
             /* In the interpreter, record profiling information that the branch was used. */
             outOfBoundsTaken.enter();
             /* Use the default null value. */

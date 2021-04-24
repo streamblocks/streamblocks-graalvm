@@ -22,37 +22,39 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.api.utilities.TriState;
 
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+import ch.epfl.vlsc.truffle.cal.nodes.NetworkNode;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.types.CALType;
 
 
-// An actor instance
+// An network instance
 @ExportLibrary(InteropLibrary.class)
-public class CALActorInstance extends CALValue {
-    public @CompilationFinal ActorNode actorDecl;
+public class CALNetworkInstance extends CALValue {
+    public @CompilationFinal NetworkNode networkDecl;
     public @CompilationFinal MaterializedFrame frameDecl;
+    public @CompilationFinal CALRootNode body;
 
     public static final int INLINE_CACHE_SIZE = 2;
     // FIXME
     private static String name = "Test";
     private final CyclicAssumption callTargetStable;
 
-    public CALActorInstance(ActorNode actorDecl, MaterializedFrame frame) {
-        this.actorDecl = actorDecl;
+    public CALNetworkInstance(NetworkNode networkDecl, MaterializedFrame frame, CALRootNode body) {
+        this.networkDecl = networkDecl;
         this.frameDecl = frame;
+        this.body = body;
         this.callTargetStable = new CyclicAssumption(name);
     }
 
     // TODO how to get called?
     // TODO add child annotation
     public RootCallTarget getCallTarget() {
-        ActionNode[] actions = actorDecl.getActions();
         // TODO do FSM-thingy here and invalidate callTargetStable when
         // the action changes
         // For new we assume actions.length == 1, so we never invalidate
-        assert actions.length == 1;
-        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(actions[0]);
+        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(body);
         return callTarget;
     }
 
@@ -80,7 +82,7 @@ public class CALActorInstance extends CALValue {
     }
 
     /**
-     * {@link CALActorInstance} instances are always visible as executable to other languages.
+     * {@link CALNetworkInstance} instances are always visible as executable to other languages.
      */
     @SuppressWarnings("static-method")
     @ExportMessage
@@ -96,7 +98,7 @@ public class CALActorInstance extends CALValue {
     }
 
     /**
-     * {@link CALActorInstance} instances are always visible as executable to other languages.
+     * {@link CALNetworkInstance} instances are always visible as executable to other languages.
      */
     @ExportMessage
     boolean isExecutable() {
@@ -117,7 +119,7 @@ public class CALActorInstance extends CALValue {
     @SuppressWarnings("unused")
     static final class IsIdenticalOrUndefined {
         @Specialization
-        static TriState doSLFunction(CALActorInstance receiver, CALActorInstance other) {
+        static TriState doSLFunction(CALNetworkInstance receiver, CALNetworkInstance other) {
             /*
              * SLFunctions are potentially identical to other SLFunctions.
              */
@@ -125,14 +127,14 @@ public class CALActorInstance extends CALValue {
         }
 
         @Fallback
-        static TriState doOther(CALActorInstance receiver, Object other) {
+        static TriState doOther(CALNetworkInstance receiver, Object other) {
             return TriState.UNDEFINED;
         }
     }
 
     @ExportMessage
     @TruffleBoundary
-    static int identityHashCode(CALActorInstance receiver) {
+    static int identityHashCode(CALNetworkInstance receiver) {
         return System.identityHashCode(receiver);
     }
 
@@ -201,13 +203,14 @@ public class CALActorInstance extends CALValue {
                 guards = "function.getCallTarget() == cachedTarget", //
                 assumptions = "callTargetStable")
         @SuppressWarnings("unused")
-        protected static Object doDirect(CALActorInstance function, Object[] arguments,
+        protected static Object doDirect(CALNetworkInstance function, Object[] arguments,
                                          @Cached("function.getCallTargetStable()") Assumption callTargetStable,
                                          @Cached("function.getCallTarget()") RootCallTarget cachedTarget,
                                          @Cached("create(cachedTarget)") DirectCallNode callNode) {
 
             /* Inline cache hit, we are safe to execute the cached call target. */
             Object returnValue = callNode.call(/*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
+            //Object returnValue = callNode.call(CALArguments.pack(function.frameDecl, arguments));
             return returnValue;
         }
 
@@ -217,13 +220,14 @@ public class CALActorInstance extends CALValue {
          * further, e.g., no method inlining is performed.
          */
         @Specialization(replaces = "doDirect")
-        protected static Object doIndirect(CALActorInstance function, Object[] arguments,
+        protected static Object doIndirect(CALNetworkInstance function, Object[] arguments,
                                            @Cached IndirectCallNode callNode) {
             /*
              * SL has a quite simple call lookup: just ask the function for the current call target,
              * and call it.
              */
             return callNode.call(function.getCallTarget(), /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
+            //return callNode.call(function.getCallTarget(), CALArguments.pack(function.frameDecl, arguments));
         }
     }
 

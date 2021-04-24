@@ -67,14 +67,7 @@ public class LambdaTransformer extends ScopedTransformer<LambdaNode> {
 
         // Prepend arguments so they are specialized the same way as in the body
         for (VarDecl varDecl : lambda.getValueParameters()) {
-            // We create a frame slot for this argument,
-            // give the rw verion to the assigning node
-            // and keep the ro view for the lexicalScope as arguments can't 
-            // be modified
-            FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(varDecl.getName(), FrameSlotKind.Illegal);
-            FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
-            lexicalScope.put(varDecl.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
-            varDecls[i] = new InitializeArgNode(frameSlot, i);
+            varDecls[i] = transformArgument(varDecl, i);
             i++;
         }
         StmtBlockNode varDeclsNode = new StmtBlockNode(varDecls);

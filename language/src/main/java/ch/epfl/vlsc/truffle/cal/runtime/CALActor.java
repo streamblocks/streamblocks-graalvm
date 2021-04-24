@@ -215,7 +215,7 @@ public class CALActor implements TruffleObject {
                                          @Cached("create(cachedTarget)") DirectCallNode callNode) {
 
             /* Inline cache hit, we are safe to execute the cached call target. */
-            Object returnValue = callNode.call(arguments);
+            Object returnValue = callNode.call(CALArguments.pack(null, arguments));
             return returnValue;
         }
 
@@ -231,7 +231,7 @@ public class CALActor implements TruffleObject {
              * SL has a quite simple call lookup: just ask the function for the current call target,
              * and call it.
              */
-            return callNode.call(function.getCallTarget(), arguments);
+            return callNode.call(function.getCallTarget(), CALArguments.pack(null, arguments));
         }
     }
 

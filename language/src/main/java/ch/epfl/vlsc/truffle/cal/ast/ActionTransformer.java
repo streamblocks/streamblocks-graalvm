@@ -20,15 +20,21 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
+import se.lth.cs.tycho.ir.entity.cal.InputPattern;
+import se.lth.cs.tycho.ir.entity.cal.OutputExpression;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
+import se.lth.cs.tycho.ir.expr.pattern.Pattern;
+import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
@@ -48,8 +54,22 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
     }
 
     public ActionNode transform() {
-        CALStatementNode[] body = new CALStatementNode[action.getBody().size() + action.getVarDecls().size()];
+        CALStatementNode[] body = new CALStatementNode[action.getInputPatterns().size() + action.getOutputExpressions().size() + action.getBody().size()
+                + action.getVarDecls().size()];
         int i = 0;
+
+        for (InputPattern input : action.getInputPatterns()) {
+            // TODO implement patterns
+            // FIXME
+            Pattern pat = input.getMatches().get(0).getExpression().getAlternatives().get(0).getPattern();
+            String name;
+            if (pat instanceof PatternBinding)
+                name = ((PatternBinding) pat).getDeclaration().getName();
+            else
+                throw new UnsupportedOperationException("Pattern not implemented");
+            body[i] = createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName())));
+            i++;
+        }
         // Prepend local variable declarations to the body nodes
         for (LocalVarDecl varDecl : action.getVarDecls()) {
             body[i] = transformVarDecl(varDecl);
@@ -57,6 +77,17 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         }
         for (Statement statement : action.getBody()) {
             body[i] = transformSatement(statement);
+            i++;
+        }
+        // TODO write nodeeeeees HEEERE
+        // get the variables name linked to the output and add a write to the FIFO 
+        // in the tail of the action
+        for (OutputExpression output : action.getOutputExpressions()) {
+            CALExpressionNode fifo = getReadNode(output.getPort().getName());
+            if (output.getExpressions().size() > 1)
+                throw new UnsupportedOperationException("More than one output expr not supported");
+            CALExpressionNode value = transformExpr(output.getExpressions().get(0));
+            body[i] = new CALWriteFIFONode(fifo, value);
             i++;
         }
         StmtBlockNode block = new StmtBlockNode(body);
@@ -87,7 +118,6 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             throw new Error("unknown lvalue" + stmtAssignment.getLValue().getClass().getName());
         }
     }
-
 
     public CALInvokeNode transformStmtCall(StmtCall stmtCall) {
 

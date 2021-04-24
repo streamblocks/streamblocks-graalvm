@@ -27,12 +27,14 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
+import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
@@ -42,6 +44,8 @@ import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtGroupNode;
+
 public class ActorTransformer extends ScopedTransformer<ActorNode> {
 
     CalActor actor;
@@ -53,15 +57,51 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         this.name = name;
     }
 
+    // TODO merge with transformVarDecl
+    private CALStatementNode transformPortDecl(PortDecl port, Integer position) {
+        // We create a frame slot for this argument,
+        // give the rw verion to the assigning node
+        // and keep the ro view for the lexicalScope as arguments can't
+        // be modified
+        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(port.getName(), FrameSlotKind.Illegal);
+        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
+        lexicalScope.put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
+        return new InitializeArgNode(frameSlot, position);
+    }
+
     public ActorNode transform() {
-        CALExpressionNode[] headStatements = new CALExpressionNode[actor.getVarDecls().size()];
+        CALStatementNode[] headStatements = new CALStatementNode[actor.getVarDecls().size()
+                + actor.getValueParameters().size() + actor.getOutputPorts().size() + actor.getInputPorts().size()];
         int i = 0;
+
+        // TODO we are making assumptions about the number of arguments
+        // and that EVERY argument and port is effectively passed
+        
+        // WARNING keep as the first declaration as it needs to match the arguments
+        // position
+        // Prepend arguments so they are specialized the same way as in the body
+        for (VarDecl varDecl : actor.getValueParameters()) {
+            headStatements[i] = transformArgument(varDecl, i);
+            i++;
+        }
+
+        for (PortDecl in : actor.getInputPorts()) {
+            // Input ports are passed as arguments
+            headStatements[i] = transformPortDecl(in, i);
+            i++;
+        }
+        for (PortDecl out : actor.getOutputPorts()) {
+            // Input ports are passed as arguments
+            headStatements[i] = transformPortDecl(out, i);
+            i++;
+        }
         for (LocalVarDecl varDecl : actor.getVarDecls()) {
             headStatements[i] = transformVarDecl(varDecl);
             i++;
         }
 
-        StmtBlockNode head = new StmtBlockNode(headStatements);
+        // FIXME we can probably use a StmtBlockNode
+        CALStatementNode head = new StmtBlockNode(headStatements);
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
         SourceSection actorSrc = source.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
                 actor.getToLineNumber());

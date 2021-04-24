@@ -28,7 +28,7 @@ public class ReturnsLastBodyNode extends  CALExpressionNode {
     public Object executeGeneric(VirtualFrame frame) {
         statementsNode.executeVoid(frame);
         if (returnNode != null)
-        return returnNode.executeGeneric(frame);
+            return returnNode.executeGeneric(frame);
         else 
             return CALNull.SINGLETON;
     }

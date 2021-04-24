@@ -22,7 +22,7 @@ class ActorInstantiateNode extends CALExpressionNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         // create a new frame with the actor's frame descriptor
-        MaterializedFrame actorFrame = Truffle.getRuntime().createMaterializedFrame(null, actor.getFrameDescriptor());
+        MaterializedFrame actorFrame = Truffle.getRuntime().createMaterializedFrame(frame.getArguments(), actor.getFrameDescriptor());
         head.executeVoid(actorFrame);
         return new CALActorInstance(actor, actorFrame);
     }

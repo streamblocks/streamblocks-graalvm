@@ -1,30 +1,27 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.runtime.CALActorInstance;
 
-import com.oracle.truffle.api.Truffle;
+import java.util.Map;
+
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-public class ActorNode extends CALRootNode {
+public class NetworkNode extends CALRootNode {
 
-    @Child ActorInstantiateNode instantiateNode;
-    private ActionNode[] actions;
+    @Child NetworkInstantiateNode instantiateNode;
     private final String name;
     private boolean isCloningAllowed;
     private final SourceSection sourceSection;
 
-    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, CALStatementNode head, SourceSection sourceSection, String name) {
+    public NetworkNode(CALLanguage language, FrameDescriptor frameDescriptor, CALStatementNode head, CALRootNode body, SourceSection sourceSection, String name) {
         // FIXME null-hack
         super(language, frameDescriptor, null, sourceSection, name);
-        this.actions = actions;
         this.sourceSection = sourceSection;
         this.name = name;
-        this.instantiateNode = new ActorInstantiateNode(this, head);
+        this.instantiateNode = new NetworkInstantiateNode(this, head, body);
     }
 
     @Override
@@ -32,6 +29,7 @@ public class ActorNode extends CALRootNode {
         return sourceSection;
     }
 
+    // FIXME return
     @Override
     public Object execute(VirtualFrame frame) {
         assert lookupContextReference(CALLanguage.class).get() != null;
@@ -44,10 +42,6 @@ public class ActorNode extends CALRootNode {
     @Override
     public CALExpressionNode getBodyNode() {
         return instantiateNode;
-    }
-
-    public ActionNode[] getActions() {
-        return actions;
     }
 
     @Override
