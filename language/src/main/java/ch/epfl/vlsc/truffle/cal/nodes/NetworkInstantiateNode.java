@@ -18,7 +18,7 @@ class NetworkInstantiateNode extends CALExpressionNode {
     NetworkNode network;
     // Variable declaration now, but maybe other stuff too later
     @Child CALStatementNode head;
-    CALRootNode body;
+    @Child CALRootNode body;
     public NetworkInstantiateNode(NetworkNode network, CALStatementNode head, CALRootNode body) {
         this.head = head;
         this.body = body;
