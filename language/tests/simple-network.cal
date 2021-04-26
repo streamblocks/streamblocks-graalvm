@@ -9,6 +9,8 @@ namespace simple.dwf:
         int Counter := 0;
 
         action ==> OUT:[token]
+        guard
+            Counter < 16
         var
             int token = Counter
         do

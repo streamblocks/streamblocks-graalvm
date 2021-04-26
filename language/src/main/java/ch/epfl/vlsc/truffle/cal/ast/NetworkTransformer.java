@@ -32,6 +32,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALArguments;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.NetworkBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
@@ -137,23 +138,24 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
 
         depth++;
         // Run the actors
-        List<CALStatementNode> bodyStatements = new LinkedList<>();
-        String instanceName = "source";
-        CALExpressionNode entityNode = getReadNode(instanceName);
-        bodyStatements.add(new CALInvokeNode(entityNode, new CALExpressionNode[0]));
-        instanceName = "sink";
-        entityNode = getReadNode(instanceName);
-        bodyStatements.add(new CALInvokeNode(entityNode, new CALExpressionNode[0]));
-        
-        StmtBlockNode body = new StmtBlockNode(bodyStatements.toArray(new CALExpressionNode[bodyStatements.size()]));
+        List<CALExpressionNode> bodyStatements = new LinkedList<>();
+        for (String instanceName : actors.keySet()) {
+            CALExpressionNode entityNode = getReadNode(instanceName);
+            bodyStatements.add(new CALInvokeNode(entityNode, new CALExpressionNode[0]));
+        }
+        CALStatementNode body = new NetworkBodyNode(
+                bodyStatements.toArray(new CALExpressionNode[bodyStatements.size()]));
+
         StmtBlockNode head = new StmtBlockNode(headStatements);
-        SourceSection networkSrc = source.createUnavailableSection();//.createSection(network.getFromLineNumber(), network.getFromColumnNumber(),
-//                network.getToLineNumber());
-        CALRootNode toyRoot = new CALRootNode(language, frameDescriptor, new ReturnsLastBodyNode(body),
+        SourceSection networkSrc = source.createUnavailableSection();// .createSection(network.getFromLineNumber(),
+                                                                     // network.getFromColumnNumber(),
+        // network.getToLineNumber());
+        // FIXME wrap in a stmt block node so that library is adopted, don't know why
+        CALRootNode toyRoot = new CALRootNode(language, frameDescriptor,
+                new ReturnsLastBodyNode(new StmtBlockNode(new CALStatementNode[] { body })),
                 source.createUnavailableSection(), "root");
         depth--;
         return new NetworkNode(language, frameDescriptor, head, toyRoot, networkSrc, name);
     }
-
 
 }

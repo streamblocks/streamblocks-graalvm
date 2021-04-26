@@ -1,6 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
@@ -46,7 +47,7 @@ public class CALActorInstance extends CALValue {
 
     // TODO how to get called?
     // TODO add child annotation
-    public RootCallTarget getCallTarget() {
+    protected RootCallTarget getCallTarget() {
         ActionNode[] actions = actorDecl.getActions();
         // TODO do FSM-thingy here and invalidate callTargetStable when
         // the action changes
@@ -197,6 +198,7 @@ public class CALActorInstance extends CALValue {
          * @param callNode the {@link DirectCallNode} specifically created for the
          *            {@link CallTarget} in cachedFunction.
          */
+        /*
         @Specialization(limit = "INLINE_CACHE_SIZE", //
                 guards = "function.getCallTarget() == cachedTarget", //
                 assumptions = "callTargetStable")
@@ -206,24 +208,29 @@ public class CALActorInstance extends CALValue {
                                          @Cached("function.getCallTarget()") RootCallTarget cachedTarget,
                                          @Cached("create(cachedTarget)") DirectCallNode callNode) {
 
-            /* Inline cache hit, we are safe to execute the cached call target. */
-            Object returnValue = callNode.call(/*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
-            return returnValue;
-        }
+            *//* Inline cache hit, we are safe to execute the cached call target. */
+            //Object returnValue = callNode.call(/*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
+            /*return returnValue;
+        }*/
 
         /**
          * Slow-path code for a call, used when the polymorphic inline cache exceeded its maximum
          * size specified in <code>INLINE_CACHE_SIZE</code>. Such calls are not optimized any
          * further, e.g., no method inlining is performed.
          */
-        @Specialization(replaces = "doDirect")
+        //@Specialization(replaces = "doDirect")
+        @Specialization
         protected static Object doIndirect(CALActorInstance function, Object[] arguments,
                                            @Cached IndirectCallNode callNode) {
-            /*
-             * SL has a quite simple call lookup: just ask the function for the current call target,
-             * and call it.
-             */
-            return callNode.call(function.getCallTarget(), /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
+            // TODO
+            // Sort actions by priority and filter fireable actions
+            for (ActionNode action : function.actorDecl.getActions()) {
+                CallTarget target = Truffle.getRuntime().createCallTarget(action);
+                Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
+                if (executed)
+                    return true;
+            }
+            return false;
         }
     }
 

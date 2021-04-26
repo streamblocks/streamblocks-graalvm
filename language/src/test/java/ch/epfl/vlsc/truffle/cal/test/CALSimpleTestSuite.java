@@ -61,5 +61,9 @@ public class CALSimpleTestSuite extends CALTestSuite {
     	runTest(TestCase.newBuilder("println-var").build());
     }
     
+    @Test
+    public void simpleNetworkTest() throws IOException {
+    	runTest(TestCase.newBuilder("simple-network").setActorName("SourceSink").build());
+    }
 	
 }

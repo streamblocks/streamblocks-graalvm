@@ -3,6 +3,8 @@ package ch.epfl.vlsc.truffle.cal.ast;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.source.Source;
@@ -11,6 +13,8 @@ import com.oracle.truffle.api.source.SourceSection;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 import java.math.BigInteger;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -20,11 +24,14 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.InputPattern;
@@ -54,8 +61,8 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
     }
 
     public ActionNode transform() {
-        CALStatementNode[] body = new CALStatementNode[action.getInputPatterns().size() + action.getOutputExpressions().size() + action.getBody().size()
-                + action.getVarDecls().size()];
+        CALStatementNode[] body = new CALStatementNode[action.getInputPatterns().size()
+                + action.getOutputExpressions().size() + action.getBody().size() + action.getVarDecls().size()];
         int i = 0;
 
         for (InputPattern input : action.getInputPatterns()) {
@@ -80,7 +87,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             i++;
         }
         // TODO write nodeeeeees HEEERE
-        // get the variables name linked to the output and add a write to the FIFO 
+        // get the variables name linked to the output and add a write to the FIFO
         // in the tail of the action
         for (OutputExpression output : action.getOutputExpressions()) {
             CALExpressionNode fifo = getReadNode(output.getPort().getName());
@@ -90,12 +97,40 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             body[i] = new CALWriteFIFONode(fifo, value);
             i++;
         }
+
+        // Firing conditions
+        List<CALExpressionNode> firingConditions = new LinkedList<>();
+        // Enough tokens to bind
+        for (InputPattern input : action.getInputPatterns()) {
+            // TODO implement patterns
+            // FIXME
+            Pattern pat = input.getMatches().get(0).getExpression().getAlternatives().get(0).getPattern();
+            String name;
+            if (pat instanceof PatternBinding)
+                name = ((PatternBinding) pat).getDeclaration().getName();
+            else
+                throw new UnsupportedOperationException("Pattern not implemented");
+            firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
+                    new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
+        }
+        for (Expression guard : action.getGuards()) {
+            firingConditions.add(transformExpr(guard));
+        }
+        CALExpressionNode firingCondition;
+        if (firingConditions.size() > 0) {
+            firingCondition = firingConditions.remove(0);
+            for (CALExpressionNode cond : firingConditions)
+                firingCondition = new CALBinaryLogicalAndNode(firingCondition, cond);
+        } else {
+            firingCondition = new BooleanLiteralNode(true);
+        }
+
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
         SourceSection actionSrc = source.createSection(action.getFromLineNumber(), action.getFromColumnNumber(),
                 action.getToLineNumber());
         // FIXME name
-        return new ActionNode(language, frameDescriptor, bodyNode, actionSrc, "action-1");
+        return new ActionNode(language, frameDescriptor, bodyNode, firingCondition, actionSrc, "action-1");
     }
 
     public CALStatementNode transformSatement(Statement statement) {

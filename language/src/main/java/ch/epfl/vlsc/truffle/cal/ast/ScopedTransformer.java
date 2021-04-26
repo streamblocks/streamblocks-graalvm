@@ -10,8 +10,11 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
@@ -157,8 +160,17 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "+":
             result = CALBinaryAddNodeGen.create(left, right);
             break;
+        case "-":
+            result = CALBinarySubNodeGen.create(left, right);
+            break;
         case "*":
             result = CALBinaryMulNodeGen.create(left, right);
+            break;
+        case "<=":
+            result = CALBinaryLessOrEqualNodeGen.create(left, right);
+            break;
+        case "<":
+            result = CALBinaryLessThanNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);

@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.nodes;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
@@ -10,16 +11,21 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 public final class ActionNode extends CALRootNode {
     @Child
     private CALExpressionNode body;
+    @Child
+    private CALExpressionNode firingCondition;
     private final String name;
     private boolean isCloningAllowed;
     private final SourceSection sourceSection;
-    public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body, SourceSection sourceSection, String name) {
+
+    public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body,
+            CALExpressionNode firingCondition, SourceSection sourceSection, String name) {
         super(language, frameDescriptor, body, sourceSection, name);
-        this.body= body;
+        this.body = body;
+        this.firingCondition = firingCondition;
         this.sourceSection = sourceSection;
         this.name = name;
     }
-    
+
     @Override
     public SourceSection getSourceSection() {
         return sourceSection;
@@ -29,9 +35,17 @@ public final class ActionNode extends CALRootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         assert lookupContextReference(CALLanguage.class).get() != null;
-        //getNextAction().executeGeneric(frame);
-        // fix frame arguments
-        return body.executeGeneric(frame);
+        try {
+            boolean fireable = (Boolean) firingCondition.executeBoolean(frame);
+            if (fireable) {
+                body.executeGeneric(frame);
+                return true;
+            } else {
+                return false;
+            }
+        } catch (UnexpectedResultException e) {
+            throw new Error("internal error");
+        }
 
     }
 
@@ -39,7 +53,6 @@ public final class ActionNode extends CALRootNode {
     public CALExpressionNode getBodyNode() {
         return body;
     }
-
 
     @Override
     public String getName() {
