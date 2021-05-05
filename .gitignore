@@ -37,5 +37,6 @@ tags
 [._]*.un~
 
 .metals
+.vim
 
 .vimspector.json
