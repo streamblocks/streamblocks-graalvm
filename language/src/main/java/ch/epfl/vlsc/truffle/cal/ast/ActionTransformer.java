@@ -27,6 +27,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
@@ -45,6 +47,7 @@ import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
+import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
 public class ActionTransformer extends ScopedTransformer<ActionNode> {
@@ -149,8 +152,13 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             String name = lvalue.getVariable().getName();
 
             return createAssignment(name, stmtAssignment.getExpression());
+        } else if (stmtAssignment.getLValue() instanceof LValueIndexer) {
+            LValueIndexer lvalue = (LValueIndexer) stmtAssignment.getLValue();
+            String name = ((LValueVariable) lvalue.getStructure()).getVariable().getName();
+            return ListWriteNodeGen.create(getReadNode(name), transformExpr(lvalue.getIndex()),
+                    transformExpr(stmtAssignment.getExpression()));
         } else {
-            throw new Error("unknown lvalue" + stmtAssignment.getLValue().getClass().getName());
+            throw new Error("unknown lvalue " + stmtAssignment.getLValue().getClass().getName());
         }
     }
 

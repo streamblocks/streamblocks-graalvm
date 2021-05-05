@@ -1,4 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.ast;
+
 import java.math.BigInteger;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -19,9 +20,13 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
+import se.lth.cs.tycho.ir.expr.ExprIndexer;
 import se.lth.cs.tycho.ir.expr.ExprLambda;
+import se.lth.cs.tycho.ir.expr.ExprList;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
@@ -32,7 +37,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     protected int depth;
     protected FrameDescriptor frameDescriptor;
     protected LexicalScope lexicalScope;
-    public ScopedTransformer(CALLanguage language, Source source, LexicalScope parentScope, FrameDescriptor frameDescriptor, int depth) {
+
+    public ScopedTransformer(CALLanguage language, Source source, LexicalScope parentScope,
+            FrameDescriptor frameDescriptor, int depth) {
         super(language, source);
         this.frameDescriptor = frameDescriptor;// new FrameDescriptor();
         // lexical scope must include parent scope
@@ -40,19 +47,19 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         this.depth = depth + 1;
     }
 
-
     // Arguments
     //
     public CALStatementNode transformArgument(VarDecl varDecl, Integer position) {
-            // We create a frame slot for this argument,
-            // give the rw verion to the assigning node
-            // and keep the ro view for the lexicalScope as arguments can't 
-            // be modified
-            FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(varDecl.getName(), FrameSlotKind.Illegal);
-            FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
-            lexicalScope.put(varDecl.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
-            return new InitializeArgNode(frameSlot, position);
+        // We create a frame slot for this argument,
+        // give the rw verion to the assigning node
+        // and keep the ro view for the lexicalScope as arguments can't
+        // be modified
+        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(varDecl.getName(), FrameSlotKind.Illegal);
+        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
+        lexicalScope.put(varDecl.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
+        return new InitializeArgNode(frameSlot, position);
     }
+
     // Local variables declared in header
     public CALExpressionNode transformVarDecl(LocalVarDecl varDecl) {
         // TODO handle type with varDecl.getType
@@ -66,6 +73,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         CALExpressionNode valueNode = transformExpr(value);
         return createAssignment(name, valueNode);
     }
+
     protected CALExpressionNode createAssignment(String name, CALExpressionNode valueNode) {
         // FIXME this definitely doesnt work, we need to get the slot form lexicalscope
         // first
@@ -95,23 +103,25 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         return result;
 
     }
+
     public CALExpressionNode getReadNode(String name) {
-            final CALExpressionNode result;
-            final FrameSlotAndDepth frameSlot = lexicalScope.get(name);
-            if (frameSlot != null) {
-                /* Read of a local variable. */
-                result = frameSlot.createReadNode(depth);
-            } else {
-                /*
-                 * Read of a global name. In our language, the only global names are functions.
-                 */
-                result = new FunctionLiteralNode(name);
-            }
-            // result.setSourceSection(nameNode.getSourceCharIndex(),
-            // nameNode.getSourceLength());
-            result.addExpressionTag();
-            return result;
+        final CALExpressionNode result;
+        final FrameSlotAndDepth frameSlot = lexicalScope.get(name);
+        if (frameSlot != null) {
+            /* Read of a local variable. */
+            result = frameSlot.createReadNode(depth);
+        } else {
+            /*
+             * Read of a global name. In our language, the only global names are functions.
+             */
+            result = new FunctionLiteralNode(name);
+        }
+        // result.setSourceSection(nameNode.getSourceCharIndex(),
+        // nameNode.getSourceLength());
+        result.addExpressionTag();
+        return result;
     }
+
     public CALExpressionNode transformExpr(Expression expr) {
         if (expr instanceof ExprLiteral) {
             if (((ExprLiteral) expr).getKind() == ExprLiteral.Kind.String)
@@ -129,12 +139,30 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         } else if (expr instanceof ExprBinaryOp) {
             return transformBinaryExpr((ExprBinaryOp) expr);
         } else if (expr instanceof ExprLambda) {
-            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth)).transform();
+            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth))
+                    .transform();
         } else if (expr instanceof ExprApplication) {
             return transformExprApplication((ExprApplication) expr);
+        } else if (expr instanceof ExprList) {
+            return transformExprList((ExprList) expr);
+        } else if (expr instanceof ExprIndexer) {
+            return transformExprIndexer((ExprIndexer) expr);
         } else {
             throw new Error("unknown expr " + expr.getClass().getName());
         }
+    }
+
+    private CALExpressionNode transformExprIndexer(ExprIndexer exprIndexer) {
+        return ListReadNodeGen.create(transformExpr(exprIndexer.getStructure()),
+                transformExpr(exprIndexer.getIndex()));
+    }
+
+    private CALExpressionNode transformExprList(ExprList exprList) {
+        CALExpressionNode[] values = new CALExpressionNode[exprList.getElements().size()];
+        for (int i = 0; i < values.length; i++) {
+            values[i] = transformExpr(exprList.getElements().get(i));
+        }
+        return new ListInitNode(values);
     }
 
     public CALInvokeNode transformExprApplication(ExprApplication expr) {
