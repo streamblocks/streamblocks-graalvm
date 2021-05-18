@@ -18,12 +18,14 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
+import se.lth.cs.tycho.ir.expr.ExprComprehension;
 import se.lth.cs.tycho.ir.expr.ExprIndexer;
 import se.lth.cs.tycho.ir.expr.ExprLambda;
 import se.lth.cs.tycho.ir.expr.ExprList;
@@ -61,7 +63,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     // Local variables declared in header
-    public CALExpressionNode transformVarDecl(LocalVarDecl varDecl) {
+    public CALExpressionNode transformVarDecl(VarDecl varDecl) {
         // TODO handle type with varDecl.getType
         String name = varDecl.getName();
         Expression value = varDecl.getValue();
@@ -123,7 +125,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     public CALExpressionNode transformExpr(Expression expr) {
-        if (expr instanceof ExprLiteral) {
+        if (expr == null) {
+            return new NullLiteralNode(); 
+        } else if (expr instanceof ExprLiteral) {
             if (((ExprLiteral) expr).getKind() == ExprLiteral.Kind.String)
                 return new StringLiteralNode(((ExprLiteral) expr).getText());
             else if (((ExprLiteral) expr).getKind() == ExprLiteral.Kind.Integer)
@@ -147,9 +151,17 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             return transformExprList((ExprList) expr);
         } else if (expr instanceof ExprIndexer) {
             return transformExprIndexer((ExprIndexer) expr);
+        } else if (expr instanceof ExprComprehension) {
+            return transformExprComprehension((ExprComprehension) expr);
         } else {
             throw new Error("unknown expr " + expr.getClass().getName());
         }
+    }
+
+    private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
+        if (comprehension.getFilters().size() > 0)
+            throw new Error("filters not implemented");
+        return null;
     }
 
     private CALExpressionNode transformExprIndexer(ExprIndexer exprIndexer) {

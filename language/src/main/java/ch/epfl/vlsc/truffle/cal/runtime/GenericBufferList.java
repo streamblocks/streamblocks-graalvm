@@ -20,6 +20,9 @@ public final class GenericBufferList {
     @ExportMessage boolean isList() {
         return true;
     }
+    @ExportMessage int size() {
+        return length;
+    }
     @ExportMessage Object read(int index) {
         if (index < length)
             return buffer[index];

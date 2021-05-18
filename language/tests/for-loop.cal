@@ -1,0 +1,12 @@
+namespace test:
+
+	actor test() ==> :
+		action ==>
+		do
+            foreach int a in [1,2,3] do
+			    println(a);
+            end
+		end
+	end
+end
+

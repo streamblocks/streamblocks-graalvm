@@ -1,6 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
@@ -27,6 +29,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
@@ -47,6 +50,7 @@ import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
+import se.lth.cs.tycho.ir.stmt.StmtForeach;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
@@ -141,8 +145,31 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             return transformStmtCall((StmtCall) statement);
         } else if (statement instanceof StmtAssignment) {
             return transformStmtAssignment((StmtAssignment) statement);
+        } else if (statement instanceof StmtForeach) {
+            return transformStmtForeach((StmtForeach) statement);
         } else {
             throw new Error("unknown statement " + statement.getClass().getName());
+        }
+    }
+
+    public CALStatementNode transformStmtForeach(StmtForeach foreach) {
+        CALExpressionNode list = transformExpr(foreach.getGenerator().getCollection());
+        if (foreach.getGenerator().getVarDecls().size() != 1) {
+            throw new Error("unsupported multiple var decls in for loop");
+        }
+        CALExpressionNode write = transformVarDecl(foreach.getGenerator().getVarDecls().get(0));
+        CALStatementNode[] bodyNodes = new CALStatementNode[foreach.getBody().size()];
+        for (int i = 0; i < foreach.getBody().size(); i++) {
+            bodyNodes[i] = transformSatement(foreach.getBody().get(i));
+        }
+
+        CALStatementNode statement = new StmtBlockNode(bodyNodes);
+        if (write instanceof CALWriteLocalVariableNode) {
+            ForeacheNode f = ForeacheNodeGen.create(statement, (CALWriteLocalVariableNode) write, list); 
+        return f;
+        }
+        else {
+            throw new Error();
         }
     }
 

@@ -9,6 +9,7 @@ public abstract class ListLibrary extends Library {
         return false;
     }
 
+    public abstract int size(Object receiver);
     public abstract Object read(Object receiver, int index);
     public abstract void write(Object receiver, int index, Object value);
 }
