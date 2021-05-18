@@ -75,4 +75,9 @@ public class CALSimpleTestSuite extends CALTestSuite {
     public void foreachTest() throws IOException {
     	runTest(TestCase.newBuilder("for-loop").build());
     }
+
+    @Test
+    public void forComprehensionTest() throws IOException {
+    	runTest(TestCase.newBuilder("for-comprehensions").build());
+    }
 }

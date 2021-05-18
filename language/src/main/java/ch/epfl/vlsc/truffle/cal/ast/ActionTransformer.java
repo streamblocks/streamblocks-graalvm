@@ -37,6 +37,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
+import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.InputPattern;
@@ -153,11 +154,14 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
     }
 
     public CALStatementNode transformStmtForeach(StmtForeach foreach) {
-        CALExpressionNode list = transformExpr(foreach.getGenerator().getCollection());
-        if (foreach.getGenerator().getVarDecls().size() != 1) {
+        Generator generator = foreach.getGenerator();
+        CALExpressionNode list = transformExpr(generator.getCollection());
+        if (generator.getVarDecls().size() != 1) {
             throw new Error("unsupported multiple var decls in for loop");
         }
-        CALExpressionNode write = transformVarDecl(foreach.getGenerator().getVarDecls().get(0));
+        // transformVarDecl NEEDS to be called before body nodes transformations
+        // in order to get the read of the variable right
+        CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
         CALStatementNode[] bodyNodes = new CALStatementNode[foreach.getBody().size()];
         for (int i = 0; i < foreach.getBody().size(); i++) {
             bodyNodes[i] = transformSatement(foreach.getBody().get(i));
@@ -165,11 +169,11 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         CALStatementNode statement = new StmtBlockNode(bodyNodes);
         if (write instanceof CALWriteLocalVariableNode) {
-            ForeacheNode f = ForeacheNodeGen.create(statement, (CALWriteLocalVariableNode) write, list); 
-        return f;
-        }
-        else {
-            throw new Error();
+            ForeacheNode f = ForeacheNodeGen.create(statement, (CALWriteLocalVariableNode) write, list);
+            return f;
+        } else {
+            // FIXME once createAssignment is fixed
+            throw new Error("unsupported variable name reuse");
         }
     }
 

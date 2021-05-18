@@ -20,7 +20,7 @@ public class ReturnsLastBodyNode extends  CALExpressionNode {
         this.statementsNode = body;
         this.returnNode = null;
     }
-    public ReturnsLastBodyNode(StmtBlockNode body, CALExpressionNode returnNode) {
+    public ReturnsLastBodyNode(CALStatementNode body, CALExpressionNode returnNode) {
         this.statementsNode = body;
         this.returnNode = returnNode;
     }

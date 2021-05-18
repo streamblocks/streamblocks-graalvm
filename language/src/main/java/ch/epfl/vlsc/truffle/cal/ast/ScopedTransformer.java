@@ -9,7 +9,11 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
@@ -20,9 +24,12 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
 import se.lth.cs.tycho.ir.expr.ExprComprehension;
@@ -32,6 +39,8 @@ import se.lth.cs.tycho.ir.expr.ExprList;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
+import se.lth.cs.tycho.ir.util.ImmutableList;
+import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 
@@ -126,7 +135,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
 
     public CALExpressionNode transformExpr(Expression expr) {
         if (expr == null) {
-            return new NullLiteralNode(); 
+            return new NullLiteralNode();
         } else if (expr instanceof ExprLiteral) {
             if (((ExprLiteral) expr).getKind() == ExprLiteral.Kind.String)
                 return new StringLiteralNode(((ExprLiteral) expr).getText());
@@ -161,12 +170,46 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
         if (comprehension.getFilters().size() > 0)
             throw new Error("filters not implemented");
-        return null;
+        Generator generator = comprehension.getGenerator();
+        // FIXME filters
+        ImmutableList<Expression> filters = comprehension.getFilters();
+        if (filters.size() > 0) throw new Error("Filters not supported");
+        if (!(comprehension.getCollection() instanceof ExprList)) throw new Error("for comp should have a collection");
+        ExprList collection = (ExprList) comprehension.getCollection();
+
+        CALStatementNode[] init = new CALStatementNode[3];
+        // Create tempList
+        init[0] = createAssignment("$tempList", new UnknownSizeListInitNode());
+        // FIXME
+        init[1] = createAssignment("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
+
+        // Create assignment to variable
+        CALExpressionNode list = transformExpr(generator.getCollection());
+        if (generator.getVarDecls().size() != 1) {
+            throw new Error("unsupported multiple var decls in for loop");
+        }
+        CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
+        //
+        if (collection.getElements().size() > 1) throw new Error("unsupported more than 1 element for for-comp");
+        CALStatementNode[] bodyNodes = new CALStatementNode[2];
+        bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
+                transformExpr(collection.getElements().get(0)));
+        bodyNodes[1] = createAssignment("$comprehensionCounter", CALBinaryAddNodeGen
+                .create(getReadNode("$comprehensionCounter"), new BigIntegerLiteralNode(new BigInteger("1"))));
+
+        CALStatementNode body = new StmtBlockNode(bodyNodes);
+
+        if (write instanceof CALWriteLocalVariableNode) {
+            init[2] = ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) write, list);
+            return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode("$tempList"));
+        } else {
+            throw new Error();
+        }
+        // Transform the for loop and return the temporary list
     }
 
     private CALExpressionNode transformExprIndexer(ExprIndexer exprIndexer) {
-        return ListReadNodeGen.create(transformExpr(exprIndexer.getStructure()),
-                transformExpr(exprIndexer.getIndex()));
+        return ListReadNodeGen.create(transformExpr(exprIndexer.getStructure()), transformExpr(exprIndexer.getIndex()));
     }
 
     private CALExpressionNode transformExprList(ExprList exprList) {
