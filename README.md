@@ -10,6 +10,7 @@
 ### Actions
  - [x] Basic support
  - [x] Simple, single-port input pattern
+ - [ ] repeat
  - [ ] Other input patterns
  - [x] Simple, single-port output expressions
  - [ ] Delays
@@ -21,7 +22,7 @@
  - [x] Calls
  - [x] Lambdas
  - [x] most literals
- - [ ] if
+ - [ ] if, only statements if-expr not supported yet
  - [x] for, doesn't support multiple var decls and probably othe little things, comprehensions lack filter support
  - [ ] while
  - [ ] choose
