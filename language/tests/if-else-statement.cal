@@ -1,0 +1,22 @@
+namespace test:
+
+	actor test() ==> :
+		action ==>
+		var
+			bool a := true,
+			bool b := false
+		do
+            if a then
+                println("TRUE");
+                if b then
+                    println("SHOULDNT PRINT");
+                else
+                    println("FALSE");
+                end
+            else
+                println("SHOULDNT PRINT");
+            end
+		end
+	end
+end
+
