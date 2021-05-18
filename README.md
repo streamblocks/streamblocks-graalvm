@@ -22,7 +22,7 @@
  - [x] Lambdas
  - [x] most literals
  - [ ] if
- - [ ] for
+ - [x] for, doesn't support multiple var decls and probably othe little things, comprehensions lack filter support
  - [ ] while
  - [ ] choose
  - [x] +, -, *
