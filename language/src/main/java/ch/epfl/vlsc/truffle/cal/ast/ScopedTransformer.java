@@ -21,6 +21,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
@@ -39,6 +40,7 @@ import se.lth.cs.tycho.ir.expr.ExprList;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
+import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
 import se.lth.cs.tycho.ir.util.ImmutableList;
 import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
@@ -137,12 +139,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         if (expr == null) {
             return new NullLiteralNode();
         } else if (expr instanceof ExprLiteral) {
-            if (((ExprLiteral) expr).getKind() == ExprLiteral.Kind.String)
-                return new StringLiteralNode(((ExprLiteral) expr).getText());
-            else if (((ExprLiteral) expr).getKind() == ExprLiteral.Kind.Integer)
-                return new BigIntegerLiteralNode(new BigInteger(((ExprLiteral) expr).getText()));
-            else
-                throw new Error("unknown expr litteral " + expr.getClass().getName());
+            return transformExprLiteral((ExprLiteral) expr);
         } else if (expr instanceof ExprVariable) {
             ExprVariable v = (ExprVariable) expr;
             // For now we assume that we only read variables names,
@@ -167,14 +164,30 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         }
     }
 
+    private CALExpressionNode transformExprLiteral(ExprLiteral expr) {
+        switch (expr.getKind()) {
+        case String:
+            return new StringLiteralNode(expr.getText());
+        case Integer:
+            return new BigIntegerLiteralNode(new BigInteger(expr.getText()));
+        case True:
+        case False:
+            return new BooleanLiteralNode(expr.getKind() == Kind.True);
+        default:
+            throw new Error("unknown expr litteral " + expr.getKind().name());
+        }
+    }
+
     private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
         if (comprehension.getFilters().size() > 0)
             throw new Error("filters not implemented");
         Generator generator = comprehension.getGenerator();
         // FIXME filters
         ImmutableList<Expression> filters = comprehension.getFilters();
-        if (filters.size() > 0) throw new Error("Filters not supported");
-        if (!(comprehension.getCollection() instanceof ExprList)) throw new Error("for comp should have a collection");
+        if (filters.size() > 0)
+            throw new Error("Filters not supported");
+        if (!(comprehension.getCollection() instanceof ExprList))
+            throw new Error("for comp should have a collection");
         ExprList collection = (ExprList) comprehension.getCollection();
 
         CALStatementNode[] init = new CALStatementNode[3];
@@ -190,7 +203,8 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         }
         CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
         //
-        if (collection.getElements().size() > 1) throw new Error("unsupported more than 1 element for for-comp");
+        if (collection.getElements().size() > 1)
+            throw new Error("unsupported more than 1 element for for-comp");
         CALStatementNode[] bodyNodes = new CALStatementNode[2];
         bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
                 transformExpr(collection.getElements().get(0)));

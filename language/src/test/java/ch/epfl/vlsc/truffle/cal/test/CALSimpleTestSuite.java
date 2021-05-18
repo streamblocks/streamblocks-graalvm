@@ -80,4 +80,9 @@ public class CALSimpleTestSuite extends CALTestSuite {
     public void forComprehensionTest() throws IOException {
     	runTest(TestCase.newBuilder("for-comprehensions").build());
     }
+
+    @Test
+    public void ifStatementTest() throws IOException {
+    	runTest(TestCase.newBuilder("if-statement").build());
+    }
 }

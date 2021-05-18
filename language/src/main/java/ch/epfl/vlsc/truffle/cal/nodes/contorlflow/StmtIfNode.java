@@ -45,7 +45,7 @@ public class StmtIfNode extends CALStatementNode {
             /* Execute the then-branch. */
             thenPartNode.executeVoid(frame);
         } else {
-            /* Execute the else-branch (which is optional according to the SL syntax). */
+            /* Execute the else-branch (which is optional according to the CAL syntax). */
             if (elsePartNode != null) {
                 elsePartNode.executeVoid(frame);
             }

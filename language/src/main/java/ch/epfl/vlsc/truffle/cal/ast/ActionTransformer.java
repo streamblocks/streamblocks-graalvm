@@ -25,6 +25,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
@@ -52,6 +53,7 @@ import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
 import se.lth.cs.tycho.ir.stmt.StmtForeach;
+import se.lth.cs.tycho.ir.stmt.StmtIf;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
@@ -148,9 +150,27 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             return transformStmtAssignment((StmtAssignment) statement);
         } else if (statement instanceof StmtForeach) {
             return transformStmtForeach((StmtForeach) statement);
+        } else if (statement instanceof StmtIf) {
+            return transformStmtIf((StmtIf) statement);
         } else {
             throw new Error("unknown statement " + statement.getClass().getName());
         }
+    }
+
+    private CALStatementNode transformStatementsList(List<Statement> statements) {
+        CALStatementNode[] statementNodes = new CALStatementNode[statements.size()];
+        for (int i = 0; i < statements.size(); i++) {
+            statementNodes[i] = transformSatement(statements.get(i));
+        }
+        return new StmtBlockNode(statementNodes);
+    }
+
+    private CALStatementNode transformStmtIf(StmtIf stmtIf) {
+        CALStatementNode elze = null;
+        if (stmtIf.getElseBranch() != null)
+            elze = transformStatementsList(stmtIf.getElseBranch());
+        return new StmtIfNode(transformExpr(stmtIf.getCondition()), transformStatementsList(stmtIf.getThenBranch()),
+                elze);
     }
 
     public CALStatementNode transformStmtForeach(StmtForeach foreach) {
