@@ -24,6 +24,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
@@ -31,8 +32,12 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
@@ -70,6 +75,30 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
     }
 
+    public CALExpressionNode batchReadInput(InputPattern input) {
+        CALStatementNode[] init = new CALStatementNode[3];
+        // Create tempList
+        // TODO in fact type might be known and size is probably also known
+        init[0] = createAssignment("$tempList", new UnknownSizeListInitNode());
+        // FIXME
+        init[1] = createAssignment("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
+
+        // Create assignment to variable
+        CALExpressionNode list = ListRangeInitNodeGen.create(new BigIntegerLiteralNode(new BigInteger("0")),
+                transformExpr(input.getRepeatExpr()));
+        //
+        CALStatementNode[] bodyNodes = new CALStatementNode[2];
+        bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
+                new CALReadFIFONode(getReadNode(input.getPort().getName())));
+        bodyNodes[1] = createAssignment("$comprehensionCounter", CALBinaryAddNodeGen
+                .create(getReadNode("$comprehensionCounter"), new BigIntegerLiteralNode(new BigInteger("1"))));
+
+        CALStatementNode body = new StmtBlockNode(bodyNodes);
+
+        init[2] = ForeacheNodeGen.create(body, null, list);
+        return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode("$tempList"));
+    }
+
     public ActionNode transform() {
         CALStatementNode[] body = new CALStatementNode[action.getInputPatterns().size()
                 + action.getOutputExpressions().size() + action.getBody().size() + action.getVarDecls().size()];
@@ -84,7 +113,11 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
                 name = ((PatternBinding) pat).getDeclaration().getName();
             else
                 throw new UnsupportedOperationException("Pattern not implemented");
-            body[i] = createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName())));
+
+            if (input.getRepeatExpr() != null)
+                body[i] = createAssignment(name, batchReadInput(input));
+            else
+                body[i] = createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName())));
             i++;
         }
         // Prepend local variable declarations to the body nodes
@@ -96,7 +129,6 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             body[i] = transformSatement(statement);
             i++;
         }
-        // TODO write nodeeeeees HEEERE
         // get the variables name linked to the output and add a write to the FIFO
         // in the tail of the action
         for (OutputExpression output : action.getOutputExpressions()) {
@@ -110,22 +142,29 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         // Firing conditions
         List<CALExpressionNode> firingConditions = new LinkedList<>();
-        // Enough tokens to bind
+        // check there is enough tokens to bind
         for (InputPattern input : action.getInputPatterns()) {
             // TODO implement patterns
-            // FIXME
             Pattern pat = input.getMatches().get(0).getExpression().getAlternatives().get(0).getPattern();
             String name;
             if (pat instanceof PatternBinding)
                 name = ((PatternBinding) pat).getDeclaration().getName();
             else
                 throw new UnsupportedOperationException("Pattern not implemented");
-            firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
-                    new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
+            if (input.getRepeatExpr() == null)
+                firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
+                        new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
+            else
+                firingConditions.add(CALBinaryLessOrEqualNodeGen.create(transformExpr(input.getRepeatExpr()),
+                        new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
+
+                
         }
+        // Parse guards
         for (Expression guard : action.getGuards()) {
             firingConditions.add(transformExpr(guard));
         }
+        // Build the boolean expression to determine whether an action is fireable
         CALExpressionNode firingCondition;
         if (firingConditions.size() > 0) {
             firingCondition = firingConditions.remove(0);

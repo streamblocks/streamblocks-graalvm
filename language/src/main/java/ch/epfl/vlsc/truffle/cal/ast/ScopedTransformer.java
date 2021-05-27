@@ -188,26 +188,29 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             throw new Error("Filters not supported");
         if (!(comprehension.getCollection() instanceof ExprList))
             throw new Error("for comp should have a collection");
+        // [ f(x) : for x in originalList ]
         ExprList collection = (ExprList) comprehension.getCollection();
 
         CALStatementNode[] init = new CALStatementNode[3];
-        // Create tempList
+        // tempList=[]
         init[0] = createAssignment("$tempList", new UnknownSizeListInitNode());
-        // FIXME
+        // i=0
         init[1] = createAssignment("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
 
-        // Create assignment to variable
+        // resolve originalList
         CALExpressionNode list = transformExpr(generator.getCollection());
         if (generator.getVarDecls().size() != 1) {
             throw new Error("unsupported multiple var decls in for loop");
         }
+        // x = originalList[i]
         CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
-        //
         if (collection.getElements().size() > 1)
             throw new Error("unsupported more than 1 element for for-comp");
         CALStatementNode[] bodyNodes = new CALStatementNode[2];
+        // tempList[i] =  f(x)
         bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
                 transformExpr(collection.getElements().get(0)));
+        // i= i + 1
         bodyNodes[1] = createAssignment("$comprehensionCounter", CALBinaryAddNodeGen
                 .create(getReadNode("$comprehensionCounter"), new BigIntegerLiteralNode(new BigInteger("1"))));
 

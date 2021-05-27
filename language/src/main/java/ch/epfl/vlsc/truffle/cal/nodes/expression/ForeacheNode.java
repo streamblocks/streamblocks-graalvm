@@ -24,8 +24,9 @@ public abstract class ForeacheNode extends CALStatementNode {
     public void execute(VirtualFrame frame, Object list, @CachedLibrary("list") ListLibrary lists) {
         int size = lists.size(list);
         for (int i=0; i < size; i++) {
-            // TODO really not sure
-            write.executeWrite(frame, lists.read(list, i));
+            // Sometimes there are no variables to be bound in a for loop
+            if (write != null)
+                write.executeWrite(frame, lists.read(list, i));
             statement.executeVoid(frame);
         }
     }

@@ -72,6 +72,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 	
     @Test
+    public void repeatInputTest() throws IOException {
+    	runTest(TestCase.newBuilder("repeat").build());
+    }
+
+    @Test
     public void foreachTest() throws IOException {
     	runTest(TestCase.newBuilder("for-loop").build());
     }
