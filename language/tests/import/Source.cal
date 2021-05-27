@@ -1,0 +1,21 @@
+namespace test.b:
+    /*
+     * Source actor 
+     * Produces 16 token from 0 to 15, and send them to output OUT.
+     */
+    actor Source()
+        ==> int OUT:
+
+        int Counter := 0;
+
+        action ==> OUT:[token]
+        guard
+            Counter < 16
+        var
+            int token = Counter
+        do
+            Counter := Counter + 1;
+        end
+
+    end
+end

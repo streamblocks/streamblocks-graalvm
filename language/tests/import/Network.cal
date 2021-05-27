@@ -1,0 +1,18 @@
+namespace test:
+    import test.a.Sink;
+    import test.b.Source;
+    /*
+     * SourceSink network
+     * Instatiates Source and Sink actors and interconnects them.
+     */
+    network SourceSink() 
+        ==> :
+
+        entities
+            source = Source();
+            sink = Sink();
+        structure
+            source.OUT --> sink.IN;
+    end
+end
+

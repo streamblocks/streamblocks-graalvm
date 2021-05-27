@@ -176,8 +176,8 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
-        SourceSection actionSrc = source.createSection(action.getFromLineNumber(), action.getFromColumnNumber(),
-                action.getToLineNumber());
+        SourceSection actionSrc = source.createUnavailableSection();//createSection(action.getFromLineNumber(), action.getFromColumnNumber(),
+                //action.getToLineNumber());
         // FIXME name
         return new ActionNode(language, frameDescriptor, bodyNode, firingCondition, actionSrc, "action-1");
     }

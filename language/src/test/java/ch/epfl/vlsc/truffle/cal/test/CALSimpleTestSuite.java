@@ -34,65 +34,74 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
 
 public class CALSimpleTestSuite extends CALTestSuite {
-	
+
     @Test
     public void addTest() throws IOException {
-    	runTest(TestCase.newBuilder("add").build());
+        runTest(TestCase.newBuilder("add").build());
     }
+
     @Test
     public void actorState() throws IOException {
-    	runTest(TestCase.newBuilder("add-stored-var").setIterations(10).build());
+        runTest(TestCase.newBuilder("add-stored-var").setIterations(10).build());
     }
+
     @Test
     public void lambdaTest() throws IOException {
-    	runTest(TestCase.newBuilder("lambda").build());
+        runTest(TestCase.newBuilder("lambda").build());
     }
-    
+
     @Test
     public void nestedLambdaTest() throws IOException {
-    	runTest(TestCase.newBuilder("nested-lambda").build());
+        runTest(TestCase.newBuilder("nested-lambda").build());
     }
+
     @Test
     public void printlnTest() throws IOException {
-    	runTest(TestCase.newBuilder("println").build());
+        runTest(TestCase.newBuilder("println").build());
     }
+
     @Test
     public void printlnVariablesTest() throws IOException {
-    	runTest(TestCase.newBuilder("println-var").build());
+        runTest(TestCase.newBuilder("println-var").build());
     }
-    
+
     @Test
     public void simpleNetworkTest() throws IOException {
-    	runTest(TestCase.newBuilder("simple-network").setActorName("simple.dwf.SourceSink").build());
+        runTest(TestCase.newBuilder("simple-network").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test
     public void listInitTest() throws IOException {
-    	runTest(TestCase.newBuilder("init-list").build());
+        runTest(TestCase.newBuilder("init-list").build());
     }
-	
+
     @Test
     public void repeatInputTest() throws IOException {
-    	runTest(TestCase.newBuilder("repeat").setActorName("simple.dwf.SourceSink").build());
+        runTest(TestCase.newBuilder("repeat").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test
     public void foreachTest() throws IOException {
-    	runTest(TestCase.newBuilder("for-loop").build());
+        runTest(TestCase.newBuilder("for-loop").build());
     }
 
     @Test
     public void forComprehensionTest() throws IOException {
-    	runTest(TestCase.newBuilder("for-comprehensions").build());
+        runTest(TestCase.newBuilder("for-comprehensions").build());
     }
 
     @Test
     public void ifStatementTest() throws IOException {
-    	runTest(TestCase.newBuilder("if-statement").build());
+        runTest(TestCase.newBuilder("if-statement").build());
     }
 
     @Test
     public void ifElseStatementTest() throws IOException {
-    	runTest(TestCase.newBuilder("if-else-statement").build());
+        runTest(TestCase.newBuilder("if-else-statement").build());
+    }
+
+    @Test
+    public void importsTest() throws IOException {
+        runTest(TestCase.newBuilder("import/Network").setActorName("test.SourceSink").setDirLookup(true).build());
     }
 }

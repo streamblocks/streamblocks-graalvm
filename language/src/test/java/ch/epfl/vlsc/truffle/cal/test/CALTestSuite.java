@@ -74,12 +74,14 @@ abstract class CALTestSuite {
 			String input;
 			String actorName;
 			Integer iterations;
+            Boolean dirLookup;
 
 			private Builder(String name) {
 				this.name = name;
 				this.input = "";
 				this.actorName = "test.test";
 				this.iterations = 1;
+                this.dirLookup = false;
 			}
 
 			public Builder setInput(String input) {
@@ -107,10 +109,16 @@ abstract class CALTestSuite {
 				return this;
 			}
 
+			public Builder setDirLookup(Boolean dirLookup) {
+				this.dirLookup = dirLookup;
+				return this;
+			}
+
 			public TestCase build() throws FileNotFoundException, IOException {
 				Map<String, String> options = new HashMap<>();
 				options.put("cal.actor", actorName);
 				options.put("cal.iterations", iterations.toString());
+				options.put("cal.directory-lookup", dirLookup.toString());
 				return new TestCase(this.getClass(), name, name, getTestPath(name + SOURCE_SUFFIX), input,
 						readAllLines(getTestPath(name + OUTPUT_SUFFIX)), options);
 			}

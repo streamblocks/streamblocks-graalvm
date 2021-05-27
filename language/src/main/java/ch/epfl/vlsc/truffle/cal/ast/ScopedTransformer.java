@@ -15,6 +15,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryDivNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
@@ -267,6 +268,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             break;
         case "*":
             result = CALBinaryMulNodeGen.create(left, right);
+            break;
+        case "/":
+            result = CALBinaryDivNodeGen.create(left, right);
             break;
         case "<=":
             result = CALBinaryLessOrEqualNodeGen.create(left, right);
