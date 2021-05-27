@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class CALUndefinedFunctionRootNode extends CALRootNode {

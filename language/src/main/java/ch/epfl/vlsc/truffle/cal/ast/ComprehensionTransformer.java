@@ -25,8 +25,8 @@ class ComprehensionTransformer extends ScopedTransformer<ForeacheNode> {
     ExprComprehension comprehension;
 
     public ComprehensionTransformer(CALLanguage language, Source source, LexicalScope parentScope,
-            ExprComprehension comprehension, FrameDescriptor frameDescriptor, int depth) {
-        super(language, source, new ROParentLexicalScope(parentScope), frameDescriptor, depth);
+            ExprComprehension comprehension, FrameDescriptor frameDescriptor, int depth, TransformContext context) {
+        super(language, source, new ROParentLexicalScope(parentScope), frameDescriptor, depth, context);
 
         this.comprehension = comprehension;
     }

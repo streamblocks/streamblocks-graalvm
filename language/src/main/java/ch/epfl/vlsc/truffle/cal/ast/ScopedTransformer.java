@@ -50,14 +50,16 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     protected int depth;
     protected FrameDescriptor frameDescriptor;
     protected LexicalScope lexicalScope;
+    protected TransformContext context;
 
     public ScopedTransformer(CALLanguage language, Source source, LexicalScope parentScope,
-            FrameDescriptor frameDescriptor, int depth) {
+            FrameDescriptor frameDescriptor, int depth, TransformContext context) {
         super(language, source);
         this.frameDescriptor = frameDescriptor;// new FrameDescriptor();
         // lexical scope must include parent scope
         lexicalScope = new LexicalScopeRW(parentScope);
         this.depth = depth + 1;
+        this.context = context;
     }
 
     // Arguments
@@ -149,7 +151,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         } else if (expr instanceof ExprBinaryOp) {
             return transformBinaryExpr((ExprBinaryOp) expr);
         } else if (expr instanceof ExprLambda) {
-            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth))
+            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth, context))
                     .transform();
         } else if (expr instanceof ExprApplication) {
             return transformExprApplication((ExprApplication) expr);

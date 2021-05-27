@@ -63,7 +63,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
     
     @Test
     public void simpleNetworkTest() throws IOException {
-    	runTest(TestCase.newBuilder("simple-network").setActorName("SourceSink").build());
+    	runTest(TestCase.newBuilder("simple-network").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test
@@ -73,7 +73,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
 	
     @Test
     public void repeatInputTest() throws IOException {
-    	runTest(TestCase.newBuilder("repeat").build());
+    	runTest(TestCase.newBuilder("repeat").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test

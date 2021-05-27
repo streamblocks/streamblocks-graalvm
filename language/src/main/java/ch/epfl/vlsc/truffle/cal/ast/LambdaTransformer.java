@@ -47,9 +47,9 @@ public class LambdaTransformer extends ScopedTransformer<LambdaNode> {
     // FIXME we should use different frameDescriptor as the one used in actor is
     // persistent and this one should not
     public LambdaTransformer(CALLanguage language, Source source, LexicalScope parentScope, ExprLambda lambda,
-            FrameDescriptor frameDescriptor, int depth) {
+            FrameDescriptor frameDescriptor, int depth, TransformContext context) {
         // lambda are side-effect-free
-        super(language, source, new ROParentLexicalScope(parentScope), frameDescriptor, depth);
+        super(language, source, new ROParentLexicalScope(parentScope), frameDescriptor, depth, context);
         this.lambda = lambda;
     }
 

@@ -5,6 +5,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepthRW;
+import ch.epfl.vlsc.truffle.cal.ast.TransformContext;
+
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
@@ -33,17 +35,25 @@ import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Language;
 
 import se.lth.cs.tycho.ir.NamespaceDecl;
+import se.lth.cs.tycho.ir.QID;
+import se.lth.cs.tycho.ir.decl.Import;
+import se.lth.cs.tycho.ir.decl.SingleImport;
 import se.lth.cs.tycho.ir.entity.cal.CalActor;
 import se.lth.cs.tycho.parsing.cal.CalParser;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.Truffle;
@@ -75,18 +85,21 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
 
     @Option(help = "Actor to run", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "actor")
     static final OptionKey<String> ActorToRun = new OptionKey<>("main");
-    
+
     @Option(help = "Number of iterations", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "iterations")
     static final OptionKey<Integer> Iterations = new OptionKey<>(1);
-    
+
+    @Option(help = "Includes all files of directory", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "directory-lookup")
+    static final OptionKey<Boolean> dirLookup = new OptionKey<>(false);
+
     @Override
     protected CALContext createContext(Env env) {
         return new CALContext(this, env, new ArrayList<>(EXTERNAL_BUILTINS));
     }
 
-    private RootCallTarget getRootCall(Map<String, RootCallTarget> actors, Source source) {
+    private RootCallTarget getRootCall(Map<QID, RootCallTarget> actors, Source source) {
         String actorName = getCurrentContext().getEnv().getOptions().get(CALLanguage.ActorToRun);
-        RootCallTarget startNode = actors.get(actorName);
+        RootCallTarget startNode = actors.get(QID.parse(actorName));
         assert startNode != null;
         CALExpressionNode actor = new ActorLiteralNode(actorName);
         CALExpressionNode call = new CALInvokeNode(actor, new CALExpressionNode[0]);
@@ -104,28 +117,56 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         // Call actor instance
         final CALExpressionNode instance = existingSlot.createReadNode(0);
         int iterations = getCurrentContext().getEnv().getOptions().get(CALLanguage.Iterations);
-        CALExpressionNode[] bodyNodes = new CALExpressionNode[1+iterations]; 
+        CALExpressionNode[] bodyNodes = new CALExpressionNode[1 + iterations];
         bodyNodes[0] = result;
         for (int i = 0; i < iterations; i++) {
-        	bodyNodes[i+1] = new CALInvokeNode(instance, new CALExpressionNode[0]);
+            bodyNodes[i + 1] = new CALInvokeNode(instance, new CALExpressionNode[0]);
         }
-    
+
         CALStatementNode body = new StmtBlockNode(bodyNodes);
         RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body),
-                source.createUnavailableSection(), "root");
+                source.createUnavailableSection(), "program root");
         return Truffle.getRuntime().createCallTarget(toyRoot);
     }
 
+    public static List<File> getFilesRecursively(File dir) {
+        if (dir.isDirectory()) {
+            List<File> ls = new LinkedList<>();
+            for (File fObj : dir.listFiles()) {
+                ls.addAll(getFilesRecursively(fObj));
+            }
+            return ls;
+        } else if (dir.getName().endsWith(".cal"))
+            return Arrays.asList(dir);
+        else
+            return Collections.emptyList();
+    }
+
+    // FIXME we need to build a graph to resolve imports in order to be able
+    // to resolve "import all" statements
+    // FIXME resolve global variable declarations
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
         Source source = request.getSource();
-        Path path = Paths.get(source.getURI());
-        CalParser parser = new CalParser(Files.newBufferedReader(path));
-        NamespaceDecl decl = parser.CompilationUnit();
-        BlockTransformer astTransformer = new BlockTransformer(this, source);
-        Map<String, RootCallTarget> actors = astTransformer.transformActors(decl);
+        File entry = Paths.get(source.getURI()).toFile();
+        List<File> allFiles;
+        if ( getCurrentContext().getEnv().getOptions().get(CALLanguage.dirLookup))
+            allFiles = getFilesRecursively(entry.getParentFile());
+        else
+            allFiles = new LinkedList<>();
+        allFiles.add(entry);
+        Map<QID, RootCallTarget> entities = new HashMap<>();
+        for (File file : allFiles) {
+            CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
+            NamespaceDecl decl = parser.CompilationUnit();
+            BlockTransformer astTransformer = new BlockTransformer(this, source, new TransformContext(decl));
+            entities.putAll(astTransformer.transformActors(decl));
+        }
+        Map<String, RootCallTarget> parsedEntities = new HashMap<>(entities.size());
+        for (Entry<QID, RootCallTarget> e : entities.entrySet())
+            parsedEntities.put(e.getKey().toString(), e.getValue());
         return Truffle.getRuntime()
-                .createCallTarget(new CALEvalRootNode(this, getRootCall(actors, source), new HashMap<>(), actors));
+                .createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), parsedEntities));
     }
 
     public RootCallTarget lookupBuiltin(NodeFactory<? extends CALBuiltinNode> factory) {
@@ -206,7 +247,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
     public static void installBuiltin(NodeFactory<? extends CALBuiltinNode> builtin) {
         EXTERNAL_BUILTINS.add(builtin);
     }
-    
+
     @Override
     protected OptionDescriptors getOptionDescriptors() {
         // this class is generated by the annotation processor

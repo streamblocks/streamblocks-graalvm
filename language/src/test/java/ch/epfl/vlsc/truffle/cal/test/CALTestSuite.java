@@ -78,7 +78,7 @@ abstract class CALTestSuite {
 			private Builder(String name) {
 				this.name = name;
 				this.input = "";
-				this.actorName = "test";
+				this.actorName = "test.test";
 				this.iterations = 1;
 			}
 

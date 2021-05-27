@@ -31,6 +31,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.ir.NamespaceDecl;
+import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
@@ -49,10 +50,10 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtGroupNode;
 public class ActorTransformer extends ScopedTransformer<ActorNode> {
 
     CalActor actor;
-    String name;
+    QID name;
 
-    public ActorTransformer(CALLanguage language, Source source, CalActor actor, String name, int depth) {
-        super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth);
+    public ActorTransformer(CALLanguage language, Source source, CalActor actor, QID name, int depth, TransformContext context) {
+        super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth, context);
         this.actor = actor;
         this.name = name;
     }
@@ -105,11 +106,11 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
         SourceSection actorSrc = source.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
                 actor.getToLineNumber());
-        return new ActorNode(language, frameDescriptor, actions, head, actorSrc, name);
+        return new ActorNode(language, frameDescriptor, actions, head, actorSrc, name.toString());
     }
 
     public ActionNode transformAction(Action action) {
-        return (new ActionTransformer(language, source, lexicalScope, action, frameDescriptor, depth)).transform();
+        return (new ActionTransformer(language, source, lexicalScope, action, frameDescriptor, depth, context)).transform();
     }
 
 }

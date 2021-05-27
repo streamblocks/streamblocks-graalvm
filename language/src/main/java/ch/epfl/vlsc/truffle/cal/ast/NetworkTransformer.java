@@ -41,6 +41,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.attribute.EntityDeclarations;
 import se.lth.cs.tycho.ir.NamespaceDecl;
+import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
@@ -57,10 +58,10 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
 
     NlNetwork network;
-    String name;
+    QID name;
 
-    public NetworkTransformer(CALLanguage language, Source source, NlNetwork network, String name, int depth) {
-        super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth);
+    public NetworkTransformer(CALLanguage language, Source source, NlNetwork network, QID name, int depth, TransformContext context) {
+        super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth, context);
         this.network = network;
         this.name = name;
     }
@@ -123,7 +124,7 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
         // Instansiation nodes for all actors
         for (Entry<String, ActorArguments> entry : actors.entrySet()) {
             ActorArguments args = entry.getValue();
-            CALExpressionNode actor = new ActorLiteralNode(args.actorName);
+            CALExpressionNode actor = new ActorLiteralNode(context.getEntityQID(args.actorName).toString());
             CALExpressionNode[] arguments = new CALExpressionNode[args.arguments.length + args.inputs.size()
                     + args.outputs.size()];
             System.arraycopy(args.arguments, 0, arguments, 0, args.arguments.length);
@@ -153,9 +154,9 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
         // FIXME wrap in a stmt block node so that library is adopted, don't know why
         CALRootNode toyRoot = new CALRootNode(language, frameDescriptor,
                 new ReturnsLastBodyNode(new StmtBlockNode(new CALStatementNode[] { body })),
-                source.createUnavailableSection(), "root");
+                source.createUnavailableSection(), name.toString());
         depth--;
-        return new NetworkNode(language, frameDescriptor, head, toyRoot, networkSrc, name);
+        return new NetworkNode(language, frameDescriptor, head, toyRoot, networkSrc, name.toString());
     }
 
 }

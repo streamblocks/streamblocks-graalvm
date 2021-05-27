@@ -69,8 +69,8 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
     // FIXME we should use different frameDescriptor as the one used in actor is
     // persistent and this one should not
     public ActionTransformer(CALLanguage language, Source source, LexicalScope parentScope, Action action,
-            FrameDescriptor frameDescriptor, int depth) {
-        super(language, source, parentScope, frameDescriptor, depth);
+            FrameDescriptor frameDescriptor, int depth, TransformContext context) {
+        super(language, source, parentScope, frameDescriptor, depth, context);
         this.action = action;
 
     }
