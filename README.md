@@ -7,6 +7,12 @@
 
 ## Project Status
 
+### Namespace
+ - [x] Multiple files
+ - [x] Named imports
+ - [ ] Import all, currently we are parsing all the files but this need to be done with a DAG in order to have the entities to import with all
+ - [ ] Import functions and global variables
+
 ### Actions
  - [x] Basic support
  - [x] Simple, single-port input pattern
