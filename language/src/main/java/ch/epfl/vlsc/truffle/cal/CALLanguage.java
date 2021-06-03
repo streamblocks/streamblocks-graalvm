@@ -43,6 +43,7 @@ import se.lth.cs.tycho.parsing.cal.CalParser;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -157,9 +158,11 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         allFiles.add(entry);
         Map<QID, RootCallTarget> entities = new HashMap<>();
         for (File file : allFiles) {
+            System.out.println("importing: " + file.toURL());
             CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
             NamespaceDecl decl = parser.CompilationUnit();
-            BlockTransformer astTransformer = new BlockTransformer(this, source, new TransformContext(decl));
+            Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
+            BlockTransformer astTransformer = new BlockTransformer(this, iSource, new TransformContext(decl));
             entities.putAll(astTransformer.transformActors(decl));
         }
         Map<String, RootCallTarget> parsedEntities = new HashMap<>(entities.size());

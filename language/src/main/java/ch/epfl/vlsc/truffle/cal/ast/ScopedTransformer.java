@@ -26,12 +26,16 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
 import se.lth.cs.tycho.ir.expr.ExprComprehension;
@@ -39,6 +43,7 @@ import se.lth.cs.tycho.ir.expr.ExprIndexer;
 import se.lth.cs.tycho.ir.expr.ExprLambda;
 import se.lth.cs.tycho.ir.expr.ExprList;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
+import se.lth.cs.tycho.ir.expr.ExprUnaryOp;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
 import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
@@ -151,6 +156,8 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             return getReadNode(name);
         } else if (expr instanceof ExprBinaryOp) {
             return transformBinaryExpr((ExprBinaryOp) expr);
+        } else if (expr instanceof ExprUnaryOp) {
+            return transformUnaryExpr((ExprUnaryOp) expr);
         } else if (expr instanceof ExprLambda) {
             return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth, context))
                     .transform();
@@ -163,7 +170,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         } else if (expr instanceof ExprComprehension) {
             return transformExprComprehension((ExprComprehension) expr);
         } else {
-            throw new Error("unknown expr " + expr.getClass().getName());
+            throw new TransformException("unknown expr " + expr.getClass().getName(), source, expr);
         }
     }
 
@@ -177,20 +184,20 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case False:
             return new BooleanLiteralNode(expr.getKind() == Kind.True);
         default:
-            throw new Error("unknown expr litteral " + expr.getKind().name());
+            throw new TransformException("unknown expr litteral " + expr.getKind().name(), source, expr);
         }
     }
 
     private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
         if (comprehension.getFilters().size() > 0)
-            throw new Error("filters not implemented");
+            throw new TransformException("filters not implemented", source, comprehension);
         Generator generator = comprehension.getGenerator();
         // FIXME filters
         ImmutableList<Expression> filters = comprehension.getFilters();
         if (filters.size() > 0)
-            throw new Error("Filters not supported");
+            throw new TransformException("Filters not supported", source, comprehension);
         if (!(comprehension.getCollection() instanceof ExprList))
-            throw new Error("for comp should have a collection");
+            throw new TransformException("for comp should have a collection", source, comprehension);
         // [ f(x) : for x in originalList ]
         ExprList collection = (ExprList) comprehension.getCollection();
 
@@ -203,12 +210,12 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // resolve originalList
         CALExpressionNode list = transformExpr(generator.getCollection());
         if (generator.getVarDecls().size() != 1) {
-            throw new Error("unsupported multiple var decls in for loop");
+            throw new TransformException("unsupported multiple var decls in for loop", source, generator);
         }
         // x = originalList[i]
         CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
         if (collection.getElements().size() > 1)
-            throw new Error("unsupported more than 1 element for for-comp");
+            throw new TransformException("unsupported more than 1 element for for-comp", source, generator);
         CALStatementNode[] bodyNodes = new CALStatementNode[2];
         // tempList[i] =  f(x)
         bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
@@ -223,7 +230,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             init[2] = ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) write, list);
             return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode("$tempList"));
         } else {
-            throw new Error();
+            throw new TransformException("Node write error", source, comprehension);
         }
         // Transform the for loop and return the temporary list
     }
@@ -250,10 +257,24 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         return new CALInvokeNode(functionNode, args);
     }
 
+    public CALExpressionNode transformUnaryExpr(ExprUnaryOp expr) {
+        CALExpressionNode result;
+        CALExpressionNode valueNode = transformExpr(expr.getOperand());
+        switch (expr.getOperation()) {
+            case "-":
+                result = CALUnaryMinusNodeGen.create(valueNode);
+                break;
+            default:
+                throw new Error("unimplemented unary op " + expr.getOperation());
+        }
+        return result;
+    }
+
+
     public CALExpressionNode transformBinaryExpr(ExprBinaryOp expr) {
         assert expr.getOperations().size() == 1;
         String opeString = expr.getOperations().get(0);
-        CALBinaryNode result;
+        CALExpressionNode result;
 
         assert expr.getOperands().size() == 2;
         CALExpressionNode left = transformExpr(expr.getOperands().get(0));
@@ -277,6 +298,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             break;
         case "<":
             result = CALBinaryLessThanNodeGen.create(left, right);
+            break;
+        case "..":
+            result = ListRangeInitNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);
