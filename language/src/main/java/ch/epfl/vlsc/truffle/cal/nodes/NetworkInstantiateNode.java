@@ -28,7 +28,7 @@ class NetworkInstantiateNode extends CALExpressionNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         // create a new frame with the network's frame descriptor
-        MaterializedFrame networkFrame = Truffle.getRuntime().createMaterializedFrame(null, network.getFrameDescriptor());
+        MaterializedFrame networkFrame = Truffle.getRuntime().createMaterializedFrame(frame.getArguments(), network.getFrameDescriptor());
         // TODO add arguments, create the actors
         // create and link the FIFOs
         head.executeVoid(networkFrame);

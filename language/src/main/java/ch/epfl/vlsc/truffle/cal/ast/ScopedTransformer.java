@@ -52,6 +52,7 @@ import se.lth.cs.tycho.ir.util.ImmutableList;
 import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
+import se.lth.cs.tycho.ir.entity.PortDecl;
 
 public abstract class ScopedTransformer<T> extends Transformer<T> {
     protected int depth;
@@ -67,8 +68,21 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         lexicalScope = new LexicalScopeRW(parentScope);
         this.depth = depth + 1;
         this.context = context;
+
     }
 
+    // TODO move in a new EntityTransformer
+    // TODO merge with transformVarDecl
+    protected CALStatementNode transformPortDecl(PortDecl port, Integer position) {
+        // We create a frame slot for this argument,
+        // give the rw verion to the assigning node
+        // and keep the ro view for the lexicalScope as arguments can't
+        // be modified
+        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(port.getName(), FrameSlotKind.Illegal);
+        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
+        lexicalScope.put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
+        return new InitializeArgNode(frameSlot, position);
+    }
     // Arguments
     //
     public CALStatementNode transformArgument(VarDecl varDecl, Integer position) {

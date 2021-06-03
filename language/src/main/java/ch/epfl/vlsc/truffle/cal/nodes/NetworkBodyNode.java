@@ -3,7 +3,7 @@ package ch.epfl.vlsc.truffle.cal.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-public class NetworkBodyNode extends CALStatementNode {
+public class NetworkBodyNode extends CALExpressionNode {
     @Children
     private final CALExpressionNode[] actors;
 
@@ -12,8 +12,8 @@ public class NetworkBodyNode extends CALStatementNode {
     }
 
     @Override
-    public void executeVoid(VirtualFrame frame) {
-        // Run all actors until the is not a single runnable
+    public Object executeGeneric(VirtualFrame frame) {
+        // Run all actors until three is not a single runnable
         // action remaining
         // The return value of the actor is true iff the actor
         // could run an action
@@ -28,5 +28,6 @@ public class NetworkBodyNode extends CALStatementNode {
                 }
             }
         }
+        return remaining;
     }
 }

@@ -112,7 +112,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             if (pat instanceof PatternBinding)
                 name = ((PatternBinding) pat).getDeclaration().getName();
             else
-                throw new UnsupportedOperationException("Pattern not implemented");
+                throw new TransformException("Pattern not implemented", source, pat);
 
             if (input.getRepeatExpr() != null)
                 body[i] = createAssignment(name, batchReadInput(input));
@@ -134,7 +134,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         for (OutputExpression output : action.getOutputExpressions()) {
             CALExpressionNode fifo = getReadNode(output.getPort().getName());
             if (output.getExpressions().size() > 1)
-                throw new UnsupportedOperationException("More than one output expr not supported");
+                throw new TransformException("More than one output expr not supported", source, output);
             CALExpressionNode value = transformExpr(output.getExpressions().get(0));
             body[i] = new CALWriteFIFONode(fifo, value);
             i++;
@@ -150,7 +150,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             if (pat instanceof PatternBinding)
                 name = ((PatternBinding) pat).getDeclaration().getName();
             else
-                throw new UnsupportedOperationException("Pattern not implemented");
+                throw new TransformException("Pattern not implemented", source, pat);
             if (input.getRepeatExpr() == null)
                 firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
                         new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));

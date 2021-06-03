@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.oracle.truffle.api.frame.FrameSlot;
 
-class LexicalScopeRW implements LexicalScope {
+public class LexicalScopeRW implements LexicalScope {
     private final LexicalScope outer;
     private final Map<String, FrameSlotAndDepth> locals;
 

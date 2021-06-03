@@ -8,7 +8,10 @@ import se.lth.cs.tycho.ir.entity.cal.CalActor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -58,51 +61,39 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         this.name = name;
     }
 
-    // TODO merge with transformVarDecl
-    private CALStatementNode transformPortDecl(PortDecl port, Integer position) {
-        // We create a frame slot for this argument,
-        // give the rw verion to the assigning node
-        // and keep the ro view for the lexicalScope as arguments can't
-        // be modified
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(port.getName(), FrameSlotKind.Illegal);
-        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
-        lexicalScope.put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
-        return new InitializeArgNode(frameSlot, position);
-    }
-
     public ActorNode transform() {
-        CALStatementNode[] headStatements = new CALStatementNode[actor.getVarDecls().size()
-                + actor.getValueParameters().size() + actor.getOutputPorts().size() + actor.getInputPorts().size()];
+        List<CALStatementNode> headStatements = new ArrayList<CALStatementNode>(actor.getVarDecls().size()
+                + actor.getValueParameters().size() + actor.getOutputPorts().size() + actor.getInputPorts().size());
         int i = 0;
 
         // TODO we are making assumptions about the number of arguments
         // and that EVERY argument and port is effectively passed
-        
+
         // WARNING keep as the first declaration as it needs to match the arguments
         // position
         // Prepend arguments so they are specialized the same way as in the body
         for (VarDecl varDecl : actor.getValueParameters()) {
-            headStatements[i] = transformArgument(varDecl, i);
+            headStatements.add(transformArgument(varDecl, i));
             i++;
         }
 
         for (PortDecl in : actor.getInputPorts()) {
             // Input ports are passed as arguments
-            headStatements[i] = transformPortDecl(in, i);
+            headStatements.add(transformPortDecl(in, i));
             i++;
         }
         for (PortDecl out : actor.getOutputPorts()) {
             // Input ports are passed as arguments
-            headStatements[i] = transformPortDecl(out, i);
+            headStatements.add(transformPortDecl(out, i));
             i++;
         }
         for (LocalVarDecl varDecl : actor.getVarDecls()) {
-            headStatements[i] = transformVarDecl(varDecl);
+            headStatements.add(transformVarDecl(varDecl));
             i++;
         }
 
         // FIXME we can probably use a StmtBlockNode
-        CALStatementNode head = new StmtBlockNode(headStatements);
+        CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
         SourceSection actorSrc = source.createUnavailableSection(); /*.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
                 actor.getToLineNumber());*/

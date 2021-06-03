@@ -15,7 +15,9 @@ import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.NetworkNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,7 @@ import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
+import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
@@ -60,7 +63,8 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
     NlNetwork network;
     QID name;
 
-    public NetworkTransformer(CALLanguage language, Source source, NlNetwork network, QID name, int depth, TransformContext context) {
+    public NetworkTransformer(CALLanguage language, Source source, NlNetwork network, QID name, int depth,
+            TransformContext context) {
         super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth, context);
         this.network = network;
         this.name = name;
@@ -73,15 +77,37 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
     // 2.1 FIFO creation nodes
     // 2.2 FIFO linking nodes
     public NetworkNode transform() {
-        CALExpressionNode[] headStatements = new CALExpressionNode[network.getVarDecls().size()
-                + network.getStructure().size() + network.getEntities().size()];
+        List<CALStatementNode> headStatements = new ArrayList<>(network.getVarDecls().size()
+                + network.getStructure().size() + network.getValueParameters().size() + network.getEntities().size() + network.getInputPorts().size() + network.getOutputPorts().size());
         int i = 0;
+        // merge with actor if possible
+        // TODO we are making assumptions about the number of arguments
+        // and that EVERY argument and port is effectively passed
+
+        // WARNING keep as the first declaration as it needs to match the arguments
+        // position
+        // Prepend arguments so they are specialized the same way as in the body
+        for (VarDecl varDecl : network.getValueParameters()) {
+            headStatements.add(transformArgument(varDecl, i));
+            i++;
+        }
+
+        for (PortDecl in : network.getInputPorts()) {
+            // Input ports are passed as arguments
+            headStatements.add(transformPortDecl(in, i));
+            i++;
+        }
+        for (PortDecl out : network.getOutputPorts()) {
+            // Input ports are passed as arguments
+            headStatements.add(transformPortDecl(out, i));
+            i++;
+        }
         for (LocalVarDecl varDecl : network.getVarDecls()) {
-            headStatements[i] = transformVarDecl(varDecl);
+            headStatements.add(transformVarDecl(varDecl));
             i++;
         }
         // List all the actors instansiated
-        Map<String, ActorArguments> actors = new HashMap<>();
+        Map<String, ActorArguments> actors = new LinkedHashMap<>();
         for (InstanceDecl instanceDecl : network.getEntities()) {
             String instanceName = instanceDecl.getInstanceName();
             // FIXME handle arguments
@@ -93,7 +119,7 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                     // FIXME
                     actors.put(instanceName, new ActorArguments(actorName, arguments));
                 } else {
-                    throw new UnsupportedOperationException("Unknown entity referencei in network");
+                    throw new UnsupportedOperationException("Unknown entity reference in network");
                 }
 
             } else {
@@ -103,19 +129,38 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
         }
         // create the fifos and add them to the actors
         for (StructureStatement struct : network.getStructure()) {
+            int j = 0;
             if (struct instanceof StructureConnectionStmt) {
                 StructureConnectionStmt connection = (StructureConnectionStmt) struct;
                 // create a FIFO
-                // FIXME
-                CALExpressionNode assignment = createAssignment("fifo-1", new CALCreateFIFONode());
                 // TODO handle mulitple ports
                 String source = connection.getSrc().getEntityName();
                 String dest = connection.getDst().getEntityName();
+                // If we have a FIFO connections two entities instantiated here 
+                // we have to create a new FIFO
+                if (source != null && dest != null) {
+                    CALExpressionNode assignment = createAssignment("fifo-" + j, new CALCreateFIFONode());
+                    headStatements.add(assignment);
+                    actors.get(source).outputs.add(getReadNode("fifo-" + j));
+                    actors.get(dest).inputs.add(getReadNode("fifo-" + j));
+                    j++;
+                    i++;
+                }
+                // Otherwise we use the FIFO given in arguments
+                else {
+                    String fifoName;
+                    if (source == null)
+                        fifoName = connection.getSrc().getPortName();
+                    else if (dest == null)
+                        fifoName = connection.getDst().getPortName();
+                    else
+                        throw new TransformException("unsupported network local fifo", this.source, connection);
+                    if (source != null)
+                        actors.get(source).outputs.add(getReadNode(fifoName));
+                    if (dest != null)
+                        actors.get(dest).inputs.add(getReadNode(fifoName));
+                }
 
-                actors.get(source).outputs.add(getReadNode("fifo-1"));
-                actors.get(dest).inputs.add(getReadNode("fifo-1"));
-                headStatements[i] = assignment;
-                i++;
             } else {
                 throw new UnsupportedOperationException("Unsupported Structure found");
             }
@@ -133,7 +178,7 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                     args.outputs.size());
 
             CALExpressionNode call = new CALInvokeNode(actor, arguments);
-            headStatements[i] = createAssignment(entry.getKey(), call);
+            headStatements.add(createAssignment(entry.getKey(), call));
             i++;
         }
 
@@ -144,16 +189,15 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
             CALExpressionNode entityNode = getReadNode(instanceName);
             bodyStatements.add(new CALInvokeNode(entityNode, new CALExpressionNode[0]));
         }
-        CALStatementNode body = new NetworkBodyNode(
+        CALExpressionNode body = new NetworkBodyNode(
                 bodyStatements.toArray(new CALExpressionNode[bodyStatements.size()]));
 
-        StmtBlockNode head = new StmtBlockNode(headStatements);
+        StmtBlockNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         SourceSection networkSrc = source.createUnavailableSection();// .createSection(network.getFromLineNumber(),
                                                                      // network.getFromColumnNumber(),
         // network.getToLineNumber());
         // FIXME wrap in a stmt block node so that library is adopted, don't know why
-        CALRootNode toyRoot = new CALRootNode(language, frameDescriptor,
-                new ReturnsLastBodyNode(new StmtBlockNode(new CALStatementNode[] { body })),
+        CALRootNode toyRoot = new CALRootNode(language, frameDescriptor, body,
                 source.createUnavailableSection(), name.toString());
         depth--;
         return new NetworkNode(language, frameDescriptor, head, toyRoot, networkSrc, name.toString());
