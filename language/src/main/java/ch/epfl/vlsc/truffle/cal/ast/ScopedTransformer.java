@@ -41,6 +41,7 @@ import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
 import se.lth.cs.tycho.ir.expr.ExprComprehension;
 import se.lth.cs.tycho.ir.expr.ExprIndexer;
 import se.lth.cs.tycho.ir.expr.ExprLambda;
+import se.lth.cs.tycho.ir.expr.ExprLet;
 import se.lth.cs.tycho.ir.expr.ExprList;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
 import se.lth.cs.tycho.ir.expr.ExprUnaryOp;
@@ -159,8 +160,11 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         } else if (expr instanceof ExprUnaryOp) {
             return transformUnaryExpr((ExprUnaryOp) expr);
         } else if (expr instanceof ExprLambda) {
-            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth, context))
-                    .transform();
+            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth,
+                    context)).transform();
+        } else if (expr instanceof ExprLet) {
+            return (new LetExprTransformer(language, source, lexicalScope, (ExprLet) expr, frameDescriptor, depth,
+                    context)).transform();
         } else if (expr instanceof ExprApplication) {
             return transformExprApplication((ExprApplication) expr);
         } else if (expr instanceof ExprList) {
@@ -217,7 +221,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         if (collection.getElements().size() > 1)
             throw new TransformException("unsupported more than 1 element for for-comp", source, generator);
         CALStatementNode[] bodyNodes = new CALStatementNode[2];
-        // tempList[i] =  f(x)
+        // tempList[i] = f(x)
         bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
                 transformExpr(collection.getElements().get(0)));
         // i= i + 1
@@ -252,6 +256,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         int i = 0;
         for (Expression arg : expr.getArgs()) {
             args[i] = transformExpr(arg);
+            i++;
         }
         CALExpressionNode functionNode = transformExpr(expr.getFunction());
         return new CALInvokeNode(functionNode, args);
@@ -261,15 +266,14 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         CALExpressionNode result;
         CALExpressionNode valueNode = transformExpr(expr.getOperand());
         switch (expr.getOperation()) {
-            case "-":
-                result = CALUnaryMinusNodeGen.create(valueNode);
-                break;
-            default:
-                throw new Error("unimplemented unary op " + expr.getOperation());
+        case "-":
+            result = CALUnaryMinusNodeGen.create(valueNode);
+            break;
+        default:
+            throw new Error("unimplemented unary op " + expr.getOperation());
         }
         return result;
     }
-
 
     public CALExpressionNode transformBinaryExpr(ExprBinaryOp expr) {
         assert expr.getOperations().size() == 1;

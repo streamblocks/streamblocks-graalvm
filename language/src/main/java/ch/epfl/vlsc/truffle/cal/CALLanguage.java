@@ -158,7 +158,6 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         allFiles.add(entry);
         Map<QID, RootCallTarget> entities = new HashMap<>();
         for (File file : allFiles) {
-            System.out.println("importing: " + file.toURL());
             CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
             NamespaceDecl decl = parser.CompilationUnit();
             Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();

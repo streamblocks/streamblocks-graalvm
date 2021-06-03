@@ -21,8 +21,6 @@ public final class LambdaNode extends CALExpressionNode {
     // FIXME return
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        //getNextAction().executeGeneric(frame);
-        // fix frame arguments
         MaterializedFrame lambdaFrame = frame.materialize();
         return new CALLambda(body, lambdaFrame);
 
