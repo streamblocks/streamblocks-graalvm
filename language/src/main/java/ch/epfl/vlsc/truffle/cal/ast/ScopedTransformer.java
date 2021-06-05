@@ -12,12 +12,16 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerOrEqualNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryDivNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
@@ -26,6 +30,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryBitNotNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
@@ -39,6 +45,7 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
 import se.lth.cs.tycho.ir.expr.ExprComprehension;
+import se.lth.cs.tycho.ir.expr.ExprIf;
 import se.lth.cs.tycho.ir.expr.ExprIndexer;
 import se.lth.cs.tycho.ir.expr.ExprLambda;
 import se.lth.cs.tycho.ir.expr.ExprLet;
@@ -83,6 +90,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         lexicalScope.put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
         return new InitializeArgNode(frameSlot, position);
     }
+
     // Arguments
     //
     public CALStatementNode transformArgument(VarDecl varDecl, Integer position) {
@@ -187,9 +195,16 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             return transformExprIndexer((ExprIndexer) expr);
         } else if (expr instanceof ExprComprehension) {
             return transformExprComprehension((ExprComprehension) expr);
+        } else if (expr instanceof ExprIf) {
+            return transformExprIf((ExprIf) expr);
         } else {
             throw new TransformException("unknown expr " + expr.getClass().getName(), source, expr);
         }
+    }
+
+    private CALExpressionNode transformExprIf(ExprIf expr) {
+        return new ExprIfNode(transformExpr(expr.getCondition()), transformExpr(expr.getThenExpr()),
+                transformExpr(expr.getElseExpr()));
     }
 
     private CALExpressionNode transformExprLiteral(ExprLiteral expr) {
@@ -283,6 +298,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "-":
             result = CALUnaryMinusNodeGen.create(valueNode);
             break;
+        case "not":
+            result = CALUnaryLogicalNodeGen.create(valueNode);
+            break;
         default:
             throw new Error("unimplemented unary op " + expr.getOperation());
         }
@@ -317,8 +335,17 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "<":
             result = CALBinaryLessThanNodeGen.create(left, right);
             break;
+        case ">=":
+            result = CALBinaryBiggerOrEqualNodeGen.create(left, right);
+            break;
+        case ">":
+            result = CALBinaryBiggerThanNodeGen.create(left, right);
+            break;
         case "..":
             result = ListRangeInitNodeGen.create(left, right);
+            break;
+        case "and":
+            result = new CALBinaryLogicalAndNode(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);
