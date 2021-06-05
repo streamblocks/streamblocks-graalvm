@@ -154,8 +154,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         if ( getCurrentContext().getEnv().getOptions().get(CALLanguage.dirLookup))
             allFiles = getFilesRecursively(entry.getParentFile());
         else
-            allFiles = new LinkedList<>();
-        allFiles.add(entry);
+            allFiles = Arrays.asList(entry);
         Map<QID, RootCallTarget> entities = new HashMap<>();
         for (File file : allFiles) {
             CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
