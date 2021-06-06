@@ -46,8 +46,13 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    public void actorState() throws IOException {
+    public void actorStateTest() throws IOException {
         runTest(TestCase.newBuilder("add-stored-var").setIterations(10).build());
+    }
+
+    @Test
+    public void actorParameterTest() throws IOException {
+        runTest(TestCase.newBuilder("actor-parameters").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test
@@ -102,6 +107,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void foreachTest() throws IOException {
         runTest(TestCase.newBuilder("for-loop").build());
+    }
+
+    @Test
+    public void nestedForLoopsTest() throws IOException {
+        runTest(TestCase.newBuilder("nested-for-loop").build());
     }
 
     @Test
