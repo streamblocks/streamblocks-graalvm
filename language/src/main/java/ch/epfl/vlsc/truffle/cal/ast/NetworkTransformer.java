@@ -44,6 +44,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import se.lth.cs.tycho.attribute.EntityDeclarations;
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.QID;
+import se.lth.cs.tycho.ir.ValueParameter;
 import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
@@ -111,13 +112,16 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
         for (InstanceDecl instanceDecl : network.getEntities()) {
             String instanceName = instanceDecl.getInstanceName();
             // FIXME handle arguments
-            CALExpressionNode[] arguments = new CALExpressionNode[0];
             if (instanceDecl.getEntityExpr() instanceof EntityInstanceExpr) {
                 EntityInstanceExpr entity = (EntityInstanceExpr) instanceDecl.getEntityExpr();
                 if (entity.getEntityName() instanceof EntityReferenceLocal) {
                     String actorName = ((EntityReferenceLocal) entity.getEntityName()).getName();
-                    // FIXME
-                    actors.put(instanceName, new ActorArguments(actorName, arguments));
+                    // FIXME here we assume that the parameters are passed in the same order as in the declaration
+                    // it however does not need to be the case, so this has to be changed
+                    List<CALExpressionNode> arguments = new ArrayList<>(entity.getValueParameters().size());
+                    for (ValueParameter parameter: entity.getValueParameters())
+                        arguments.add(transformExpr(parameter.getValue()));
+                    actors.put(instanceName, new ActorArguments(actorName, arguments.toArray(new CALExpressionNode[arguments.size()])));
                 } else {
                     throw new UnsupportedOperationException("Unknown entity reference in network");
                 }
@@ -127,9 +131,9 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
             }
 
         }
+        int j = 0;
         // create the fifos and add them to the actors
         for (StructureStatement struct : network.getStructure()) {
-            int j = 0;
             if (struct instanceof StructureConnectionStmt) {
                 StructureConnectionStmt connection = (StructureConnectionStmt) struct;
                 // create a FIFO

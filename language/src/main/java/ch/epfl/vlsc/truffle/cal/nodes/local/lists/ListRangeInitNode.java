@@ -12,12 +12,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 @NodeChild(type = CALExpressionNode.class, value = "top")
 public abstract class ListRangeInitNode extends CALExpressionNode {
 
-    // FIXME
+    // FIXME use an implementation only for functional lists
     @Specialization
     public Object executeList(CALBigNumber bottom, CALBigNumber top) {
-        Integer[] values = new Integer[top.getValue().intValue()-bottom.getValue().intValue()];
-        for(int i = bottom.getValue().intValue(); i < top.getValue().intValue(); i++)
-            values[i-bottom.getValue().intValue()] = i;
+        CALBigNumber[] values = new CALBigNumber[top.getValue().intValue()-bottom.getValue().intValue()+1];
+        for(int i = bottom.getValue().intValue(); i <= top.getValue().intValue(); i++)
+            values[i-bottom.getValue().intValue()] = new CALBigNumber(i);
         return new GenericBufferList(values);
     }
 

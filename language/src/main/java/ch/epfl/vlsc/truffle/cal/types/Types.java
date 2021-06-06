@@ -10,7 +10,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 
 import java.math.BigInteger;
 
-@TypeSystem({long.class, boolean.class})
+@TypeSystem({int.class, long.class, boolean.class})
 public abstract class Types {
 
     /**
@@ -45,6 +45,11 @@ public abstract class Types {
     @ImplicitCast
     @CompilerDirectives.TruffleBoundary
     public static CALBigNumber castBigNumber(long value) {
+        return new CALBigNumber(BigInteger.valueOf(value));
+    }
+    @ImplicitCast
+    @CompilerDirectives.TruffleBoundary
+    public static CALBigNumber castBigNumber(int value) {
         return new CALBigNumber(BigInteger.valueOf(value));
     }
 }

@@ -41,6 +41,7 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import se.lth.cs.tycho.ir.Generator;
@@ -85,11 +86,39 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         // Create assignment to variable
         CALExpressionNode list = ListRangeInitNodeGen.create(new BigIntegerLiteralNode(new BigInteger("0")),
-                transformExpr(input.getRepeatExpr()));
+                CALBinarySubNodeGen.create(transformExpr(input.getRepeatExpr()), new LongLiteralNode(1)));
         //
         CALStatementNode[] bodyNodes = new CALStatementNode[2];
         bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
                 new CALReadFIFONode(getReadNode(input.getPort().getName())));
+        bodyNodes[1] = createAssignment("$comprehensionCounter", CALBinaryAddNodeGen
+                .create(getReadNode("$comprehensionCounter"), new BigIntegerLiteralNode(new BigInteger("1"))));
+
+        CALStatementNode body = new StmtBlockNode(bodyNodes);
+
+        init[2] = ForeacheNodeGen.create(body, null, list);
+        return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode("$tempList"));
+    }
+
+    public CALExpressionNode batchWriteOutput(OutputExpression output) {
+        CALStatementNode[] init = new CALStatementNode[3];
+        // Create tempList
+        // TODO in fact type might be known and size is probably also known
+        init[0] = createAssignment("$tempList", new UnknownSizeListInitNode());
+        // FIXME
+        init[1] = createAssignment("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
+
+        // Create assignment to variable
+        // FIXME
+        CALExpressionNode list = ListRangeInitNodeGen.create(new BigIntegerLiteralNode(new BigInteger("0")),
+                CALBinarySubNodeGen.create(transformExpr(output.getRepeatExpr()), new LongLiteralNode(1)));
+        //
+        CALStatementNode[] bodyNodes = new CALStatementNode[2];
+        bodyNodes[0] = new CALWriteFIFONode(
+                getReadNode(output.getPort().getName()), 
+                ListReadNodeGen.create(
+                    transformExpr(output.getExpressions().get(0)), 
+                getReadNode(("$comprehensionCounter"))));
         bodyNodes[1] = createAssignment("$comprehensionCounter", CALBinaryAddNodeGen
                 .create(getReadNode("$comprehensionCounter"), new BigIntegerLiteralNode(new BigInteger("1"))));
 
@@ -135,8 +164,12 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             CALExpressionNode fifo = getReadNode(output.getPort().getName());
             if (output.getExpressions().size() > 1)
                 throw new TransformException("More than one output expr not supported", source, output);
-            CALExpressionNode value = transformExpr(output.getExpressions().get(0));
-            body[i] = new CALWriteFIFONode(fifo, value);
+            if (output.getRepeatExpr() == null) {
+                CALExpressionNode value = transformExpr(output.getExpressions().get(0));
+                body[i] = new CALWriteFIFONode(fifo, value);
+            } else {
+                body[i] = batchWriteOutput(output);
+            }
             i++;
         }
 
@@ -181,85 +214,4 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         // FIXME name
         return new ActionNode(language, frameDescriptor, bodyNode, firingCondition, actionSrc, "action-1");
     }
-
-    public CALStatementNode transformSatement(Statement statement) {
-        if (statement instanceof StmtCall) {
-            return transformStmtCall((StmtCall) statement);
-        } else if (statement instanceof StmtAssignment) {
-            return transformStmtAssignment((StmtAssignment) statement);
-        } else if (statement instanceof StmtForeach) {
-            return transformStmtForeach((StmtForeach) statement);
-        } else if (statement instanceof StmtIf) {
-            return transformStmtIf((StmtIf) statement);
-        } else {
-            throw new Error("unknown statement " + statement.getClass().getName());
-        }
-    }
-
-    private CALStatementNode transformStatementsList(List<Statement> statements) {
-        CALStatementNode[] statementNodes = new CALStatementNode[statements.size()];
-        for (int i = 0; i < statements.size(); i++) {
-            statementNodes[i] = transformSatement(statements.get(i));
-        }
-        return new StmtBlockNode(statementNodes);
-    }
-
-    private CALStatementNode transformStmtIf(StmtIf stmtIf) {
-        CALStatementNode elze = null;
-        if (stmtIf.getElseBranch() != null)
-            elze = transformStatementsList(stmtIf.getElseBranch());
-        return new StmtIfNode(transformExpr(stmtIf.getCondition()), transformStatementsList(stmtIf.getThenBranch()),
-                elze);
-    }
-
-    public CALStatementNode transformStmtForeach(StmtForeach foreach) {
-        Generator generator = foreach.getGenerator();
-        CALExpressionNode list = transformExpr(generator.getCollection());
-        if (generator.getVarDecls().size() != 1) {
-            throw new Error("unsupported multiple var decls in for loop");
-        }
-        // transformVarDecl NEEDS to be called before body nodes transformations
-        // in order to get the read of the variable right
-        CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
-        CALStatementNode[] bodyNodes = new CALStatementNode[foreach.getBody().size()];
-        for (int i = 0; i < foreach.getBody().size(); i++) {
-            bodyNodes[i] = transformSatement(foreach.getBody().get(i));
-        }
-
-        CALStatementNode statement = new StmtBlockNode(bodyNodes);
-        if (write instanceof CALWriteLocalVariableNode) {
-            ForeacheNode f = ForeacheNodeGen.create(statement, (CALWriteLocalVariableNode) write, list);
-            return f;
-        } else {
-            // FIXME once createAssignment is fixed
-            throw new Error("unsupported variable name reuse");
-        }
-    }
-
-    public CALStatementNode transformStmtAssignment(StmtAssignment stmtAssignment) {
-        if (stmtAssignment.getLValue() instanceof LValueVariable) {
-            LValueVariable lvalue = (LValueVariable) stmtAssignment.getLValue();
-            String name = lvalue.getVariable().getName();
-
-            return createAssignment(name, stmtAssignment.getExpression());
-        } else if (stmtAssignment.getLValue() instanceof LValueIndexer) {
-            LValueIndexer lvalue = (LValueIndexer) stmtAssignment.getLValue();
-            String name = ((LValueVariable) lvalue.getStructure()).getVariable().getName();
-            return ListWriteNodeGen.create(getReadNode(name), transformExpr(lvalue.getIndex()),
-                    transformExpr(stmtAssignment.getExpression()));
-        } else {
-            throw new Error("unknown lvalue " + stmtAssignment.getLValue().getClass().getName());
-        }
-    }
-
-    public CALInvokeNode transformStmtCall(StmtCall stmtCall) {
-
-        return new CALInvokeNode(transformExpr(stmtCall.getProcedure()),
-                stmtCall.getArgs().map(new Function<Expression, CALExpressionNode>() {
-                    public CALExpressionNode apply(Expression expr) {
-                        return transformExpr(expr);
-                    }
-                }).toArray(new CALExpressionNode[0]));
-    }
-
 }

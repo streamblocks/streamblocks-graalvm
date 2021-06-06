@@ -1,6 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
 import java.math.BigInteger;
+import java.util.List;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
@@ -11,6 +13,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
@@ -60,6 +63,24 @@ import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
+import se.lth.cs.tycho.ir.Generator;
+import se.lth.cs.tycho.ir.decl.LocalVarDecl;
+import se.lth.cs.tycho.ir.entity.cal.Action;
+import se.lth.cs.tycho.ir.entity.cal.InputPattern;
+import se.lth.cs.tycho.ir.entity.cal.OutputExpression;
+import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
+import se.lth.cs.tycho.ir.expr.ExprLiteral;
+import se.lth.cs.tycho.ir.expr.ExprVariable;
+import se.lth.cs.tycho.ir.expr.Expression;
+import se.lth.cs.tycho.ir.expr.pattern.Pattern;
+import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
+import se.lth.cs.tycho.ir.stmt.Statement;
+import se.lth.cs.tycho.ir.stmt.StmtAssignment;
+import se.lth.cs.tycho.ir.stmt.StmtCall;
+import se.lth.cs.tycho.ir.stmt.StmtForeach;
+import se.lth.cs.tycho.ir.stmt.StmtIf;
+import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
+import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
 public abstract class ScopedTransformer<T> extends Transformer<T> {
     protected int depth;
@@ -231,7 +252,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             throw new TransformException("Filters not supported", source, comprehension);
         if (!(comprehension.getCollection() instanceof ExprList))
             throw new TransformException("for comp should have a collection", source, comprehension);
-        // [ f(x) : for x in originalList ]
+        // [ f(x) : for x in originalList ] 
         ExprList collection = (ExprList) comprehension.getCollection();
 
         CALStatementNode[] init = new CALStatementNode[3];
@@ -308,6 +329,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     public CALExpressionNode transformBinaryExpr(ExprBinaryOp expr) {
+        // FIXME implement operation priority
         assert expr.getOperations().size() == 1;
         String opeString = expr.getOperations().get(0);
         CALExpressionNode result;
@@ -351,5 +373,84 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             throw new Error("unimplemented bin op " + opeString);
         }
         return result;
+    }
+    public CALStatementNode transformSatement(Statement statement) {
+        if (statement instanceof StmtCall) {
+            return transformStmtCall((StmtCall) statement);
+        } else if (statement instanceof StmtAssignment) {
+            return transformStmtAssignment((StmtAssignment) statement);
+        } else if (statement instanceof StmtForeach) {
+            return transformStmtForeach((StmtForeach) statement);
+        } else if (statement instanceof StmtIf) {
+            return transformStmtIf((StmtIf) statement);
+        } else {
+            throw new Error("unknown statement " + statement.getClass().getName());
+        }
+    }
+
+    private CALStatementNode transformStatementsList(List<Statement> statements) {
+        CALStatementNode[] statementNodes = new CALStatementNode[statements.size()];
+        for (int i = 0; i < statements.size(); i++) {
+            statementNodes[i] = transformSatement(statements.get(i));
+        }
+        return new StmtBlockNode(statementNodes);
+    }
+
+    private CALStatementNode transformStmtIf(StmtIf stmtIf) {
+        CALStatementNode elze = null;
+        if (stmtIf.getElseBranch() != null)
+            elze = transformStatementsList(stmtIf.getElseBranch());
+        return new StmtIfNode(transformExpr(stmtIf.getCondition()), transformStatementsList(stmtIf.getThenBranch()),
+                elze);
+    }
+
+    public CALStatementNode transformStmtForeach(StmtForeach foreach) {
+        Generator generator = foreach.getGenerator();
+        CALExpressionNode list = transformExpr(generator.getCollection());
+        if (generator.getVarDecls().size() != 1) {
+            throw new Error("unsupported multiple var decls in for loop");
+        }
+        // transformVarDecl NEEDS to be called before body nodes transformations
+        // in order to get the read of the variable right
+        CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
+        CALStatementNode[] bodyNodes = new CALStatementNode[foreach.getBody().size()];
+        for (int i = 0; i < foreach.getBody().size(); i++) {
+            bodyNodes[i] = transformSatement(foreach.getBody().get(i));
+        }
+
+        CALStatementNode statement = new StmtBlockNode(bodyNodes);
+        if (write instanceof CALWriteLocalVariableNode) {
+            ForeacheNode f = ForeacheNodeGen.create(statement, (CALWriteLocalVariableNode) write, list);
+            return f;
+        } else {
+            // FIXME once createAssignment is fixed
+            throw new Error("unsupported variable name reuse");
+        }
+    }
+
+    public CALStatementNode transformStmtAssignment(StmtAssignment stmtAssignment) {
+        if (stmtAssignment.getLValue() instanceof LValueVariable) {
+            LValueVariable lvalue = (LValueVariable) stmtAssignment.getLValue();
+            String name = lvalue.getVariable().getName();
+
+            return createAssignment(name, stmtAssignment.getExpression());
+        } else if (stmtAssignment.getLValue() instanceof LValueIndexer) {
+            LValueIndexer lvalue = (LValueIndexer) stmtAssignment.getLValue();
+            String name = ((LValueVariable) lvalue.getStructure()).getVariable().getName();
+            return ListWriteNodeGen.create(getReadNode(name), transformExpr(lvalue.getIndex()),
+                    transformExpr(stmtAssignment.getExpression()));
+        } else {
+            throw new Error("unknown lvalue " + stmtAssignment.getLValue().getClass().getName());
+        }
+    }
+
+    public CALInvokeNode transformStmtCall(StmtCall stmtCall) {
+
+        return new CALInvokeNode(transformExpr(stmtCall.getProcedure()),
+                stmtCall.getArgs().map(new Function<Expression, CALExpressionNode>() {
+                    public CALExpressionNode apply(Expression expr) {
+                        return transformExpr(expr);
+                    }
+                }).toArray(new CALExpressionNode[0]));
     }
 }

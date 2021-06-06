@@ -31,6 +31,8 @@ public class CALType implements TruffleObject {
     public static final CALType OBJECT = new CALType("Object", (l, v) -> l.hasMembers(v));
     public static final CALType FUNCTION = new CALType("Function", (l, v) -> l.isExecutable(v) && v instanceof CALFunction);
     public static final CALType ACTOR = new CALType("Function", (l, v) -> l.isExecutable(v) && v instanceof CALActorInstance);
+    // FIXME
+    // public static final CALType LIST = new CALType("List", (l, v) -> l.isList(v) && v instanceof CALActorInstance);
 
     /*
      * This array is used when all types need to be checked in a certain order. While most interop

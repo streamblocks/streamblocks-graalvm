@@ -99,7 +99,7 @@ public final class CALLanguageView implements TruffleObject {
                 }
             }
         }
-        return "Unsupported";
+        return "Unsupported to string conversion";
     }
 
     /*

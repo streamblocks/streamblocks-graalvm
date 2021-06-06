@@ -57,7 +57,7 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
  * conversion methods for some types. In this class, we only cover types where the automatically
  * generated ones would not be sufficient.
  */
-@TypeSystem({long.class, boolean.class})
+@TypeSystem({int.class, long.class, boolean.class})
 public abstract class CALTypes {
 
     /**
@@ -92,6 +92,11 @@ public abstract class CALTypes {
     @ImplicitCast
     @TruffleBoundary
     public static CALBigNumber castBigNumber(long value) {
+        return new CALBigNumber(BigInteger.valueOf(value));
+    }
+    @ImplicitCast
+    @TruffleBoundary
+    public static CALBigNumber castBigNumber(int value) {
         return new CALBigNumber(BigInteger.valueOf(value));
     }
 }
