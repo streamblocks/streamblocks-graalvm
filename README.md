@@ -2,7 +2,7 @@
 
 ## Usage
 ```
-./cal <path> --cal.actor=<actor to run> --cal.iterations=<number of iterations>
+./cal <path> --cal.actor=<actor to run> --cal.iterations=<number of iterations> --cal.directory-lookup=<true to recursively load and parse all the files in the directory>
 ```
 
 ## Project Status
@@ -16,7 +16,7 @@
 ### Actions
  - [x] Basic support
  - [x] Simple, single-port input pattern
- - [ ] repeat
+ - [X] repeat, lacking proper multiport support
  - [ ] Other input patterns
  - [x] Simple, single-port output expressions
  - [ ] Delays
@@ -28,12 +28,12 @@
  - [x] Calls
  - [x] Lambdas
  - [x] most literals
- - [ ] if, only statements if-expr not supported yet
+ - [x] if
  - [x] for, doesn't support multiple var decls and probably othe little things, comprehensions lack filter support
  - [ ] while
  - [ ] choose
- - [x] +, -, *
- - [ ] /, unary -, # (list size)
+ - [x] +, -, \*, /,
+ - [ ] # (list size)
 
 ### Types
  - [x] Numbers, all implemented as BigNumbers
