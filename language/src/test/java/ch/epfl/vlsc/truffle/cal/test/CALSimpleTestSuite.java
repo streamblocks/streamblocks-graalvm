@@ -41,6 +41,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void precedenceTest() throws IOException {
+        runTest(TestCase.newBuilder("precedence").build());
+    }
+
+    @Test
     public void actorState() throws IOException {
         runTest(TestCase.newBuilder("add-stored-var").setIterations(10).build());
     }
@@ -81,7 +86,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
 
     @Test
     public void repeatInputTest() throws IOException {
-        runTest(TestCase.newBuilder("repeat").setActorName("simple.dwf.SourceSink").build());
+        runTest(TestCase.newBuilder("repeat-input").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
+    public void repeatOutputTest() throws IOException {
+        runTest(TestCase.newBuilder("repeat-output").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test

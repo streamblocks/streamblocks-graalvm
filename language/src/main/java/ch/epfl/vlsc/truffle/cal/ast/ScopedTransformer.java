@@ -1,8 +1,15 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import static java.util.Map.entry;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
@@ -328,8 +335,59 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         return result;
     }
 
+    public ExprBinaryOp prioritieBinaryOperations(ExprBinaryOp expr) {
+        ImmutableList<String> operations = expr.getOperations();
+        ImmutableList<Expression> operands = expr.getOperands();
+        if (operations.size() < 2)
+            return expr;
+
+        Map<String, Integer> precedence = Map.ofEntries(
+                entry("and", 1),
+                entry("or", 1),
+                entry("=", 2),
+                entry("!=", 2),
+                entry("<", 2),
+                entry("<=", 2),
+                entry(">", 2),
+                entry(">=", 2),
+                entry("in", 3),
+                entry("+", 4),
+                entry("-", 4),
+                entry("div", 5),
+                entry("mod", 5),
+                entry("*", 5),
+                entry("/", 5),
+                entry("^", 6)
+                );
+
+        int lower = 7;
+        int operationIndex = 0;
+        int i = 0;
+        List<String> reverseOperations = new ArrayList<>(operations);
+        Collections.reverse(reverseOperations);
+        for( String opeString : reverseOperations) {
+            if ( precedence.get(opeString) < lower) {
+                lower = precedence.get(opeString);
+                operationIndex = i;
+            }
+            i++;
+        }
+        operationIndex = operations.size() - 1 - operationIndex;
+        ExprBinaryOp left = expr.copy(
+                ImmutableList.from(operations.subList(0, operationIndex)),
+                ImmutableList.from(operands.subList(0, operationIndex+1)));
+        ExprBinaryOp right = expr.copy(
+                ImmutableList.from(operations.subList(operationIndex+1, operations.size())),
+                ImmutableList.from(operands.subList(operationIndex+1, operands.size())));
+
+        return expr.copy(
+                ImmutableList.of(operations.get(operationIndex)),
+                ImmutableList.of(prioritieBinaryOperations(left), prioritieBinaryOperations(right)));
+    }
     public CALExpressionNode transformBinaryExpr(ExprBinaryOp expr) {
-        // FIXME implement operation priority
+        expr = prioritieBinaryOperations(expr);
+        if (expr.getOperations().size() == 0)
+            return transformExpr(expr.getOperands().get(0));
         assert expr.getOperations().size() == 1;
         String opeString = expr.getOperations().get(0);
         CALExpressionNode result;
