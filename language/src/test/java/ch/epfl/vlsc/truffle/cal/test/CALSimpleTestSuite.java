@@ -133,4 +133,9 @@ public class CALSimpleTestSuite extends CALTestSuite {
     public void importsTest() throws IOException {
         runTest(TestCase.newBuilder("import/Network").setActorName("test.SourceSink").setDirLookup(true).build());
     }
+
+    @Test
+    public void idctTest() throws IOException {
+        runTest(TestCase.newBuilder("dct/src/TopIDCT").setActorName("RVC.TopIDCT").setDirLookup(true).build());
+    }
 }
