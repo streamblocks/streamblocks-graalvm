@@ -73,13 +73,13 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
     }
 
     @Option(help = "Actor to run", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "actor")
-    static final OptionKey<String> ActorToRun = new OptionKey<>("main");
+    public static final OptionKey<String> ActorToRun = new OptionKey<>("main");
 
     @Option(help = "Number of iterations", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "iterations")
-    static final OptionKey<Integer> Iterations = new OptionKey<>(1);
+    public static final OptionKey<Integer> Iterations = new OptionKey<>(1);
 
     @Option(help = "Includes all files of directory", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "directory-lookup")
-    static final OptionKey<Boolean> dirLookup = new OptionKey<>(false);
+    public static final OptionKey<Boolean> dirLookup = new OptionKey<>(false);
 
     @Override
     protected CALContext createContext(Env env) {

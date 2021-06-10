@@ -10,12 +10,12 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALTypes;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.runtime.CALFunction;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
-import ch.epfl.vlsc.truffle.cal.types.Types;
 
-@TypeSystemReference(Types.class)
+@TypeSystemReference(CALTypes.class)
 @NodeChild
 public abstract class ExprUnboxNode extends CALExpressionNode {
 

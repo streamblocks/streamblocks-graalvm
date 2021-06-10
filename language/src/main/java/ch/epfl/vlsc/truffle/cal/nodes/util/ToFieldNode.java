@@ -12,11 +12,11 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 
+import ch.epfl.vlsc.truffle.cal.nodes.CALTypes;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
-import ch.epfl.vlsc.truffle.cal.types.Types;
 
 
-@TypeSystemReference(Types.class)
+@TypeSystemReference(CALTypes.class)
 @GenerateUncached
 public abstract class ToFieldNode extends Node {
 

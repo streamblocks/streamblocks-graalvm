@@ -11,7 +11,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.types.CALType;
 
 @ExportLibrary(InteropLibrary.class)
 @SuppressWarnings("static-method")

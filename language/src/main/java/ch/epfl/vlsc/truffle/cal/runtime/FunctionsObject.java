@@ -55,7 +55,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.types.CALType;
 
 @ExportLibrary(InteropLibrary.class)
 @SuppressWarnings("static-method")

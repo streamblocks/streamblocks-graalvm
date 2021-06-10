@@ -23,7 +23,6 @@ import com.oracle.truffle.api.utilities.TriState;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
-import ch.epfl.vlsc.truffle.cal.types.CALType;
 
 
 // An actor instance

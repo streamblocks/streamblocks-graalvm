@@ -23,7 +23,6 @@ import com.oracle.truffle.api.utilities.TriState;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
-import ch.epfl.vlsc.truffle.cal.types.CALType;
 
 
 // A lambda
