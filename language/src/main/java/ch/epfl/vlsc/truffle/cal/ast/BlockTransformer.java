@@ -41,18 +41,14 @@ import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
 public class BlockTransformer {
 
-    Source source;
-    CALLanguage language;
     TransformContext context;
 
-    public BlockTransformer(CALLanguage language, Source source, TransformContext context) {
-        this.source = source;
-        this.language = language;
+    public BlockTransformer(TransformContext context) {
         this.context = context;
     }
 
     private QID entityQID(String name) {
-        return context.namespace.concat(new QID(Arrays.asList(name)));
+        return context.getNamespace().concat(new QID(Arrays.asList(name)));
     }
     public Map<QID, RootCallTarget> transformActors(NamespaceDecl namespace) {
         Map<QID, RootCallTarget> nsFunctions = new HashMap<>();
@@ -75,13 +71,13 @@ public class BlockTransformer {
     public NetworkNode transformNetork(NlNetwork nlNetwork, QID name) {
         // start a block and a rootcalltarget
         // new lexical scope
-        return (new NetworkTransformer(language, source, nlNetwork, name, 0, context)).transform();
+        return (new NetworkTransformer(nlNetwork, name, context.deeper(false))).transform();
     }
 
     public ActorNode transformActor(CalActor actor, QID name) {
         // start a block and a rootcalltarget
         // new lexical scope
-        return (new ActorTransformer(language, source, actor, name, 0, context)).transform();
+        return (new ActorTransformer(actor, name, context.deeper(false))).transform();
     }
 
 }

@@ -21,7 +21,9 @@ class ROParentLexicalScope implements LexicalScope {
     public FrameSlotAndDepth get(String name) {
         FrameSlotAndDepth val = locals.get(name);
         if (val == null)
-            return new FrameSlotAndDepthRO(outer.get(name));
+            if (outer.containsKey(name))
+                return new FrameSlotAndDepthRO(outer.get(name));
+            else return null;
         else
             return val;
     }

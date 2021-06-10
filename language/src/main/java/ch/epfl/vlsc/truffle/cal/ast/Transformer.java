@@ -4,17 +4,13 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import com.oracle.truffle.api.source.Source;
 
 public abstract class Transformer<R> {
-    Source source;
-    CALLanguage language;
-    protected Transformer(CALLanguage language, Source source) {
+    protected Transformer(TransformContext context) {
         Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler(){
             @Override
             public void uncaughtException(Thread t, Throwable e) {
-                throw new TransformException(e.getMessage(), source);
+                throw new TransformException(e.getMessage(), context.getSource());
             }
         });
-        this.source = source;
-        this.language = language;
     }
 
     public abstract R transform();

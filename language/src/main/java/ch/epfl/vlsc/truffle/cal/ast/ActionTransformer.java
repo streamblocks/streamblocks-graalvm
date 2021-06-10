@@ -69,11 +69,9 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
     // FIXME we should use different frameDescriptor as the one used in actor is
     // persistent and this one should not
-    public ActionTransformer(CALLanguage language, Source source, LexicalScope parentScope, Action action,
-            FrameDescriptor frameDescriptor, int depth, TransformContext context) {
-        super(language, source, parentScope, frameDescriptor, depth, context);
+    public ActionTransformer(Action action, TransformContext context) {
+        super(context);
         this.action = action;
-
     }
 
     public CALExpressionNode batchReadInput(InputPattern input) {
@@ -141,7 +139,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             if (pat instanceof PatternBinding)
                 name = ((PatternBinding) pat).getDeclaration().getName();
             else
-                throw new TransformException("Pattern not implemented", source, pat);
+                throw new TransformException("Pattern not implemented", context.getSource(), pat);
 
             if (input.getRepeatExpr() != null)
                 body[i] = createAssignment(name, batchReadInput(input));
@@ -163,7 +161,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         for (OutputExpression output : action.getOutputExpressions()) {
             CALExpressionNode fifo = getReadNode(output.getPort().getName());
             if (output.getExpressions().size() > 1)
-                throw new TransformException("More than one output expr not supported", source, output);
+                throw new TransformException("More than one output expr not supported", context.getSource(), output);
             if (output.getRepeatExpr() == null) {
                 CALExpressionNode value = transformExpr(output.getExpressions().get(0));
                 body[i] = new CALWriteFIFONode(fifo, value);
@@ -183,7 +181,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             if (pat instanceof PatternBinding)
                 name = ((PatternBinding) pat).getDeclaration().getName();
             else
-                throw new TransformException("Pattern not implemented", source, pat);
+                throw new TransformException("Pattern not implemented", context.getSource(), pat);
             if (input.getRepeatExpr() == null)
                 firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
                         new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
@@ -209,9 +207,9 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
-        SourceSection actionSrc = source.createUnavailableSection();//createSection(action.getFromLineNumber(), action.getFromColumnNumber(),
+        SourceSection actionSrc = context.getSource().createUnavailableSection();//createSection(action.getFromLineNumber(), action.getFromColumnNumber(),
                 //action.getToLineNumber());
         // FIXME name
-        return new ActionNode(language, frameDescriptor, bodyNode, firingCondition, actionSrc, "action-1");
+        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, "action-1");
     }
 }

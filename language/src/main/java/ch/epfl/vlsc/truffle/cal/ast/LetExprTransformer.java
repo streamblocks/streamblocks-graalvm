@@ -1,10 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.source.Source;
-
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
@@ -16,12 +11,11 @@ public class LetExprTransformer extends ScopedTransformer<LetExprNode> {
 
     ExprLet letExpr;
 
-    public LetExprTransformer(CALLanguage language, Source source, LexicalScope parentScope, ExprLet letExpr,
-            FrameDescriptor frameDescriptor, int depth, TransformContext context) {
+    public LetExprTransformer(ExprLet letExpr, TransformContext context) {
         // let expressions are side-effect-free
         // kind of an exception here as we have a new lexical scope but we don't go
         // deeper as we don't have any materialized frame
-        super(language, source, new ROParentLexicalScope(parentScope), frameDescriptor, depth - 1, context);
+        super(context);
         this.letExpr = letExpr;
     }
 

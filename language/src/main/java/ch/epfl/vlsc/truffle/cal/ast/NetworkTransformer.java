@@ -64,9 +64,12 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
     NlNetwork network;
     QID name;
 
-    public NetworkTransformer(CALLanguage language, Source source, NlNetwork network, QID name, int depth,
-            TransformContext context) {
-        super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth, context);
+    public NetworkTransformer(NlNetwork network, QID name, TransformContext context) {
+    	super(context);
+    	// We want a clean frame
+    	// TODO support global variables
+    	context.clearLexicalScopeAndFrame();
+        //super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth, context);
         this.network = network;
         this.name = name;
     }
@@ -158,7 +161,7 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                     else if (dest == null)
                         fifoName = connection.getDst().getPortName();
                     else
-                        throw new TransformException("unsupported network local fifo", this.source, connection);
+                        throw new TransformException("unsupported network local fifo", context.getSource(), connection);
                     if (source != null)
                         actors.get(source).outputs.add(getReadNode(fifoName));
                     if (dest != null)
@@ -186,7 +189,7 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
             i++;
         }
 
-        depth++;
+        context.setDepth(context.getDepth()+1);
         // Run the actors
         List<CALExpressionNode> bodyStatements = new LinkedList<>();
         for (String instanceName : actors.keySet()) {
@@ -197,14 +200,14 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                 bodyStatements.toArray(new CALExpressionNode[bodyStatements.size()]));
 
         StmtBlockNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
-        SourceSection networkSrc = source.createUnavailableSection();// .createSection(network.getFromLineNumber(),
+        SourceSection networkSrc = context.getSource().createUnavailableSection();// .createSection(network.getFromLineNumber(),
                                                                      // network.getFromColumnNumber(),
         // network.getToLineNumber());
         // FIXME wrap in a stmt block node so that library is adopted, don't know why
-        CALRootNode toyRoot = new CALRootNode(language, frameDescriptor, body,
-                source.createUnavailableSection(), name.toString());
-        depth--;
-        return new NetworkNode(language, frameDescriptor, head, toyRoot, networkSrc, name.toString());
+        CALRootNode toyRoot = new CALRootNode(context.getLanguage(), context.getFrameDescriptor(), body,
+        		context.getSource().createUnavailableSection(), name.toString());
+        context.setDepth(context.getDepth()-1);
+        return new NetworkNode(context.getLanguage(), context.getFrameDescriptor(), head, toyRoot, networkSrc, name.toString());
     }
 
 }

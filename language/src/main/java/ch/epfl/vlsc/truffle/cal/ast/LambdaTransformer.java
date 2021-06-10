@@ -46,10 +46,9 @@ public class LambdaTransformer extends ScopedTransformer<LambdaNode> {
 
     // FIXME we should use different frameDescriptor as the one used in actor is
     // persistent and this one should not
-    public LambdaTransformer(CALLanguage language, Source source, LexicalScope parentScope, ExprLambda lambda,
-            FrameDescriptor frameDescriptor, int depth, TransformContext context) {
+    public LambdaTransformer(ExprLambda lambda, TransformContext context) {
         // lambda are side-effect-free
-        super(language, source, new ROParentLexicalScope(parentScope), frameDescriptor, depth, context);
+        super(context);
         this.lambda = lambda;
     }
 
@@ -75,9 +74,9 @@ public class LambdaTransformer extends ScopedTransformer<LambdaNode> {
         // TODO fix CAL parser
         /*SourceSection lambdaSrc = source.createSection(lambda.getFromLineNumber(), lambda.getFromColumnNumber(),
                 lambda.getToLineNumber());*/
-        SourceSection lambdaSrc = source.createUnavailableSection();
+        SourceSection lambdaSrc = context.getSource().createUnavailableSection();
         // FIXME name
-        CALRootNode bodyRootNode = new CALRootNode(language, frameDescriptor, bodyNode, lambdaSrc, "lambda-1");
+        CALRootNode bodyRootNode = new CALRootNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, lambdaSrc, "lambda-1");
         return new LambdaNode(bodyRootNode);
     }
 

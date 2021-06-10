@@ -160,7 +160,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
             NamespaceDecl decl = parser.CompilationUnit();
             Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
-            BlockTransformer astTransformer = new BlockTransformer(this, iSource, new TransformContext(decl));
+            BlockTransformer astTransformer = new BlockTransformer(new TransformContext(this, iSource, decl));
             entities.putAll(astTransformer.transformActors(decl));
         }
         Map<String, RootCallTarget> parsedEntities = new HashMap<>(entities.size());

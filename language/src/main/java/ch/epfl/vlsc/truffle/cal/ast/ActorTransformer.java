@@ -55,8 +55,11 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
     CalActor actor;
     QID name;
 
-    public ActorTransformer(CALLanguage language, Source source, CalActor actor, QID name, int depth, TransformContext context) {
-        super(language, source, new LexicalScopeRW(null), new FrameDescriptor(), depth, context);
+    public ActorTransformer(CalActor actor, QID name, TransformContext context) {
+    	super(context);
+    	// We want a clean frame
+    	// TODO support global variables
+    	context.clearLexicalScopeAndFrame();
         this.actor = actor;
         this.name = name;
     }
@@ -95,13 +98,13 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         // FIXME we can probably use a StmtBlockNode
         CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
-        SourceSection actorSrc = source.createUnavailableSection(); /*.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
+        SourceSection actorSrc = context.getSource().createUnavailableSection(); /*.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
                 actor.getToLineNumber());*/
-        return new ActorNode(language, frameDescriptor, actions, head, actorSrc, name.toString());
+        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, head, actorSrc, name.toString());
     }
 
     public ActionNode transformAction(Action action) {
-        return (new ActionTransformer(language, source, lexicalScope, action, frameDescriptor, depth, context)).transform();
+        return (new ActionTransformer(action, context.deeper(false))).transform();
     }
 
 }

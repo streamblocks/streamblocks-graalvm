@@ -13,7 +13,6 @@ import static java.util.Map.entry;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
@@ -90,20 +89,11 @@ import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
 public abstract class ScopedTransformer<T> extends Transformer<T> {
-    protected int depth;
-    protected FrameDescriptor frameDescriptor;
-    protected LexicalScope lexicalScope;
     protected TransformContext context;
 
-    public ScopedTransformer(CALLanguage language, Source source, LexicalScope parentScope,
-            FrameDescriptor frameDescriptor, int depth, TransformContext context) {
-        super(language, source);
-        this.frameDescriptor = frameDescriptor;// new FrameDescriptor();
-        // lexical scope must include parent scope
-        lexicalScope = new LexicalScopeRW(parentScope);
-        this.depth = depth + 1;
+    public ScopedTransformer(TransformContext context) {
+        super(context);
         this.context = context;
-
     }
 
     // TODO move in a new EntityTransformer
@@ -111,11 +101,11 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     protected CALStatementNode transformPortDecl(PortDecl port, Integer position) {
         // We create a frame slot for this argument,
         // give the rw verion to the assigning node
-        // and keep the ro view for the lexicalScope as arguments can't
+        // and keep the ro view for the context.getLexicalScope() as arguments can't
         // be modified
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(port.getName(), FrameSlotKind.Illegal);
-        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
-        lexicalScope.put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(port.getName(), FrameSlotKind.Illegal);
+        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
+        context.getLexicalScope().put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
         return new InitializeArgNode(frameSlot, position);
     }
 
@@ -124,11 +114,11 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     public CALStatementNode transformArgument(VarDecl varDecl, Integer position) {
         // We create a frame slot for this argument,
         // give the rw verion to the assigning node
-        // and keep the ro view for the lexicalScope as arguments can't
+        // and keep the ro view for the context.getLexicalScope() as arguments can't
         // be modified
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(varDecl.getName(), FrameSlotKind.Illegal);
-        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, depth);
-        lexicalScope.put(varDecl.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(varDecl.getName(), FrameSlotKind.Illegal);
+        FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
+        context.getLexicalScope().put(varDecl.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
         return new InitializeArgNode(frameSlot, position);
     }
 
@@ -151,19 +141,19 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // first
         // FIXME we have to handle the case where actor declare a state and an action
         // redaclare a variable with the same name
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(name, FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, FrameSlotKind.Illegal);
         boolean newVariable = false;
         FrameSlotAndDepth slot;
-        if (!lexicalScope.containsKey(name)) {
+        if (!context.getLexicalScope().containsKey(name)) {
             newVariable = true;
-            slot = new FrameSlotAndDepthRW(frameSlot, depth);
-            lexicalScope.put(name, slot);
+            slot = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
+            context.getLexicalScope().put(name, slot);
         } else {
-            slot = lexicalScope.get(name);
+            slot = context.getLexicalScope().get(name);
         }
         CALExpressionNode nameNode = new StringLiteralNode(name);
 
-        final CALExpressionNode result = slot.createWriteNode(valueNode, nameNode, newVariable, depth);
+        final CALExpressionNode result = slot.createWriteNode(valueNode, nameNode, newVariable, context.getDepth());
 
         if (valueNode.hasSource()) {
             final int start = nameNode.getSourceCharIndex();
@@ -178,13 +168,13 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
 
     public CALExpressionNode getReadNode(String name) {
         final CALExpressionNode result;
-        final FrameSlotAndDepth frameSlot = lexicalScope.get(name);
+        final FrameSlotAndDepth frameSlot = context.getLexicalScope().get(name);
         if (frameSlot != null) {
             /* Read of a local variable. */
-            result = frameSlot.createReadNode(depth);
+            result = frameSlot.createReadNode(context.getDepth());
         } else {
             /*
-             * Read of a global name. In our language, the only global names are functions.
+             * Read of a global name. In our context.getLanguage(), the only global names are functions.
              */
             result = new FunctionLiteralNode(name);
         }
@@ -210,11 +200,12 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         } else if (expr instanceof ExprUnaryOp) {
             return transformUnaryExpr((ExprUnaryOp) expr);
         } else if (expr instanceof ExprLambda) {
-            return (new LambdaTransformer(language, source, lexicalScope, (ExprLambda) expr, frameDescriptor, depth,
-                    context)).transform();
+            return (new LambdaTransformer((ExprLambda) expr, context.deeper(true))).transform();
         } else if (expr instanceof ExprLet) {
-            return (new LetExprTransformer(language, source, lexicalScope, (ExprLet) expr, frameDescriptor, depth,
-                    context)).transform();
+        	// Readonly, but not deeper
+        	TransformContext exprCtx = context.deeper(true);
+        	exprCtx.setDepth(exprCtx.getDepth()-1);
+            return (new LetExprTransformer((ExprLet) expr, exprCtx)).transform();
         } else if (expr instanceof ExprApplication) {
             return transformExprApplication((ExprApplication) expr);
         } else if (expr instanceof ExprList) {
@@ -226,7 +217,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         } else if (expr instanceof ExprIf) {
             return transformExprIf((ExprIf) expr);
         } else {
-            throw new TransformException("unknown expr " + expr.getClass().getName(), source, expr);
+            throw new TransformException("unknown expr " + expr.getClass().getName(), context.getSource(), expr);
         }
     }
 
@@ -245,20 +236,20 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case False:
             return new BooleanLiteralNode(expr.getKind() == Kind.True);
         default:
-            throw new TransformException("unknown expr litteral " + expr.getKind().name(), source, expr);
+            throw new TransformException("unknown expr litteral " + expr.getKind().name(), context.getSource(), expr);
         }
     }
 
     private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
         if (comprehension.getFilters().size() > 0)
-            throw new TransformException("filters not implemented", source, comprehension);
+            throw new TransformException("filters not implemented", context.getSource(), comprehension);
         Generator generator = comprehension.getGenerator();
         // FIXME filters
         ImmutableList<Expression> filters = comprehension.getFilters();
         if (filters.size() > 0)
-            throw new TransformException("Filters not supported", source, comprehension);
+            throw new TransformException("Filters not supported", context.getSource(), comprehension);
         if (!(comprehension.getCollection() instanceof ExprList))
-            throw new TransformException("for comp should have a collection", source, comprehension);
+            throw new TransformException("for comp should have a collection", context.getSource(), comprehension);
         // [ f(x) : for x in originalList ] 
         ExprList collection = (ExprList) comprehension.getCollection();
 
@@ -271,12 +262,12 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // resolve originalList
         CALExpressionNode list = transformExpr(generator.getCollection());
         if (generator.getVarDecls().size() != 1) {
-            throw new TransformException("unsupported multiple var decls in for loop", source, generator);
+            throw new TransformException("unsupported multiple var decls in for loop", context.getSource(), generator);
         }
         // x = originalList[i]
         CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
         if (collection.getElements().size() > 1)
-            throw new TransformException("unsupported more than 1 element for for-comp", source, generator);
+            throw new TransformException("unsupported more than 1 element for for-comp", context.getSource(), generator);
         CALStatementNode[] bodyNodes = new CALStatementNode[2];
         // tempList[i] = f(x)
         bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
@@ -291,7 +282,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             init[2] = ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) write, list);
             return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode("$tempList"));
         } else {
-            throw new TransformException("Node write error", source, comprehension);
+            throw new TransformException("Node write error", context.getSource(), comprehension);
         }
         // Transform the for loop and return the temporary list
     }
