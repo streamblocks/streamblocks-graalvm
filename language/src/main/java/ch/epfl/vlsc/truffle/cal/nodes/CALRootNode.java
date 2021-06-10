@@ -1,11 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +13,12 @@ import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
+
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
 
 @NodeInfo(language = "CAL", description = "The root of all CAL execution trees")
 public class CALRootNode extends RootNode {

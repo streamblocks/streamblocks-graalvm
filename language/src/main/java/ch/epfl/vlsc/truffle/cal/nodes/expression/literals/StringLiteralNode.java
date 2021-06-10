@@ -1,8 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.literals;
 
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
+
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 
 @NodeInfo(shortName = "const")
 public final class StringLiteralNode extends CALExpressionNode {

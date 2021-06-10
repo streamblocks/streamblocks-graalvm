@@ -3,8 +3,6 @@ package ch.epfl.vlsc.truffle.cal.ast;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.api.frame.FrameSlot;
-
 public class LexicalScopeRW implements LexicalScope {
     private final LexicalScope outer;
     private final Map<String, FrameSlotAndDepth> locals;

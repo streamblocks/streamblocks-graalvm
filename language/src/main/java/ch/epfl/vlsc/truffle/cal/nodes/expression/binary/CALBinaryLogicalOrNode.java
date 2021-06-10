@@ -1,8 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.binary;
 
+import com.oracle.truffle.api.nodes.NodeInfo;
+
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ShortCircuitNode;
-import com.oracle.truffle.api.nodes.NodeInfo;
 
 @NodeInfo(shortName = "or")
 public class CALBinaryLogicalOrNode extends ShortCircuitNode {

@@ -1,11 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.binary;
 
-import ch.epfl.vlsc.truffle.cal.CALException;
-import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
+
+import ch.epfl.vlsc.truffle.cal.CALException;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
 @NodeInfo(shortName = "%")
 public abstract class CALBinaryModNode extends CALBinaryNode {

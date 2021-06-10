@@ -1,11 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.literals;
 
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import java.math.BigInteger;
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
 @NodeInfo(shortName = "const")
 public class BigIntegerLiteralNode extends CALExpressionNode {

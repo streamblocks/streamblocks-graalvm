@@ -1,7 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.nodes.util;
 
-import ch.epfl.vlsc.truffle.cal.types.Types;
-import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
+import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -12,7 +12,8 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 
-import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
+import ch.epfl.vlsc.truffle.cal.types.Types;
 
 
 @TypeSystemReference(Types.class)

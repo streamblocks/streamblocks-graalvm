@@ -1,10 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.types;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.runtime.CALActorInstance;
-import ch.epfl.vlsc.truffle.cal.runtime.CALFunction;
-import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;
@@ -15,6 +10,11 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.runtime.CALActorInstance;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
+import ch.epfl.vlsc.truffle.cal.runtime.CALFunction;
 
 @ExportLibrary(InteropLibrary.class)
 @SuppressWarnings("static-method")

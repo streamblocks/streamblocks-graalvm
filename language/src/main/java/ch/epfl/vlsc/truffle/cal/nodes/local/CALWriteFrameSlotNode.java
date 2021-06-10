@@ -48,16 +48,9 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.StandardTags.WriteVariableTag;
-import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.SourceSection;
-
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.interop.NodeObjectDescriptor;
 
 /**
  * Node to write a local variable to a function's {@link VirtualFrame frame}. The Truffle frame API

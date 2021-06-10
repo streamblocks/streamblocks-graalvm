@@ -1,18 +1,17 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
-import ch.epfl.vlsc.truffle.cal.builtins.CALRshiftBuiltinFactory;
-import ch.epfl.vlsc.truffle.cal.builtins.CALLshiftBuiltinFactory;
-import ch.epfl.vlsc.truffle.cal.builtins.CALPrintlnBuiltin;
-import ch.epfl.vlsc.truffle.cal.builtins.CALPrintlnBuiltinFactory;
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
-import com.oracle.truffle.api.*;
+import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.List;
+
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
@@ -20,13 +19,17 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.List;
-
-import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
+import ch.epfl.vlsc.truffle.cal.builtins.CALLshiftBuiltinFactory;
+import ch.epfl.vlsc.truffle.cal.builtins.CALPrintlnBuiltinFactory;
+import ch.epfl.vlsc.truffle.cal.builtins.CALRshiftBuiltinFactory;
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
 
 public class CALContext {
 

@@ -1,20 +1,17 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
+import static java.util.Map.entry;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import static java.util.Map.entry;
 
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
@@ -32,16 +29,13 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNode
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryBitNotNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
@@ -50,7 +44,9 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
+import se.lth.cs.tycho.ir.Generator;
+import se.lth.cs.tycho.ir.decl.VarDecl;
+import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
 import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
 import se.lth.cs.tycho.ir.expr.ExprComprehension;
@@ -60,26 +56,10 @@ import se.lth.cs.tycho.ir.expr.ExprLambda;
 import se.lth.cs.tycho.ir.expr.ExprLet;
 import se.lth.cs.tycho.ir.expr.ExprList;
 import se.lth.cs.tycho.ir.expr.ExprLiteral;
+import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
 import se.lth.cs.tycho.ir.expr.ExprUnaryOp;
 import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
-import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
-import se.lth.cs.tycho.ir.util.ImmutableList;
-import se.lth.cs.tycho.ir.Generator;
-import se.lth.cs.tycho.ir.decl.LocalVarDecl;
-import se.lth.cs.tycho.ir.decl.VarDecl;
-import se.lth.cs.tycho.ir.entity.PortDecl;
-import se.lth.cs.tycho.ir.Generator;
-import se.lth.cs.tycho.ir.decl.LocalVarDecl;
-import se.lth.cs.tycho.ir.entity.cal.Action;
-import se.lth.cs.tycho.ir.entity.cal.InputPattern;
-import se.lth.cs.tycho.ir.entity.cal.OutputExpression;
-import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
-import se.lth.cs.tycho.ir.expr.ExprLiteral;
-import se.lth.cs.tycho.ir.expr.ExprVariable;
-import se.lth.cs.tycho.ir.expr.Expression;
-import se.lth.cs.tycho.ir.expr.pattern.Pattern;
-import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
@@ -87,6 +67,7 @@ import se.lth.cs.tycho.ir.stmt.StmtForeach;
 import se.lth.cs.tycho.ir.stmt.StmtIf;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
+import se.lth.cs.tycho.ir.util.ImmutableList;
 
 public abstract class ScopedTransformer<T> extends Transformer<T> {
     protected TransformContext context;
@@ -190,11 +171,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         } else if (expr instanceof ExprLiteral) {
             return transformExprLiteral((ExprLiteral) expr);
         } else if (expr instanceof ExprVariable) {
-            ExprVariable v = (ExprVariable) expr;
-            // For now we assume that we only read variables names,
-            // we have to implement local variables and scopes
-            String name = v.getVariable().getName();
-            return getReadNode(name);
+            return transformExprVariable((ExprVariable) expr);
         } else if (expr instanceof ExprBinaryOp) {
             return transformBinaryExpr((ExprBinaryOp) expr);
         } else if (expr instanceof ExprUnaryOp) {
@@ -221,6 +198,13 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         }
     }
 
+    private CALExpressionNode transformExprVariable(ExprVariable expr) {
+            ExprVariable v = (ExprVariable) expr;
+            // For now we assume that we only read variables names,
+            // we have to implement local variables and scopes
+            String name = v.getVariable().getName();
+            return getReadNode(name);
+    }
     private CALExpressionNode transformExprIf(ExprIf expr) {
         return new ExprIfNode(transformExpr(expr.getCondition()), transformExpr(expr.getThenExpr()),
                 transformExpr(expr.getElseExpr()));

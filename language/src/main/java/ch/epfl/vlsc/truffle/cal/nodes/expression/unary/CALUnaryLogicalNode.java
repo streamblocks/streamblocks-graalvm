@@ -1,9 +1,10 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.unary;
 
-import ch.epfl.vlsc.truffle.cal.CALException;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
+
+import ch.epfl.vlsc.truffle.cal.CALException;
 
 @NodeInfo(shortName = "not")
 public abstract class CALUnaryLogicalNode extends ExprUnaryNode {

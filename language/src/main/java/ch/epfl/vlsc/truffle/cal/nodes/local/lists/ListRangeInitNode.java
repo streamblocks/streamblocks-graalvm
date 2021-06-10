@@ -1,12 +1,11 @@
 package ch.epfl.vlsc.truffle.cal.nodes.local.lists;
 
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Specialization;
+
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.runtime.GenericBufferList;
-
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 @NodeChild(type = CALExpressionNode.class, value = "bottom")
 @NodeChild(type = CALExpressionNode.class, value = "top")

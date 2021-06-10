@@ -1,7 +1,7 @@
 package ch.epfl.vlsc.truffle.cal;
 
-import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
-import ch.epfl.vlsc.truffle.cal.runtime.CALLanguageView;
+import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -10,7 +10,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 
-import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
+import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
+import ch.epfl.vlsc.truffle.cal.runtime.CALLanguageView;
 
 public class CALException extends RuntimeException implements TruffleException {
     private static final long serialVersionUID = -6799734410727348507L;

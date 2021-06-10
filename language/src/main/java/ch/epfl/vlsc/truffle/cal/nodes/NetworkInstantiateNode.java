@@ -1,14 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
-import java.util.Map;
-
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import ch.epfl.vlsc.truffle.cal.ast.ActorArguments;
 import ch.epfl.vlsc.truffle.cal.runtime.CALNetworkInstance;
 
 /* Instantiate an network

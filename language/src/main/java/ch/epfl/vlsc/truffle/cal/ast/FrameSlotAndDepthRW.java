@@ -1,18 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.nodes.Node;
 
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadCapturedVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadCapturedVariableNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteCapturedVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteCapturedVariableNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.WriteNode;
 
 public class FrameSlotAndDepthRW implements FrameSlotAndDepth{
 	final FrameSlot slot;

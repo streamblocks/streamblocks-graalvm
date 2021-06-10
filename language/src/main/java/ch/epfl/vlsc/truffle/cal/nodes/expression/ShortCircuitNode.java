@@ -1,12 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
-import ch.epfl.vlsc.truffle.cal.CALException;
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+
+import ch.epfl.vlsc.truffle.cal.CALException;
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 
 public abstract class ShortCircuitNode extends CALExpressionNode {
 

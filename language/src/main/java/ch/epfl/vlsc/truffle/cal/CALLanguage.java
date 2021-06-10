@@ -1,51 +1,8 @@
 package ch.epfl.vlsc.truffle.cal;
 
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepthRW;
-import ch.epfl.vlsc.truffle.cal.ast.TransformContext;
-
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
-import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
-import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.Option;
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.debug.DebuggerTags;
-import com.oracle.truffle.api.dsl.NodeFactory;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.instrumentation.AllocationReporter;
-import com.oracle.truffle.api.instrumentation.ProvidedTags;
-import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.SourceSection;
-
-import org.graalvm.options.OptionCategory;
-import org.graalvm.options.OptionDescriptors;
-import org.graalvm.options.OptionKey;
-import org.graalvm.options.OptionStability;
-import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.Language;
-
-import se.lth.cs.tycho.ir.NamespaceDecl;
-import se.lth.cs.tycho.ir.QID;
-import se.lth.cs.tycho.ir.decl.Import;
-import se.lth.cs.tycho.ir.decl.SingleImport;
-import se.lth.cs.tycho.ir.entity.cal.CalActor;
-import se.lth.cs.tycho.parsing.cal.CalParser;
-
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,14 +14,45 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.graalvm.options.OptionCategory;
+import org.graalvm.options.OptionDescriptors;
+import org.graalvm.options.OptionKey;
+import org.graalvm.options.OptionStability;
+
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Option;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.debug.DebuggerTags;
+import com.oracle.truffle.api.dsl.NodeFactory;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.instrumentation.ProvidedTags;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.Source;
+
 import ch.epfl.vlsc.truffle.cal.ast.BlockTransformer;
+import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepthRW;
+import ch.epfl.vlsc.truffle.cal.ast.TransformContext;
+import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALEvalRootNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
+import se.lth.cs.tycho.ir.NamespaceDecl;
+import se.lth.cs.tycho.ir.QID;
+import se.lth.cs.tycho.parsing.cal.CalParser;
 
 @TruffleLanguage.Registration(id = CALLanguage.ID, name = "CAL", defaultMimeType = CALLanguage.MIME_TYPE, characterMimeTypes = CALLanguage.MIME_TYPE, contextPolicy = TruffleLanguage.ContextPolicy.SHARED, fileTypeDetectors = CALFileDetector.class)
 @ProvidedTags({ StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class,

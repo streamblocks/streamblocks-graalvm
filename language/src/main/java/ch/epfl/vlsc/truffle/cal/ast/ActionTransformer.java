@@ -1,67 +1,40 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.SourceSection;
-
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Function;
 
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.source.SourceSection;
 
+import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
-import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.InputPattern;
 import se.lth.cs.tycho.ir.entity.cal.OutputExpression;
-import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
-import se.lth.cs.tycho.ir.expr.ExprLiteral;
-import se.lth.cs.tycho.ir.expr.ExprVariable;
 import se.lth.cs.tycho.ir.expr.Expression;
 import se.lth.cs.tycho.ir.expr.pattern.Pattern;
 import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 import se.lth.cs.tycho.ir.stmt.Statement;
-import se.lth.cs.tycho.ir.stmt.StmtAssignment;
-import se.lth.cs.tycho.ir.stmt.StmtCall;
-import se.lth.cs.tycho.ir.stmt.StmtForeach;
-import se.lth.cs.tycho.ir.stmt.StmtIf;
-import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
-import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 
 public class ActionTransformer extends ScopedTransformer<ActionNode> {
 

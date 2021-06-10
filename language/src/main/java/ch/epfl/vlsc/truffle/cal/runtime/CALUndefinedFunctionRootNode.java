@@ -1,9 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
+
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
-
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class CALUndefinedFunctionRootNode extends CALRootNode {
     public CALUndefinedFunctionRootNode(CALLanguage language, String name) {

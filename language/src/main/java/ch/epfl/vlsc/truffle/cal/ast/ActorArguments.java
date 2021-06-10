@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALFifo;
 
 public class ActorArguments {
     public String actorName;

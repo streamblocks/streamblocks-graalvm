@@ -1,7 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.binary;
 
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import com.oracle.truffle.api.dsl.NodeChild;
+
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 
 @NodeChild("leftNode")
 @NodeChild("rightNode")

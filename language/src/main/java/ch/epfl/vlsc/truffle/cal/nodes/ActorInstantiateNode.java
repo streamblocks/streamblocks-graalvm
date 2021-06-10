@@ -1,7 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 

@@ -1,13 +1,10 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-
-import java.util.Map;
-
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class NetworkNode extends CALRootNode {
 

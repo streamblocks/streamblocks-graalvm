@@ -1,14 +1,15 @@
 package ch.epfl.vlsc.truffle.cal.types;
 
-import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
-import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
-import java.math.BigInteger;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
+import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 
 @TypeSystem({int.class, long.class, boolean.class})
 public abstract class Types {

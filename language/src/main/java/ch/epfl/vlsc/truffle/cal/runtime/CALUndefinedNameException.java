@@ -1,8 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
-import ch.epfl.vlsc.truffle.cal.CALException;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
+
+import ch.epfl.vlsc.truffle.cal.CALException;
 
 public class CALUndefinedNameException extends CALException {
 

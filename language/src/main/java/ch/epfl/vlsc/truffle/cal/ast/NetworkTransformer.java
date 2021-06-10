@@ -1,63 +1,34 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.source.Source;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.oracle.truffle.api.source.SourceSection;
 
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.NetworkBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.NetworkNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
+import se.lth.cs.tycho.ir.QID;
+import se.lth.cs.tycho.ir.ValueParameter;
+import se.lth.cs.tycho.ir.decl.LocalVarDecl;
+import se.lth.cs.tycho.ir.decl.VarDecl;
+import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.entity.nl.EntityInstanceExpr;
 import se.lth.cs.tycho.ir.entity.nl.EntityReferenceLocal;
 import se.lth.cs.tycho.ir.entity.nl.InstanceDecl;
 import se.lth.cs.tycho.ir.entity.nl.NlNetwork;
 import se.lth.cs.tycho.ir.entity.nl.StructureConnectionStmt;
 import se.lth.cs.tycho.ir.entity.nl.StructureStatement;
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.NetworkNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.function.Function;
-
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.nodes.RootNode;
-
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALArguments;
-import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.NetworkBodyNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteFrameSlotNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
-import se.lth.cs.tycho.attribute.EntityDeclarations;
-import se.lth.cs.tycho.ir.NamespaceDecl;
-import se.lth.cs.tycho.ir.QID;
-import se.lth.cs.tycho.ir.ValueParameter;
-import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
-import se.lth.cs.tycho.ir.decl.LocalVarDecl;
-import se.lth.cs.tycho.ir.decl.VarDecl;
-import se.lth.cs.tycho.ir.entity.PortDecl;
-import se.lth.cs.tycho.ir.entity.cal.Action;
-import se.lth.cs.tycho.ir.expr.ExprLiteral;
-import se.lth.cs.tycho.ir.expr.ExprVariable;
-import se.lth.cs.tycho.ir.expr.Expression;
-import se.lth.cs.tycho.ir.stmt.Statement;
-import se.lth.cs.tycho.ir.stmt.StmtAssignment;
-import se.lth.cs.tycho.ir.stmt.StmtCall;
-import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 
 public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
 

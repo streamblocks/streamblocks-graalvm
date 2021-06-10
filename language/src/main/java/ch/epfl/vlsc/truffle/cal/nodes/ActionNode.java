@@ -6,7 +6,6 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 
 public final class ActionNode extends CALRootNode {
     @Child
