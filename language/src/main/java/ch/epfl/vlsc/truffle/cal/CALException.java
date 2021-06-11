@@ -31,6 +31,7 @@ public class CALException extends RuntimeException implements TruffleException {
         return this;
     }
 
+    @Override
     public Node getLocation() {
         return location;
     }

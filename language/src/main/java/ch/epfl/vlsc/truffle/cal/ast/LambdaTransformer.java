@@ -40,10 +40,8 @@ public class LambdaTransformer extends ScopedTransformer<LambdaNode> {
         }
         StmtBlockNode varDeclsNode = new StmtBlockNode(varDecls);
         ReturnsLastBodyNode bodyNode = new ReturnsLastBodyNode(varDeclsNode, transformExpr(lambda.getBody()));
-        // TODO fix CAL parser
-        /*SourceSection lambdaSrc = source.createSection(lambda.getFromLineNumber(), lambda.getFromColumnNumber(),
-                lambda.getToLineNumber());*/
-        SourceSection lambdaSrc = context.getSource().createUnavailableSection();
+
+        SourceSection lambdaSrc = getSourceSection(lambda);
         // FIXME name
         CALRootNode bodyRootNode = new CALRootNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, lambdaSrc, "lambda-1");
         return new LambdaNode(bodyRootNode);

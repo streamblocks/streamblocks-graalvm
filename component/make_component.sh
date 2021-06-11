@@ -51,31 +51,31 @@ else
     exit 1
 fi
 readonly COMPONENT_DIR="component_temp_dir"
-readonly LANGUAGE_PATH="$COMPONENT_DIR/$JRE/languages/sl"
-if [[ -f ../native/slnative ]]; then
+readonly LANGUAGE_PATH="$COMPONENT_DIR/$JRE/languages/cal"
+if [[ -f ../native/calnative ]]; then
     INCLUDE_SLNATIVE="TRUE"
 fi
 
 rm -rf COMPONENT_DIR
 
 mkdir -p "$LANGUAGE_PATH"
-cp ../language/target/simplelanguage.jar "$LANGUAGE_PATH"
+cp ../language/target/cal.jar "$LANGUAGE_PATH"
 
 mkdir -p "$LANGUAGE_PATH/launcher"
-cp ../launcher/target/sl-launcher.jar "$LANGUAGE_PATH/launcher/"
+cp ../launcher/target/cal-launcher.jar "$LANGUAGE_PATH/launcher/"
 
 mkdir -p "$LANGUAGE_PATH/bin"
-cp ../sl $LANGUAGE_PATH/bin/
+cp ../cal $LANGUAGE_PATH/bin/
 if [[ $INCLUDE_SLNATIVE = "TRUE" ]]; then
-    cp ../native/slnative $LANGUAGE_PATH/bin/
+    cp ../native/calnative $LANGUAGE_PATH/bin/
 fi
 
 touch "$LANGUAGE_PATH/native-image.properties"
 
 mkdir -p "$COMPONENT_DIR/META-INF"
 {
-    echo "Bundle-Name: Simple Language";
-    echo "Bundle-Symbolic-Name: com.oracle.truffle.sl";
+    echo "Bundle-Name: CAL";
+    echo "Bundle-Symbolic-Name: ch.epfl.vlsc.truffle.cal";
     echo "Bundle-Version: $GRAALVM_VERSION";
     echo "Bundle-RequireCapability: org.graalvm; filter:=\"(&(graalvm_version=$GRAALVM_VERSION)(os_arch=amd64))\"";
     echo "x-GraalVM-Polyglot-Part: True"
@@ -83,18 +83,18 @@ mkdir -p "$COMPONENT_DIR/META-INF"
 
 (
 cd $COMPONENT_DIR || exit 1
-jar cfm ../sl-component.jar META-INF/MANIFEST.MF .
+jar cfm ../cal-component.jar META-INF/MANIFEST.MF .
 
-echo "bin/sl = ../$JRE/languages/sl/bin/sl" > META-INF/symlinks
+echo "bin/cal = ../$JRE/languages/cal/bin/cal" > META-INF/symlinks
 if [[ $INCLUDE_SLNATIVE = "TRUE" ]]; then
-    echo "bin/slnative = ../$JRE/languages/sl/bin/slnative" >> META-INF/symlinks
+    echo "bin/calnative = ../$JRE/languages/cal/bin/calnative" >> META-INF/symlinks
 fi
-jar uf ../sl-component.jar META-INF/symlinks
+jar uf ../cal-component.jar META-INF/symlinks
 
 {
-    echo "$JRE"'languages/sl/bin/sl = rwxrwxr-x'
-    echo "$JRE"'languages/sl/bin/slnative = rwxrwxr-x'
+    echo "$JRE"'languages/cal/bin/cal = rwxrwxr-x'
+    echo "$JRE"'languages/cal/bin/calnative = rwxrwxr-x'
 } > META-INF/permissions
-jar uf ../sl-component.jar META-INF/permissions
+jar uf ../cal-component.jar META-INF/permissions
 )
 rm -rf $COMPONENT_DIR

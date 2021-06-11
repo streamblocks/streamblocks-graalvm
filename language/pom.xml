@@ -46,7 +46,7 @@
     <artifactId>simplelanguage-parent</artifactId>
     <version>${graalvm.version}</version>
   </parent>
-  <artifactId>simplelanguage</artifactId>
+  <artifactId>cal</artifactId>
   <profiles>
     <profile>
       <id>jdk11-graalvm</id>
@@ -132,7 +132,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <finalName>simplelanguage</finalName>
+              <finalName>cal</finalName>
               <artifactSet>
                 <excludes>
                   <exclude>junit:junit</exclude>

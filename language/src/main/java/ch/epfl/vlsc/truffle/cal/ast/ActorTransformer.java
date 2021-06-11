@@ -64,8 +64,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         // FIXME we can probably use a StmtBlockNode
         CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
-        SourceSection actorSrc = context.getSource().createUnavailableSection(); /*.createSection(actor.getFromLineNumber(), actor.getFromColumnNumber(),
-                actor.getToLineNumber());*/
+        SourceSection actorSrc = getSourceSection(actor);
         return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, head, actorSrc, name.toString());
     }
 

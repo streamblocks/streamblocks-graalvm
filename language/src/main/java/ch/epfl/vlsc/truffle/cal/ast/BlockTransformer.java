@@ -15,18 +15,21 @@ import se.lth.cs.tycho.ir.decl.GlobalEntityDecl;
 import se.lth.cs.tycho.ir.entity.cal.CalActor;
 import se.lth.cs.tycho.ir.entity.nl.NlNetwork;
 
-public class BlockTransformer {
+public class BlockTransformer extends Transformer<Map<QID, RootCallTarget>> {
 
     TransformContext context;
+	private NamespaceDecl namespace;
 
-    public BlockTransformer(TransformContext context) {
+    public BlockTransformer(TransformContext context, NamespaceDecl namespace) {
+    	super(context);
         this.context = context;
+        this.namespace = namespace;
     }
 
     private QID entityQID(String name) {
         return context.getNamespace().concat(new QID(Arrays.asList(name)));
     }
-    public Map<QID, RootCallTarget> transformActors(NamespaceDecl namespace) {
+    public Map<QID, RootCallTarget> transform() {
         Map<QID, RootCallTarget> nsFunctions = new HashMap<>();
         for (GlobalEntityDecl entity : namespace.getEntityDecls()) {
             QID entityName = entityQID(entity.getName());

@@ -903,7 +903,7 @@ public abstract class CALScopedNode extends Node {
 
         @ExportMessage
         boolean hasSourceLocation() {
-            return writeNode.getNameNode().getSourceCharIndex() >= 0;
+            return writeNode.getNameNode().hasSource();
         }
 
         @ExportMessage
@@ -913,7 +913,7 @@ public abstract class CALScopedNode extends Node {
                 throw UnsupportedMessageException.create();
             }
             CALExpressionNode nameNode = writeNode.getNameNode();
-            return writeNode.getRootNode().getSourceSection().getSource().createSection(nameNode.getSourceCharIndex(), nameNode.getSourceLength());
+            return nameNode.getSourceSection();
         }
     }
 }

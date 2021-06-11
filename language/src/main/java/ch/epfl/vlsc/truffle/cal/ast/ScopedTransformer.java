@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
@@ -45,6 +46,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.Generator;
+import se.lth.cs.tycho.ir.IRNode;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
@@ -118,8 +120,6 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     protected CALExpressionNode createAssignment(String name, CALExpressionNode valueNode) {
-        // FIXME this definitely doesnt work, we need to get the slot form lexicalscope
-        // first
         // FIXME we have to handle the case where actor declare a state and an action
         // redaclare a variable with the same name
         FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, FrameSlotKind.Illegal);
@@ -136,11 +136,6 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
 
         final CALExpressionNode result = slot.createWriteNode(valueNode, nameNode, newVariable, context.getDepth());
 
-        if (valueNode.hasSource()) {
-            final int start = nameNode.getSourceCharIndex();
-            final int length = valueNode.getSourceEndIndex() - start;
-            result.setSourceSection(start, length);
-        }
         // result.addExpressionTag();
 
         return result;
@@ -166,37 +161,39 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     public CALExpressionNode transformExpr(Expression expr) {
+    	CALExpressionNode output;
         if (expr == null) {
-            return new NullLiteralNode();
+        	output = new NullLiteralNode();
         } else if (expr instanceof ExprLiteral) {
-            return transformExprLiteral((ExprLiteral) expr);
+        	output = transformExprLiteral((ExprLiteral) expr);
         } else if (expr instanceof ExprVariable) {
-            return transformExprVariable((ExprVariable) expr);
+        	output = transformExprVariable((ExprVariable) expr);
         } else if (expr instanceof ExprBinaryOp) {
-            return transformBinaryExpr((ExprBinaryOp) expr);
+        	output = transformBinaryExpr((ExprBinaryOp) expr);
         } else if (expr instanceof ExprUnaryOp) {
-            return transformUnaryExpr((ExprUnaryOp) expr);
+        	output = transformUnaryExpr((ExprUnaryOp) expr);
         } else if (expr instanceof ExprLambda) {
-            return (new LambdaTransformer((ExprLambda) expr, context.deeper(true))).transform();
+        	output = (new LambdaTransformer((ExprLambda) expr, context.deeper(true))).transform();
         } else if (expr instanceof ExprLet) {
         	// Readonly, but not deeper
         	TransformContext exprCtx = context.deeper(true);
         	exprCtx.setDepth(exprCtx.getDepth()-1);
-            return (new LetExprTransformer((ExprLet) expr, exprCtx)).transform();
+        	output = (new LetExprTransformer((ExprLet) expr, exprCtx)).transform();
         } else if (expr instanceof ExprApplication) {
-            return transformExprApplication((ExprApplication) expr);
+        	output = transformExprApplication((ExprApplication) expr);
         } else if (expr instanceof ExprList) {
-            return transformExprList((ExprList) expr);
+        	output = transformExprList((ExprList) expr);
         } else if (expr instanceof ExprIndexer) {
-            return transformExprIndexer((ExprIndexer) expr);
+        	output = transformExprIndexer((ExprIndexer) expr);
         } else if (expr instanceof ExprComprehension) {
-            return transformExprComprehension((ExprComprehension) expr);
+        	output = transformExprComprehension((ExprComprehension) expr);
         } else if (expr instanceof ExprIf) {
-            return transformExprIf((ExprIf) expr);
+        	output = transformExprIf((ExprIf) expr);
         } else {
             throw new TransformException("unknown expr " + expr.getClass().getName(), context.getSource(), expr);
         }
-    }
+        return withSourceSection(output, expr);
+    } 
 
     private CALExpressionNode transformExprVariable(ExprVariable expr) {
             ExprVariable v = (ExprVariable) expr;
@@ -283,7 +280,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         return new ListInitNode(values);
     }
 
-    public CALInvokeNode transformExprApplication(ExprApplication expr) {
+    private CALInvokeNode transformExprApplication(ExprApplication expr) {
         CALExpressionNode[] args = new CALExpressionNode[expr.getArgs().size()];
         int i = 0;
         for (Expression arg : expr.getArgs()) {
@@ -294,7 +291,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         return new CALInvokeNode(functionNode, args);
     }
 
-    public CALExpressionNode transformUnaryExpr(ExprUnaryOp expr) {
+    private CALExpressionNode transformUnaryExpr(ExprUnaryOp expr) {
         CALExpressionNode result;
         CALExpressionNode valueNode = transformExpr(expr.getOperand());
         switch (expr.getOperation()) {
@@ -310,7 +307,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         return result;
     }
 
-    public ExprBinaryOp prioritieBinaryOperations(ExprBinaryOp expr) {
+    private ExprBinaryOp prioritieBinaryOperations(ExprBinaryOp expr) {
         ImmutableList<String> operations = expr.getOperations();
         ImmutableList<Expression> operands = expr.getOperands();
         if (operations.size() < 2)
@@ -359,7 +356,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
                 ImmutableList.of(operations.get(operationIndex)),
                 ImmutableList.of(prioritieBinaryOperations(left), prioritieBinaryOperations(right)));
     }
-    public CALExpressionNode transformBinaryExpr(ExprBinaryOp expr) {
+    private CALExpressionNode transformBinaryExpr(ExprBinaryOp expr) {
         expr = prioritieBinaryOperations(expr);
         if (expr.getOperations().size() == 0)
             return transformExpr(expr.getOperands().get(0));
@@ -408,17 +405,19 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         return result;
     }
     public CALStatementNode transformSatement(Statement statement) {
+    	CALStatementNode output;
         if (statement instanceof StmtCall) {
-            return transformStmtCall((StmtCall) statement);
+        	output = transformStmtCall((StmtCall) statement);
         } else if (statement instanceof StmtAssignment) {
-            return transformStmtAssignment((StmtAssignment) statement);
+        	output = transformStmtAssignment((StmtAssignment) statement);
         } else if (statement instanceof StmtForeach) {
-            return transformStmtForeach((StmtForeach) statement);
+        	output = transformStmtForeach((StmtForeach) statement);
         } else if (statement instanceof StmtIf) {
-            return transformStmtIf((StmtIf) statement);
+        	output = transformStmtIf((StmtIf) statement);
         } else {
             throw new Error("unknown statement " + statement.getClass().getName());
         }
+        return withSourceSection(output, statement);
     }
 
     private CALStatementNode transformStatementsList(List<Statement> statements) {
@@ -437,7 +436,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
                 elze);
     }
 
-    public CALStatementNode transformStmtForeach(StmtForeach foreach) {
+    private CALStatementNode transformStmtForeach(StmtForeach foreach) {
         Generator generator = foreach.getGenerator();
         CALExpressionNode list = transformExpr(generator.getCollection());
         if (generator.getVarDecls().size() != 1) {
@@ -461,7 +460,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         }
     }
 
-    public CALStatementNode transformStmtAssignment(StmtAssignment stmtAssignment) {
+    private CALStatementNode transformStmtAssignment(StmtAssignment stmtAssignment) {
         if (stmtAssignment.getLValue() instanceof LValueVariable) {
             LValueVariable lvalue = (LValueVariable) stmtAssignment.getLValue();
             String name = lvalue.getVariable().getName();
@@ -477,7 +476,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         }
     }
 
-    public CALInvokeNode transformStmtCall(StmtCall stmtCall) {
+    private CALInvokeNode transformStmtCall(StmtCall stmtCall) {
 
         return new CALInvokeNode(transformExpr(stmtCall.getProcedure()),
                 stmtCall.getArgs().map(new Function<Expression, CALExpressionNode>() {

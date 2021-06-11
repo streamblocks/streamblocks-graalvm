@@ -4,7 +4,7 @@ import com.oracle.truffle.api.source.Source;
 
 import se.lth.cs.tycho.ir.IRNode;
 
-class TransformException extends RuntimeException {
+public class TransformException extends RuntimeException {
     public TransformException(String message, Source source) {
         super(String.format("%s at %s", message, source.getName()));
     }

@@ -89,7 +89,7 @@ public final class CALMain {
         Context context;
         PrintStream err = System.err;
         try {
-            context = Context.newBuilder(SL).in(in).out(out).options(options).build();
+            context = Context.newBuilder(SL).in(in).out(out).options(options).allowExperimentalOptions(true).build();
         } catch (IllegalArgumentException e) {
             err.println(e.getMessage());
             return 1;
@@ -113,6 +113,7 @@ public final class CALMain {
                 // for internal errors we print the full stack trace
                 ex.printStackTrace();
             } else {
+                ex.printStackTrace();
                 err.println(ex.getMessage());
             }
             return 1;

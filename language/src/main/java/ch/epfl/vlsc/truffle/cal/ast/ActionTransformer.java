@@ -180,9 +180,12 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
-        SourceSection actionSrc = context.getSource().createUnavailableSection();//createSection(action.getFromLineNumber(), action.getFromColumnNumber(),
-                //action.getToLineNumber());
-        // FIXME name
-        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, "action-1");
+        SourceSection actionSrc = getSourceSection(action);
+        String name;
+        if (action.getTag() != null)
+        	name = action.getTag().toString();
+        else
+        	name = "unnammed action";
+        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name);
     }
 }

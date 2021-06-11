@@ -95,7 +95,7 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                     List<CALExpressionNode> arguments = new ArrayList<>(entity.getValueParameters().size());
                     for (ValueParameter parameter: entity.getValueParameters())
                         arguments.add(transformExpr(parameter.getValue()));
-                    actors.put(instanceName, new ActorArguments(actorName, arguments.toArray(new CALExpressionNode[arguments.size()])));
+                    actors.put(instanceName, new ActorArguments(actorName, arguments.toArray(new CALExpressionNode[arguments.size()]), getSourceSection(entity)));
                 } else {
                     throw new UnsupportedOperationException("Unknown entity reference in network");
                 }
@@ -156,7 +156,10 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                     args.outputs.size());
 
             CALExpressionNode call = new CALInvokeNode(actor, arguments);
-            headStatements.add(createAssignment(entry.getKey(), call));
+            call.setSourceSection(args.sourceSection);
+            CALStatementNode assignement = createAssignment(entry.getKey(), call);
+            assignement.setSourceSection(args.sourceSection);
+            headStatements.add(assignement);
             i++;
         }
 
@@ -171,10 +174,8 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                 bodyStatements.toArray(new CALExpressionNode[bodyStatements.size()]));
 
         StmtBlockNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
-        SourceSection networkSrc = context.getSource().createUnavailableSection();// .createSection(network.getFromLineNumber(),
-                                                                     // network.getFromColumnNumber(),
-        // network.getToLineNumber());
-        // FIXME wrap in a stmt block node so that library is adopted, don't know why
+        SourceSection networkSrc = getSourceSection(network);
+
         CALRootNode toyRoot = new CALRootNode(context.getLanguage(), context.getFrameDescriptor(), body,
         		context.getSource().createUnavailableSection(), name.toString());
         context.setDepth(context.getDepth()-1);

@@ -30,12 +30,9 @@ public class LetExprTransformer extends ScopedTransformer<LetExprNode> {
         }
         StmtBlockNode varDeclsNode = new StmtBlockNode(varDecls);
         CALExpressionNode bodyNode = transformExpr(letExpr.getBody());
-        // TODO fix CAL parser
-        /*
-         * SourceSection lambdaSrc = source.createSection(lambda.getFromLineNumber(),
-         * lambda.getFromColumnNumber(), lambda.getToLineNumber());
-         */
-        return new LetExprNode(varDeclsNode, bodyNode);
+        
+        
+        return withSourceSection(new LetExprNode(varDeclsNode, bodyNode), letExpr);
     }
 
 }
