@@ -41,7 +41,7 @@
 #
 
 # If you update this number make sure the graalvm.version value in ./pom.xml matches
-VERSION="20.2.0"
+VERSION="20.3.0"
 
 MAIN_CLASS="ch.epfl.vlsc.truffle.cal.launcher.CALMain"
 SCRIPT_HOME="$(cd "$(dirname "$0")" && pwd -P)"
@@ -79,7 +79,7 @@ if [[ "$GRAALVM_VERSION" != "" ]]; then
     JAVACMD="$SCRIPT_HOME/java"
     versionCheck "Installed in wrong version of GraalVM. Expected: $VERSION, found $GRAALVM_VERSION"
 else
-    LANGUAGE_PATH="$SCRIPT_HOME/language/target/callanguage.jar"
+    LANGUAGE_PATH="$SCRIPT_HOME/language/target/cal.jar"
     LAUNCHER_PATH="$SCRIPT_HOME/launcher/target/launcher-$VERSION.jar"
     # Check the GraalVM version in JAVA_HOME
     if [[ "$JAVA_HOME" != "" ]]; then
@@ -115,7 +115,7 @@ if [[ "$GRAALVM_VERSION" != "" ]]; then
         -dump)
             JAVA_ARGS+=("-Dpolyglot.engine.AllowExperimentalOptions=true" "-Dgraal.Dump=Truffle:1" "-Dpolyglot.engine.BackgroundCompilation=false" "-Dpolyglot.engine.TraceCompilation=true" "-Dpolyglot.engine.TraceCompilationDetails=true") ;;
         -disassemble)
-            JAVA_ARGS+=("-Dpolyglot.engine.AllowExperimentalOptions=true" "-XX:CompileCommand=print,*OptimizedCallTarget.callRoot" "-XX:CompileCommand=exclude,*OptimizedCallTarget.callRoot" "-Dpolyglot.engine.BackgroundCompilation=false" "-Dpolyglot.engine.TraceCompilation=true" "-Dpolyglot.engine.TraceCompilationDetails=true") ;;
+            JAVA_ARGS+=("-Dpolyglot.engine.AllowExperimentalOptions=true" "-XX:CompileCommand=print,*OptimizedCallTarget.profiledPERoot" "-XX:CompileCommand=exclude,*OptimizedCallTarget.profiledPERoot" "-Dpolyglot.engine.BackgroundCompilation=false" "-Dpolyglot.engine.TraceCompilation=true" "-Dpolyglot.engine.TraceCompilationDetails=true") ;;
         -J*)
             opt=${opt:2}
             JAVA_ARGS+=("$opt") ;;

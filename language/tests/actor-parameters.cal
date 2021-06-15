@@ -1,0 +1,50 @@
+namespace simple.dwf:
+    /*
+     * Source actor
+     * Produces 16 token from 0 to 15, and send them to output OUT.
+     */
+    actor Source(int MIN, int MAX)
+        ==> int OUT:
+
+        int Counter := MIN;
+
+        action ==> OUT:[token]
+        guard
+            Counter < MAX
+        var
+            int token = Counter
+        do
+            Counter := Counter + 1;
+        end
+
+    end
+
+    /*
+     * Sink actor
+     * Consumes identfinetly tokens from the input port IN,
+     * and prints the tokens to the standart output.
+     */
+    actor Sink()
+        int IN ==> :
+
+        action IN:[token] ==>
+        do
+            println(token);
+        end
+    end
+
+    /*
+     * SourceSink network
+     * Instatiates Source and Sink actors and interconnects them.
+     */
+    network SourceSink()
+        ==> :
+
+        entities
+            source = Source(MIX=10, MAX=20);
+            sink = Sink();
+        structure
+            source.OUT --> sink.IN;
+    end
+
+end

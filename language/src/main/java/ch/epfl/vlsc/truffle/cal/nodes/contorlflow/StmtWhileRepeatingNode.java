@@ -1,8 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.nodes.contorlflow;
 
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
-import ch.epfl.vlsc.truffle.cal.nodes.StmtNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprUnboxNodeGen;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -10,14 +7,18 @@ import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ExprUnboxNodeGen;
+
 public final class StmtWhileRepeatingNode extends Node implements RepeatingNode {
 
 
     @Child
-    private ExprNode conditionNode;
+    private CALExpressionNode conditionNode;
 
     @Child
-    private StmtNode bodyNode;
+    private CALStatementNode bodyNode;
 
     /**
      * Profiling information, collected by the interpreter, capturing whether a {@code continue}
@@ -27,7 +28,7 @@ public final class StmtWhileRepeatingNode extends Node implements RepeatingNode 
     private final BranchProfile continueTaken = BranchProfile.create();
     private final BranchProfile breakTaken = BranchProfile.create();
 
-    public StmtWhileRepeatingNode(ExprNode conditionNode, StmtNode bodyNode) {
+    public StmtWhileRepeatingNode(CALExpressionNode conditionNode, CALStatementNode bodyNode) {
         this.conditionNode = ExprUnboxNodeGen.create(conditionNode);
         this.bodyNode = bodyNode;
     }
@@ -78,7 +79,7 @@ public final class StmtWhileRepeatingNode extends Node implements RepeatingNode 
 
     @Override
     public String toString() {
-        return StmtNode.formatSourceSection(this);
+        return CALStatementNode.formatSourceSection(this);
     }
 
 }

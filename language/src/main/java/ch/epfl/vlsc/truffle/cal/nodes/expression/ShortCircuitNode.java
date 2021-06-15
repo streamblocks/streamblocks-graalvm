@@ -1,17 +1,19 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
-import ch.epfl.vlsc.truffle.cal.CALException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-public abstract class ShortCircuitNode extends ExprNode {
+import ch.epfl.vlsc.truffle.cal.CALException;
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+
+public abstract class ShortCircuitNode extends CALExpressionNode {
 
     @Node.Child
-    private ExprNode left;
+    private CALExpressionNode left;
     @Node.Child
-    private ExprNode right;
+    private CALExpressionNode right;
 
     /**
      * Short circuits might be used just like a conditional statement it makes sense to profile the
@@ -19,7 +21,7 @@ public abstract class ShortCircuitNode extends ExprNode {
      */
     private final ConditionProfile evaluateRightProfile = ConditionProfile.createCountingProfile();
 
-    public ShortCircuitNode(ExprNode left, ExprNode right) {
+    public ShortCircuitNode(CALExpressionNode left, CALExpressionNode right) {
         this.left = left;
         this.right = right;
     }

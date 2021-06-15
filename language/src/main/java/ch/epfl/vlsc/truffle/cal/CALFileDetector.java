@@ -1,9 +1,9 @@
 package ch.epfl.vlsc.truffle.cal;
 
-import com.oracle.truffle.api.TruffleFile;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
+
+import com.oracle.truffle.api.TruffleFile;
 
 public class CALFileDetector implements TruffleFile.FileTypeDetector {
 

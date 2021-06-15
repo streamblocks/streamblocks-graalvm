@@ -1,13 +1,13 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.types.CALType;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.utilities.TriState;
+
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 @ExportLibrary(InteropLibrary.class)
 @SuppressWarnings("static-method")

@@ -1,0 +1,13 @@
+namespace test:
+	actor test() ==> :
+		action ==>
+		do
+            foreach int i in 0..7 do
+              foreach int j in 0..7 do
+                println((i*8)+j);
+              end
+            end
+		end
+	end
+end
+

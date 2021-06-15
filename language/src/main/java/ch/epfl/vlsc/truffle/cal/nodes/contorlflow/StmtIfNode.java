@@ -1,15 +1,16 @@
 package ch.epfl.vlsc.truffle.cal.nodes.contorlflow;
 
-import ch.epfl.vlsc.truffle.cal.CALException;
-import ch.epfl.vlsc.truffle.cal.nodes.StmtNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprUnboxNodeGen;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-public class StmtIfNode extends StmtNode {
+import ch.epfl.vlsc.truffle.cal.CALException;
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ExprUnboxNodeGen;
+
+public class StmtIfNode extends CALStatementNode {
 
     /**
      * The condition of the {@code if}. This in a {@link ExprNode} because we require a
@@ -17,18 +18,18 @@ public class StmtIfNode extends StmtNode {
      * {@link #evaluateCondition executing the condition} can lead to a type error.
      */
     @Node.Child
-    private ExprNode conditionNode;
+    private CALExpressionNode conditionNode;
 
     @Node.Child
-    private StmtNode thenPartNode;
+    private CALStatementNode thenPartNode;
 
     @Node.Child
-    private StmtNode elsePartNode;
+    private CALStatementNode elsePartNode;
 
 
     private final ConditionProfile condition = ConditionProfile.createCountingProfile();
 
-    public StmtIfNode(ExprNode conditionNode, StmtNode thenPartNode, StmtNode elsePartNode) {
+    public StmtIfNode(CALExpressionNode conditionNode, CALStatementNode thenPartNode, CALStatementNode elsePartNode) {
         this.conditionNode = ExprUnboxNodeGen.create(conditionNode);
         this.thenPartNode = thenPartNode;
         this.elsePartNode = elsePartNode;
@@ -44,7 +45,7 @@ public class StmtIfNode extends StmtNode {
             /* Execute the then-branch. */
             thenPartNode.executeVoid(frame);
         } else {
-            /* Execute the else-branch (which is optional according to the SL syntax). */
+            /* Execute the else-branch (which is optional according to the CAL syntax). */
             if (elsePartNode != null) {
                 elsePartNode.executeVoid(frame);
             }

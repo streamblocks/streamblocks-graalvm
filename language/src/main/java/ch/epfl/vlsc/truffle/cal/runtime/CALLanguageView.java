@@ -2,8 +2,6 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 
 import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.types.CALType;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -13,6 +11,8 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "delegate")
@@ -99,7 +99,7 @@ public final class CALLanguageView implements TruffleObject {
                 }
             }
         }
-        return "Unsupported";
+        return "Unsupported to string conversion";
     }
 
     /*

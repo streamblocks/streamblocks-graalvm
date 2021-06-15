@@ -1,0 +1,16 @@
+namespace test.a:
+    /*
+     * Sink actor
+     * Consumes identfinetly tokens from the input port IN, 
+     * and prints the tokens to the standart output.
+     */
+    actor Sink()
+        int IN ==> :
+    
+        action IN:[token] ==>
+        do 
+            println("Value");
+            println(token);
+        end
+    end
+end

@@ -1,0 +1,14 @@
+namespace test:
+
+	actor test() ==> :
+		action ==>
+		var
+			bool a := true
+		do
+            if a then
+                println("TRUE");
+            end
+		end
+	end
+end
+

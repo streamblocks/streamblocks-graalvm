@@ -1,19 +1,26 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
-import ch.epfl.vlsc.truffle.cal.nodes.util.ToFieldNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALUndefinedNameException;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.*;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
+
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ToFieldNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALUndefinedNameException;
 
 @NodeInfo(shortName = ".=")
 @NodeChild("receiverNode")
 @NodeChild("nameNode")
 @NodeChild("valueNode")
-public abstract class ExprFieldWriteNode extends ExprNode {
+
+public abstract class ExprFieldWriteNode extends CALExpressionNode {
 
     static final int LIBRARY_LIMIT = 3;
 

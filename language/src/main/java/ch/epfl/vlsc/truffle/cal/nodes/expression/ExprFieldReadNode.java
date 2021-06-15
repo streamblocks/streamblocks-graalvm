@@ -1,7 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression;
 
-import ch.epfl.vlsc.truffle.cal.nodes.util.ToFieldNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALUndefinedNameException;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -12,10 +10,14 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ToFieldNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALUndefinedNameException;
+
 @NodeInfo(shortName = ".")
 @NodeChild("receiverNode")
 @NodeChild("nameNode")
-public abstract class ExprFieldReadNode extends ExprNode {
+public abstract class ExprFieldReadNode extends CALExpressionNode {
 
     static final int LIBRARY_LIMIT = 3;
 

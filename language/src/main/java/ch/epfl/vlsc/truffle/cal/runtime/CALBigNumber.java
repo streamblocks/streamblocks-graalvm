@@ -1,7 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.types.CALType;
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -10,7 +10,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-import java.math.BigInteger;
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 @ExportLibrary(InteropLibrary.class)
 @SuppressWarnings("static-method")

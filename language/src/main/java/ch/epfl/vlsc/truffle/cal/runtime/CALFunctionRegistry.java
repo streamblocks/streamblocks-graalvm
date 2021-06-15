@@ -1,11 +1,16 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 
-import java.util.*;
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 public class CALFunctionRegistry {
     private final CALLanguage language;

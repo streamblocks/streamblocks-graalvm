@@ -4,12 +4,14 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-public class ExprParenNode extends ExprNode {
+import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+
+public class ExprParenNode extends CALExpressionNode {
 
     @Node.Child
-    private ExprNode expression;
+    private CALExpressionNode expression;
 
-    public ExprParenNode(ExprNode expression) {
+    public ExprParenNode(CALExpressionNode expression) {
         this.expression = expression;
     }
 
