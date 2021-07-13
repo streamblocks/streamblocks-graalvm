@@ -82,6 +82,7 @@ public class CALContext {
     /**
      * Returns the registry of all actors that are currently defined.
      */
+    // TODO rename getEntityRegistry
     public CALActorRegistry getActorRegistry() {
         return actorRegistry;
     }
