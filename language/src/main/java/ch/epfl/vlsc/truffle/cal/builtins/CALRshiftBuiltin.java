@@ -13,7 +13,7 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
 
 
 /**
- * Builtin function to write a value to the {@link SLContext#getOutput() standard output}. The
+ * Builtin function to write a value to the {@link CALContext#getOutput() standard output}. The
  * different specialization leverage the typed {@code println} methods available in Java, i.e.,
  * primitive values are printed without converting them to a {@link String} first.
  * <p>
