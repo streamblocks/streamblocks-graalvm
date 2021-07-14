@@ -1,7 +1,7 @@
 # StreamBlock graalvm
 
 ## Usage
-Set JAVA_HOME to graalvm 20.3.0 version root and add graalvm-20.3.0/bin subfolder to PATH.
+Set environment variable ```JAVA_HOME``` to GraalVM version 21.1.0 root directory and add ```bin``` subfolder to PATH.
 ```
 export SL_BUILD_NATIVE=false
 mvn package
