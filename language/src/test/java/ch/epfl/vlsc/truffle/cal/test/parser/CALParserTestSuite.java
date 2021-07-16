@@ -1,5 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.test.parser;
 
+import ch.epfl.vlsc.truffle.cal.parser.CalLexer;
+import ch.epfl.vlsc.truffle.cal.parser.CalParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
