@@ -23,6 +23,7 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
 import ch.epfl.vlsc.truffle.cal.builtins.CALLshiftBuiltinFactory;
 import ch.epfl.vlsc.truffle.cal.builtins.CALPrintlnBuiltinFactory;
+import ch.epfl.vlsc.truffle.cal.builtins.CALPrintBuiltinFactory;
 import ch.epfl.vlsc.truffle.cal.builtins.CALRshiftBuiltinFactory;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
@@ -82,6 +83,7 @@ public class CALContext {
     /**
      * Returns the registry of all actors that are currently defined.
      */
+    // TODO rename getEntityRegistry
     public CALActorRegistry getActorRegistry() {
         return actorRegistry;
     }
@@ -90,6 +92,7 @@ public class CALContext {
         installBuiltin(CALRshiftBuiltinFactory.getInstance());
         installBuiltin(CALLshiftBuiltinFactory.getInstance());
         installBuiltin(CALPrintlnBuiltinFactory.getInstance());
+        installBuiltin(CALPrintBuiltinFactory.getInstance());
     }
 
     public void installBuiltin(NodeFactory<? extends CALBuiltinNode> factory) {

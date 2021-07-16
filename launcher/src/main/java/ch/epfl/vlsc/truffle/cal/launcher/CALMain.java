@@ -47,6 +47,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -55,7 +56,7 @@ import org.graalvm.polyglot.Value;
 
 public final class CALMain {
 
-    private static final String SL = "cal";
+    private static final String CAL = "cal";
 
     /**
      * The main entry point.
@@ -76,10 +77,10 @@ public final class CALMain {
 
         if (file == null) {
             // @formatter:off
-            source = Source.newBuilder(SL, new InputStreamReader(System.in), "<stdin>").build();
+            source = Source.newBuilder(CAL, new InputStreamReader(System.in), "<stdin>").build();
             // @formatter:on
         } else {
-            source = Source.newBuilder(SL, new File(file)).build();
+            source = Source.newBuilder(CAL, new File(file)).build();
         }
 
         System.exit(executeSource(source, System.in, System.out, options));
@@ -89,7 +90,7 @@ public final class CALMain {
         Context context;
         PrintStream err = System.err;
         try {
-            context = Context.newBuilder(SL).in(in).out(out).options(options).allowExperimentalOptions(true).build();
+            context = Context.newBuilder(CAL).in(in).out(out).options(options).allowExperimentalOptions(true).build();
         } catch (IllegalArgumentException e) {
             err.println(e.getMessage());
             return 1;
@@ -99,8 +100,8 @@ public final class CALMain {
         try {
             Value result = context.eval(source);
             String actorToCall = options.get("cal.actor") != null ? options.get("cal.actor") : "main";
-            //FIXME
-            if (context.getBindings(SL).getMember(actorToCall) == null) {
+
+            if (context.getBindings(CAL).getMember(actorToCall) == null) {
                 err.println("No actor "+actorToCall+" defined in CAL source file, please specify using --cal.actor=<actor name>.");
                 return 1;
             }
