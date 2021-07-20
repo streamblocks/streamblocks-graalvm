@@ -27,6 +27,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerOrEqualNo
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryDivNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryEqualNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
@@ -392,6 +393,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             break;
         case ">":
             result = CALBinaryBiggerThanNodeGen.create(left, right);
+            break;
+        case "=":
+            result = CALBinaryEqualNodeGen.create(left, right);
             break;
         case "..":
             result = ListRangeInitNodeGen.create(left, right);

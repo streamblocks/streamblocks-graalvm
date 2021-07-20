@@ -41,6 +41,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void actionSelectionGuardTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-guard").setIterations(10).build());
+    }
+
+    @Test
     public void precedenceTest() throws IOException {
         runTest(TestCase.newBuilder("precedence").build());
     }
