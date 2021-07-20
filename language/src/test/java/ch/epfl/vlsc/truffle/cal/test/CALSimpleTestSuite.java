@@ -59,6 +59,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore("Not implemented yet")
     public void actionSelectionPriorityGuardTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-priorityguard").setIterations(10).build());
     }
