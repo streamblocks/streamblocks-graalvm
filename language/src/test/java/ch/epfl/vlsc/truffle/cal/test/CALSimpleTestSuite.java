@@ -22,6 +22,7 @@ import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -43,6 +44,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void actionSelectionGuardTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-guard").setIterations(10).build());
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    public void actionSelectionFsmTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-schedulefsm").setIterations(10).build());
     }
 
     @Test
