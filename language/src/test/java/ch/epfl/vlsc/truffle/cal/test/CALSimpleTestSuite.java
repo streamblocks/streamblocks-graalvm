@@ -54,6 +54,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
 
     @Test
     @Ignore("Not implemented yet")
+    public void actionSelectionRegexTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-scheduleregex").setIterations(10).build());
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
     public void actionSelectionPriorityFsmTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-priorityfsm").setIterations(10).build());
     }
