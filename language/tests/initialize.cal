@@ -1,0 +1,26 @@
+namespace test:
+    actor test () ==> :
+        state := 3;
+
+        action ==>
+        guard state = 0
+        do
+                state := 1;
+                println(0);
+        end
+
+        action ==>
+        guard state = 1
+        do
+                state := 0;
+                println(1);
+        end
+
+        initialize ==>
+        do
+                state := 0;
+                println(2);
+        end
+    end
+end
+

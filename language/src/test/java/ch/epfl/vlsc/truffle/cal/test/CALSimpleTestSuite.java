@@ -92,6 +92,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore("Not implemented yet")
+    public void initializeTest() throws IOException {
+        runTest(TestCase.newBuilder("initialize").setIterations(10).build());
+    }
+
+    @Test
     public void lambdaTest() throws IOException {
         runTest(TestCase.newBuilder("lambda").build());
     }
