@@ -77,6 +77,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore("Not implemented yet")
+    public void actionSelectionPriorityFsmGuardTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-priorityfsmguard").setIterations(10).build());
+    }
+
+    @Test
     public void precedenceTest() throws IOException {
         runTest(TestCase.newBuilder("precedence").build());
     }
