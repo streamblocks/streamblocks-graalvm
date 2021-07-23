@@ -5,18 +5,19 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import se.lth.cs.tycho.ir.QID;
 
 public class ActorNode extends CALRootNode {
 
     @Child ActorInstantiateNode instantiateNode;
-    private ActionNode[] actions;
-    private final String name;
+    @Children private ActionNode[] actions;
+    private final QID name;
     private boolean isCloningAllowed;
     private final SourceSection sourceSection;
 
-    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, CALStatementNode head, SourceSection sourceSection, String name) {
+    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, CALStatementNode head, SourceSection sourceSection, QID name) {
         // FIXME null-hack
-        super(language, frameDescriptor, null, sourceSection, name);
+        super(language, frameDescriptor, null, sourceSection, name.toString());
         this.actions = actions;
         this.sourceSection = sourceSection;
         this.name = name;
@@ -48,7 +49,7 @@ public class ActorNode extends CALRootNode {
 
     @Override
     public String getName() {
-        return name;
+        return name.toString();
     }
 
     public void setCloningAllowed(boolean isCloningAllowed) {

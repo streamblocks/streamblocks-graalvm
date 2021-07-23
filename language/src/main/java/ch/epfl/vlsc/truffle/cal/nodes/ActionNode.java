@@ -6,19 +6,20 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import se.lth.cs.tycho.ir.QID;
 
 public final class ActionNode extends CALRootNode {
     @Child
     private CALExpressionNode body;
     @Child
     private CALExpressionNode firingCondition;
-    private final String name;
+    private final QID name;
     private boolean isCloningAllowed;
     private final SourceSection sourceSection;
 
     public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body,
-            CALExpressionNode firingCondition, SourceSection sourceSection, String name) {
-        super(language, frameDescriptor, body, sourceSection, name);
+                      CALExpressionNode firingCondition, SourceSection sourceSection, QID name) {
+        super(language, frameDescriptor, body, sourceSection, name.toString());
         this.body = body;
         this.firingCondition = firingCondition;
         this.sourceSection = sourceSection;
@@ -55,7 +56,7 @@ public final class ActionNode extends CALRootNode {
 
     @Override
     public String getName() {
-        return name;
+        return name.toString();
     }
 
     public void setCloningAllowed(boolean isCloningAllowed) {

@@ -65,7 +65,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
         SourceSection actorSrc = getSourceSection(actor);
-        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, head, actorSrc, name.toString());
+        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, head, actorSrc, name);
     }
 
     public ActionNode transformAction(Action action) {
