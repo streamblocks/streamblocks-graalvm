@@ -74,6 +74,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("action-selection-priorityguard").setIterations(10).build());
     }
 
+    @Test(expected = RuntimeException.class)
+    public void actionSelectionPriorityAntiSymmetry() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-priorityantisymmetry").setIterations(10).build());
+    }
+
     @Test
     @Ignore("Not implemented yet")
     public void actionSelectionPriorityFsmGuardTest() throws IOException {

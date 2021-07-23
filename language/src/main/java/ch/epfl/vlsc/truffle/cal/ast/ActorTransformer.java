@@ -163,7 +163,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             if (visited[i] == NodeStatus.Unvisited)
                 recursiveTopologicalSort(i, visited, neighbours, topologicallySorted);
             else if(visited[i] == NodeStatus.Inprogress)
-                throw new RuntimeException("Order defined by priorities is not a Partial Order");
+                throw new RuntimeException("Action priority order defined is not an irreflexive partial order. The priority inequalities are valid iff the induced relation on the actions is an irreflexive partial order, i.e. it is antisymmetric and transitive.");
         }
         visited[v] = NodeStatus.Visited;
         topologicallySorted.add(v);
