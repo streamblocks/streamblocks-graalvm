@@ -1,20 +1,25 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.oracle.truffle.api.source.SourceSection;
-
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import com.oracle.truffle.api.source.SourceSection;
 import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.CalActor;
+import se.lth.cs.tycho.ir.util.ImmutableList;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ActorTransformer extends ScopedTransformer<ActorNode> {
 
@@ -64,8 +69,104 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         // FIXME we can probably use a StmtBlockNode
         CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
+
+        // Order the actions by priorities
+        if(!this.actor.getPriorities().isEmpty())
+            topologicalSortByPriorities(actions, this.actor.getPriorities());
+
         SourceSection actorSrc = getSourceSection(actor);
         return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, head, actorSrc, name);
+    }
+
+    /**
+     * Sort the array @param actions in an order that respects the partial order induced by @param priorities
+     */
+    private void topologicalSortByPriorities(ActionNode[] actions, ImmutableList<ImmutableList<QID>> priorities){
+        // TODO : A Lot of optimizations can be performed in this method
+        // Reducing space usage by considering only actions[i:] instead of the full array
+        // Change recursive method to iterative
+        // Modify the algorithm to permute the array
+
+        int i = 0;
+
+        // Move all the unnamed actions to the front of the list to give them maximum priority
+        while(i < actions.length && actions[i].getName().equals(ActionTransformer.UNNAMED_ACTION)) ++i;
+        for(int j = i+1; j < actions.length; ++j){
+            if(actions[j].getName().equals(ActionTransformer.UNNAMED_ACTION)){
+                ActionNode temp = actions[i];
+                actions[i++] = actions[j];
+                actions[j] = temp;
+            }
+        }
+
+        // Now topologically sort the remaining elements in the array actions[i:] to get an
+        // ordering of actions based on priority
+
+        // Create a mapping from All QID prefixes to action names
+        Map<List<String>, List<Integer>> tagToActions = new HashMap<List<String>, List<Integer>>();
+        for(int j = i; j < actions.length; ++j){
+            QID q = actions[j].getQID();
+            while(q.getNameCount() > 0){
+                if(tagToActions.containsKey(q.parts())) tagToActions.get(q.parts()).add(j);
+                else tagToActions.put(q.parts(), new LinkedList(Arrays.asList(j)));
+                q = q.getButLast();
+            }
+        }
+
+        // Create adjacency list of neighbours based on priority order
+        List<Integer>[] neighbours = new List[actions.length]; // TODO i space slots can be saved here
+        Arrays.setAll(neighbours, x -> new LinkedList<>());
+        for(ImmutableList<QID> priority: priorities){
+            for(int k = 0; k + 1 < priority.size(); ++k){
+                for(int sourceAction: tagToActions.get(priority.get(k+1).parts())){
+                    for(int targetAction: tagToActions.get(priority.get(k).parts())){
+                        neighbours[sourceAction].add(targetAction);
+                    }
+                }
+            }
+        }
+
+        // Perform the topological sorting by DFS over the graph
+        ArrayList<Integer> topologicallySorted = new ArrayList<Integer>(actions.length);
+        for(int j = 0; j < i; ++j) topologicallySorted.add(j);
+        // TODO i slots space can be saved at this point, since we only need to process actions.length - i nodes
+        NodeStatus visited[] = new NodeStatus[actions.length];
+        for (int j = i; j < actions.length; j++)
+            visited[j] = NodeStatus.Unvisited;
+
+        for (int j = i; j < actions.length; j++)
+            if (visited[j] == NodeStatus.Unvisited)
+                recursiveTopologicalSort(j, visited, neighbours, topologicallySorted);
+
+        // Permute the original array as per the ordering obtained by topological sorting
+        for (int j = 0; j < actions.length; j++) {
+            int next = j;
+            while (topologicallySorted.get(next) >= 0) {
+                ActionNode t = actions[j];
+                actions[j] = actions[topologicallySorted.get(next)];
+                actions[topologicallySorted.get(next)] = t;
+                int temp = topologicallySorted.get(next);
+                topologicallySorted.set(next, temp - actions.length);
+                next = temp;
+            }
+        }
+    }
+
+    private enum NodeStatus {Unvisited, Inprogress, Visited}
+
+    private void recursiveTopologicalSort(int v, NodeStatus[] visited, List<Integer>[] neighbours, List<Integer> topologicallySorted) {
+        visited[v] = NodeStatus.Inprogress;
+        Iterator<Integer> it = neighbours[v].iterator();
+        while (it.hasNext())
+        {
+            int i = it.next();
+            if (visited[i] == NodeStatus.Unvisited)
+                recursiveTopologicalSort(i, visited, neighbours, topologicallySorted);
+            else if(visited[i] == NodeStatus.Inprogress)
+                throw new RuntimeException("Order defined by priorities is not a Partial Order");
+        }
+        visited[v] = NodeStatus.Visited;
+        topologicallySorted.add(v);
     }
 
     public ActionNode transformAction(Action action) {

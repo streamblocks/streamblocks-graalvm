@@ -59,6 +59,10 @@ public final class ActionNode extends CALRootNode {
         return name.toString();
     }
 
+    public QID getQID() {
+        return name;
+    }
+
     public void setCloningAllowed(boolean isCloningAllowed) {
         this.isCloningAllowed = isCloningAllowed;
     }
