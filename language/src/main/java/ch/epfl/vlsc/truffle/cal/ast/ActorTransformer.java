@@ -13,13 +13,7 @@ import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.CalActor;
 import se.lth.cs.tycho.ir.util.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Iterator;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ActorTransformer extends ScopedTransformer<ActorNode> {
 
@@ -69,13 +63,16 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         // FIXME we can probably use a StmtBlockNode
         CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
+        ActionNode[] initializeractions = this.actor.getInitializers().map(x -> transformAction(x)).toArray(new ActionNode[0]);
 
         // Order the actions by priorities
-        if(!this.actor.getPriorities().isEmpty())
+        if(!this.actor.getPriorities().isEmpty()) {
             topologicalSortByPriorities(actions, this.actor.getPriorities());
+            topologicalSortByPriorities(initializeractions, this.actor.getPriorities());
+        }
 
         SourceSection actorSrc = getSourceSection(actor);
-        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, head, actorSrc, name);
+        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, initializeractions, head, actorSrc, name);
     }
 
     /**
@@ -118,8 +115,8 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         Arrays.setAll(neighbours, x -> new LinkedList<>());
         for(ImmutableList<QID> priority: priorities){
             for(int k = 0; k + 1 < priority.size(); ++k){
-                for(int sourceAction: tagToActions.get(priority.get(k+1).parts())){
-                    for(int targetAction: tagToActions.get(priority.get(k).parts())){
+                for(int sourceAction: tagToActions.getOrDefault(priority.get(k+1).parts(), Collections.emptyList())){
+                    for(int targetAction: tagToActions.getOrDefault(priority.get(k).parts(), Collections.emptyList())){
                         neighbours[sourceAction].add(targetAction);
                     }
                 }
@@ -128,6 +125,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
 
         // Perform the topological sorting by DFS over the graph
         ArrayList<Integer> topologicallySorted = new ArrayList<Integer>(actions.length);
+        // TODO this loop can be easily removed by making changes as per the next todo
         for(int j = 0; j < i; ++j) topologicallySorted.add(j);
         // TODO i slots space can be saved at this point, since we only need to process actions.length - i nodes
         NodeStatus visited[] = new NodeStatus[actions.length];
@@ -139,6 +137,8 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
                 recursiveTopologicalSort(j, visited, neighbours, topologicallySorted);
 
         // Permute the original array as per the ordering obtained by topological sorting
+        // The array topologicallySorted is a permutation on the indices of the array actions
+        // We use the permutation cycle algorithm to swap elements in succession to obtain the permuted array
         for (int j = 0; j < actions.length; j++) {
             int next = j;
             while (topologicallySorted.get(next) >= 0) {

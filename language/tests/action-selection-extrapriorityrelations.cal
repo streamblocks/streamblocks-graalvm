@@ -1,0 +1,25 @@
+namespace test:
+    actor test () ==>:
+        A: action ==>
+        do
+                println(3);
+        end
+
+        B: action ==>
+        do
+                println(2);
+        end
+
+        C: action ==>
+        do
+                println(1);
+        end
+        priority
+            C > B > A;
+            D > E;
+            X > Y;
+            F > C;
+        end
+    end
+end
+

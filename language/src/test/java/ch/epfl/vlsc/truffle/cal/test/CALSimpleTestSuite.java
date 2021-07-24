@@ -85,6 +85,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void actionSelectionExtraPriorityRelations() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-extrapriorityrelations").setIterations(10).build());
+    }
+
+    @Test
     @Ignore("Not implemented yet")
     public void actionSelectionPriorityFsmGuardTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-priorityfsmguard").setIterations(10).build());
@@ -106,7 +111,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Not implemented yet")
     public void initializeTest() throws IOException {
         runTest(TestCase.newBuilder("initialize").setIterations(10).build());
     }
