@@ -79,8 +79,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("action-selection-priorityantisymmetry").setIterations(10).build());
     }
 
-    @Test
-    @Ignore("Failing. Priorities has wrong implementation")
+    @Test(expected = RuntimeException.class)
     public void actionSelectionPriorityGuardPrefix() throws IOException {
         runTest(TestCase.newBuilder("action-selection-priorityguardprefix").setIterations(10).build());
     }
