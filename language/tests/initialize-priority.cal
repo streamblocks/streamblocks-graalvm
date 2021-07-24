@@ -16,11 +16,28 @@ namespace test:
                 println(1);
         end
 
-        initialize ==>
+        A: initialize ==>
+        guard state = 1
+        do
+                state := 0;
+                println(3);
+        end
+
+        B: initialize ==>
+        guard state = 3
+        do
+                state := 0;
+                println(4);
+        end
+
+        C: initialize ==>
+        guard state = 3
         do
                 state := 0;
                 println(2);
         end
+
+        priority C > B; end
     end
 end
 
