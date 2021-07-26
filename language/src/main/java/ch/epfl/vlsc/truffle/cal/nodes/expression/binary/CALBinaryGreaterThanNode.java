@@ -8,23 +8,22 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import ch.epfl.vlsc.truffle.cal.CALException;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
-@NodeInfo(shortName = "<=")
-public abstract class CALBinaryBiggerOrEqualNode extends CALBinaryNode {
-
+@NodeInfo(shortName = "<")
+public abstract class CALBinaryGreaterThanNode extends CALBinaryNode {
     @Specialization
-    protected boolean biggerOrEqual(long left, long right) {
-        return left >= right;
+    protected boolean greaterThan(long left, long right) {
+        return left > right;
     }
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected boolean biggerOrEqual(CALBigNumber left, CALBigNumber right) {
-        return left.compareTo(right) >= 0;
+    protected boolean greaterThan(CALBigNumber left, CALBigNumber right) {
+        return left.compareTo(right) > 0;
     }
 
     @Fallback
     protected Object typeError(Object left, Object right) {
         throw CALException.typeError(this, left, right);
     }
-}
 
+}

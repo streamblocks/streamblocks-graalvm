@@ -7,7 +7,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import ch.epfl.vlsc.truffle.cal.CALException;
 
 @NodeInfo(shortName = "not")
-public abstract class CALUnaryLogicalNode extends ExprUnaryNode {
+public abstract class CALUnaryLogicalNotNode extends ExprUnaryNode {
     @Specialization
     protected boolean doBoolean(boolean value) {
         return !value;

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.SourceSection;
@@ -22,21 +23,12 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerThanNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryDivNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
@@ -299,7 +291,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             result = CALUnaryMinusNodeGen.create(valueNode);
             break;
         case "not":
-            result = CALUnaryLogicalNodeGen.create(valueNode);
+            result = CALUnaryLogicalNotNodeGen.create(valueNode);
             break;
         default:
             throw new Error("unimplemented unary op " + expr.getOperation());
@@ -388,10 +380,10 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             result = CALBinaryLessThanNodeGen.create(left, right);
             break;
         case ">=":
-            result = CALBinaryBiggerOrEqualNodeGen.create(left, right);
+            result = CALBinaryGreaterOrEqualNodeGen.create(left, right);
             break;
         case ">":
-            result = CALBinaryBiggerThanNodeGen.create(left, right);
+            result = CALBinaryGreaterThanNodeGen.create(left, right);
             break;
         case "..":
             result = ListRangeInitNodeGen.create(left, right);
