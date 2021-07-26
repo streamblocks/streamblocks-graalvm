@@ -7,10 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
@@ -31,8 +27,6 @@ import org.junit.Assume;
 import org.junit.runner.Description;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-
-import ch.epfl.vlsc.truffle.cal.test.CALTestSuite.TestCase;
 
 abstract class CALTestSuite {
 	private static final String SOURCE_SUFFIX = ".cal";

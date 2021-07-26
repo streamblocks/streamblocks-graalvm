@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParser;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
@@ -86,9 +87,10 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         return new CALContext(this, env, new ArrayList<>(EXTERNAL_BUILTINS));
     }
 
-    private RootCallTarget getRootCall(Map<QID, RootCallTarget> actors, Source source) {
+    private RootCallTarget getRootCall(Map<String, RootCallTarget> actors, Source source) {
         String actorName = getCurrentContext().getEnv().getOptions().get(CALLanguage.ActorToRun);
-        RootCallTarget startNode = actors.get(QID.parse(actorName));
+        //RootCallTarget startNode = actors.get(QID.parse(actorName));
+        RootCallTarget startNode = actors.get(actorName);
         assert startNode != null;
         CALExpressionNode actor = new ActorLiteralNode(actorName);
         CALExpressionNode call = new CALInvokeNode(actor, new CALExpressionNode[0]);
@@ -143,7 +145,17 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             allFiles = getFilesRecursively(entry.getParentFile());
         else
             allFiles = Arrays.asList(entry);
-        Map<QID, RootCallTarget> entities = new HashMap<>();
+
+        Map<String, RootCallTarget> entities = new HashMap<>();
+        for (File file : allFiles) {
+            Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
+            entities.putAll(CALParser.parseCAL(this, iSource));
+        }
+
+        return Truffle.getRuntime()
+                .createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), entities));
+
+        /*Map<QID, RootCallTarget> entities = new HashMap<>();
         for (File file : allFiles) {
             CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
             NamespaceDecl decl = parser.CompilationUnit();
@@ -155,7 +167,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         for (Entry<QID, RootCallTarget> e : entities.entrySet())
             parsedEntities.put(e.getKey().toString(), e.getValue());
         return Truffle.getRuntime()
-                .createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), parsedEntities));
+                .createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), parsedEntities));*/
     }
 
     public RootCallTarget lookupBuiltin(NodeFactory<? extends CALBuiltinNode> factory) {
