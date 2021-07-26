@@ -49,7 +49,7 @@
  *  - Documentation comment
  */
 
-lexer grammar CalLexer;
+lexer grammar CALLexer;
 
 // ----------------------------------------------------------------------------
 // -- Keywords (CLR §Appendix B + NLR §2, §3, §4)

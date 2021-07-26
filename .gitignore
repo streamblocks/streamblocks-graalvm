@@ -40,3 +40,8 @@ tags
 .vim
 
 .vimspector.json
+
+# Antlr
+antlr-4.7.1-complete.jar
+*.interp
+*.tokens
