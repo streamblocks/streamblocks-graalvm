@@ -119,15 +119,10 @@ public static Map<String, RootCallTarget> parseCAL(CALLanguage language, Source 
 
 compilationUnit returns [Map<String, RootCallTarget> result]
     :
-        { factory.initializeCompilationUnit(); }
-        (
-            namespaceDeclaration { factory.setCompilationUnitEntities($namespaceDeclaration.result); }
-            EOF
-            |
-            unitDeclaration
-            EOF
-        )
-        { $result = factory.finalizeCompilationUnit(); }
+        namespaceDeclaration EOF
+        { $result = $namespaceDeclaration.result; }
+        |
+        unitDeclaration EOF
     ;
 
 // ----------------------------------------------------------------------------
@@ -136,42 +131,41 @@ compilationUnit returns [Map<String, RootCallTarget> result]
 
 namespaceDeclaration returns [Map<String, RootCallTarget> result]
     :
-        { factory.initializeNamespace(); }
-        (
-            namespaceBody { factory.setNamespaceEntities($namespaceBody.result); }
-            |
-            DOC_COMMENT*
-            'namespace'
-            qualifiedID { factory.setNamespaceName($qualifiedID.result); }
-            ':'
-            namespaceBody { factory.setNamespaceEntities($namespaceBody.result); }
-            ('end' | 'endnamespace')
-            |
-            DOC_COMMENT*
-            'package'
-            qualifiedID
-            ';'
-            namespaceBody
-        )
-        { $result = factory.finalizeNamespace(); }
+        body=namespaceBody { factory.setNamespaceBody($body.result); }
+        { $result = factory.createNamespace(); }
+        |
+        DOC_COMMENT*
+        'namespace'
+        name=qualifiedID { factory.setNamespaceName($name.result); }
+        ':'
+        body=namespaceBody { factory.setNamespaceBody($body.result); }
+        ('end' | 'endnamespace')
+        { $result = factory.createNamespace(); }
+        |
+        DOC_COMMENT*
+        'package'
+        qualifiedID
+        ';'
+        namespaceBody
+
     ;
 
 namespaceBody returns [Map<String, RootCallTarget> result]
+    @init { factory.initNamespaceBody(); }
     :
-        { factory.initializeNamespaceBody(); }
         (
-            importDeclaration { factory.addNamespaceBodyImport($importDeclaration.result); }
+            bodyImport=importDeclaration { factory.addNamespaceBodyImport($bodyImport.result); }
         )*
         (
             typeDefinition
             |
             globalVariableDeclaration
             |
-            actorDeclaration { factory.addNamespaceBodyEntity($actorDeclaration.result); }
+            actor=actorDeclaration { factory.addNamespaceBodyEntity($actor.result); }
             |
             networkDeclaration
         )*
-        { $result = factory.finalizeNamespaceBody(); }
+        { $result = factory.createNamespaceBody(); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -179,14 +173,14 @@ namespaceBody returns [Map<String, RootCallTarget> result]
 // ----------------------------------------------------------------------------
 
 qualifiedID returns [List<Token> result]
+    @init { factory.initQualifiedId(); }
     :
-        { factory.initializeQualifiedId(); }
-        ID { factory.addQualifiedIdPart($ID); }
+        part=ID { factory.addQualifiedIdPart($part); }
         (
             '.'
-            ID { factory.addQualifiedIdPart($ID); }
+            part=ID { factory.addQualifiedIdPart($part); }
         )*
-        { $result = factory.finalizeQualifiedId(); }
+        { $result = factory.createQualifiedId(); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -216,29 +210,25 @@ unitDeclaration
 
 importDeclaration returns [Pair<String, String> result]
     :
-        { factory.initializeImport(); }
-        (
-            singleImport { factory.setImportAsSingle($singleImport.result); }
-            |
-            groupImport
-        )
-        { $result = factory.finalizeImport(); }
+        singleImport
+        { $result = $singleImport.result; }
+        |
+        groupImport
     ;
 
 singleImport returns [Pair<String, String> result]
     :
-        { factory.initializeSingleImport(); }
         'import'
         (
             importKind
         )?
-        qualifiedID { factory.setSingleImportGlobalName($qualifiedID.result); }
+        globalName=qualifiedID { factory.setSingleImportGlobalName($globalName.result); }
         (
             '='
-            ID { factory.setSingleImportLocalName($ID); }
+            localName=ID { factory.setSingleImportLocalName($localName); }
         )?
         ';'
-        { $result = factory.finalizeSingleImport(); }
+        { $result = factory.createSingleImport(); }
     ;
 
 groupImport
@@ -387,9 +377,9 @@ portReference
 // -- Actor Declaration (CLR §3)
 // ----------------------------------------------------------------------------
 
-actorDeclaration returns [ActorNode result ]
+actorDeclaration returns [ActorNode result]
+    @init { factory.initActor(); }
     :
-        { factory.initializeActor(); }
         DOC_COMMENT*
         (
             annotation
@@ -398,7 +388,7 @@ actorDeclaration returns [ActorNode result ]
             'external'
         )?
         'actor'
-        ID { factory.setActorName($ID); }
+        name=ID { factory.setActorName($name); }
         '('
         formalParameters
         ')'
@@ -411,7 +401,7 @@ actorDeclaration returns [ActorNode result ]
             (
                 localVariableDeclaration
                 |
-                actionDefinition { factory.addActorAction($actionDefinition.result); }
+                action=actionDefinition { factory.addActorAction($action.result); }
                 |
                 initializeActionDefinition
                 |
@@ -425,7 +415,7 @@ actorDeclaration returns [ActorNode result ]
             |
             ';'
         )
-        { $result = factory.finalizeActor(); }
+        { $result = factory.createActor(); }
     ;
 
 ioSignature
@@ -455,8 +445,8 @@ processDescription
 // ----------------------------------------------------------------------------
 
 actionDefinition returns [ActionNode result]
+    @init { factory.initAction(); }
     :
-        { factory.initializeAction(); }
         DOC_COMMENT*
         (
             annotation
@@ -475,15 +465,15 @@ actionDefinition returns [ActionNode result]
         )?
         (
             'var'
-            blockVariableDeclarations { factory.setActionLocalVariables($blockVariableDeclarations.result); }
+            localVariables=blockVariableDeclarations { factory.setActionLocalVariables($localVariables.result); }
         )?
         //('delay' expression)?
         (
             'do'
-            statements { factory.setActionBodyStatements($statements.result); }
+            body=statements { factory.setActionBody($body.result); }
         )?
         ('end' | 'endaction')
-        { $result = factory.finalizeAction(); }
+        { $result = factory.createAction(); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -655,37 +645,34 @@ localVariableDeclaration
     ;
 
 blockVariableDeclarations returns [List<CALExpressionNode> result]
+    @init { factory.initBlockVariables(); }
     :
-        { factory.initializeBlockVariables(); }
-        blockVariableDeclaration { factory.addBlockVariable($blockVariableDeclaration.result); }
+        blockVariable=blockVariableDeclaration { factory.addBlockVariable($blockVariable.result); }
         (
             ','
-            blockVariableDeclaration { factory.addBlockVariable($blockVariableDeclaration.result); }
+            blockVariable=blockVariableDeclaration { factory.addBlockVariable($blockVariable.result); }
         )*
-        { $result = factory.finalizeBlockVariables(); }
+        { $result = factory.createBlockVariables(); }
     ;
 
 blockVariableDeclaration returns [CALExpressionNode result]
     :
-        { factory.initializeBlockVariable(); }
         annotation*
         (
-            explicitVariableDeclaration { factory.setExplicitBlockVariable($explicitVariableDeclaration.result); }
+            explicitVariableDeclaration { $result = $explicitVariableDeclaration.result; }
             |
             functionVariableDeclaration
             |
             procedureVariableDeclaration
         )
-        { $result = factory.finalizeBlockVariable(); }
     ;
 
 // Explicit variable declaration (CLR §5.1.1)
 explicitVariableDeclaration returns [CALExpressionNode result]
     :
-        { factory.initializeExplicitVariable(); }
         /*'mutable'?*/
         type?
-        ID { factory.setExplicitVariableName($ID); }
+        name=ID { factory.setExplicitVariableName($name); }
         (
             '['
             expression
@@ -693,9 +680,9 @@ explicitVariableDeclaration returns [CALExpressionNode result]
         )*
         (
             ('=' | ':=')
-            expression { factory.setExplicitVariableExpression($expression.result); }
+            value=expression { factory.setExplicitVariableValue($value.result); }
         )?
-        { $result = factory.finalizeExplicitVariable(); }
+        { $result = factory.createExplicitVariable(); }
     ;
 
 functionVariableDeclaration   // Function & procedure declarations (CLR §6.9.3)
@@ -811,67 +798,88 @@ generatorBody
 // ----------------------------------------------------------------------------
 
 expressions returns [List<CALExpressionNode> result]
+    @init { factory.initExpressions(); }
     :
-        { factory.initializeExpressions(); }
         expression { factory.addExpression($expression.result); }
         (
             ','
             expression { factory.addExpression($expression.result); }
         )*
-        { $result = factory.finalizeExpressions(); }
+        { $result = factory.createExpressions(); }
     ;
 
 // Operation Precedence (CLR §Appendix C.1)
 expression returns [CALExpressionNode result]
-    @init { factory.initializeExpression(); }
     :
-        <assoc=right> operand1=expression operator='^' operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        <assoc=right> operand1=expression operator='^' operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        expression '[' expressions ']'
+        composite=expression '[' indices=expressions ']'
+        { $result = factory.createIndexerExpression($composite.result, $indices.result); }
         |
-        expression '.' field
+        composite=expression '.' field
         |
-        operator='-' operand=expression { factory.setUnaryOperationExpression($operator, $operand.result); $result = factory.finalizeExpression(); }
+        operator='-' operand=expression
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
         |
-        operator='rng' operand=expression { factory.setUnaryOperationExpression($operator, $operand.result); $result = factory.finalizeExpression(); }
+        operator='rng' operand=expression
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
         |
-        operator='dom' operand=expression { factory.setUnaryOperationExpression($operator, $operand.result); $result = factory.finalizeExpression(); }
+        operator='dom' operand=expression
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
         |
-        operator='#' operand=expression { factory.setUnaryOperationExpression($operator, $operand.result); $result = factory.finalizeExpression(); }
+        operator='#' operand=expression
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
         |
-        operator='not' operand=expression { factory.setUnaryOperationExpression($operator, $operand.result); $result = factory.finalizeExpression(); }
+        operator='not' operand=expression
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
         |
-        operator='!' operand=expression { factory.setUnaryOperationExpression($operator, $operand.result); $result = factory.finalizeExpression(); }
+        operator='!' operand=expression
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
         |
-        operand1=expression operator='..' operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator='..' operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator=('*' | '/' | '%' | 'div' | 'mod') operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator=('*' | '/' | '%' | 'div' | 'mod') operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator=('+' | '-') operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator=('+' | '-') operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator=('<<' | '>>') operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator=('<<' | '>>') operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator=('<' | '<=' | '>' | '>=') operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator=('<' | '<=' | '>' | '>=') operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator=('=' | '==' | '!=') operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator=('=' | '==' | '!=') operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator='&' operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator='&' operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator='|' operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator='|' operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator='and' operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator='and' operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        operand1=expression operator='or' operand2=expression { factory.setBinaryOperationExpression($operand1.result, $operator, $operand2.result); $result = factory.finalizeExpression(); }
+        operand1=expression operator='or' operand2=expression
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
         |
-        literalExpression { factory.setLiteralExpression($literalExpression.result); $result = factory.finalizeExpression(); }
+        literalExpression
+        { $result = $literalExpression.result; }
         |
-        variableExpression { factory.setVariableExpression($variableExpression.result); $result = factory.finalizeExpression(); }
+        variableExpression
+        { $result = $variableExpression.result; }
         |
         symbolReferenceExpression
         |
         '(' expression ')'
+        { $result = $expression.result; }
         |
         ifExpression
+        { $result = $ifExpression.result; }
         |
         letExpression
         |
@@ -889,67 +897,144 @@ expression returns [CALExpressionNode result]
         |
         caseExpression
         |
-        callExpression { factory.setCallExpression($callExpression.result); $result = factory.finalizeExpression(); }
+        callExpression
+        { $result = $callExpression.result; }
     ;
 
 // Literals (CLR §6.1)
 literalExpression returns [CALExpressionNode result]
     :
-        { factory.initializeLiteralExpression(); }
-        (
-            IntegerLiteral { factory.setIntegerLiteralExpression($IntegerLiteral); }
-            |
-            FloatingPointLiteral { factory.setFloatLiteralExpression($FloatingPointLiteral); }
-            |
-            BooleanLiteral { factory.setBooleanLiteralExpression($BooleanLiteral); }
-            |
-            CharacterLiteral { factory.setCharLiteralExpression($CharacterLiteral); }
-            |
-            StringLiteral { factory.setStringLiteralExpression($StringLiteral); }
-            |
-            NullLiteral { factory.setNullLiteralExpression($NullLiteral); }
-        )
-        { $result = factory.finalizeLiteralExpression(); }
+        IntegerLiteral
+        { $result = factory.createIntegerLiteralExpression($IntegerLiteral); }
+        |
+        FloatingPointLiteral
+        { $result = factory.createFloatLiteralExpression($FloatingPointLiteral); }
+        |
+        BooleanLiteral
+        { $result = factory.createBooleanLiteralExpression($BooleanLiteral); }
+        |
+        CharacterLiteral
+        { $result = factory.createCharLiteralExpression($CharacterLiteral); }
+        |
+        StringLiteral
+        { $result = factory.createStringLiteralExpression($StringLiteral); }
+        |
+        NullLiteral
+        { $result = factory.createNullLiteralExpression($NullLiteral); }
     ;
 
 // Variable reference (CLR §6.2)
 variableExpression returns [CALExpressionNode result]
+    @init { factory.initVariableExpression(); }
     :
-        { factory.initializeVariableExpression(); }
         (
-            'old'
+            'old' { factory.setVariableExpressionAsOld(); }
         )?
         variable { factory.setVariableExpressionVariable($variable.result); }
-        { $result = factory.finalizeVariableExpression(); }
+        { $result = factory.createVariableExpression(); }
     ;
 
-symbolReferenceExpression     // Symbol Reference (CAL Specification Extension)
-    :   variable '::' ID ('(' expressions? ')')?
+// Symbol Reference (CAL Specification Extension)
+symbolReferenceExpression
+    :
+        variable
+        '::'
+        ID
+        (
+            '('
+            (
+                expressions
+            )?
+            ')'
+        )?
     ;
 
-ifExpression                                         // Conditionals (CLR §6.7)
-    :   'if' expression 'then' expression (elseIfExpression | 'else' expression) ('end' | 'endif')
+// Conditionals (CLR §6.7)
+ifExpression returns [ExprIfNode result]
+    :
+        'if'
+        condition=expression { factory.setConditionalExpressionCondition($condition.result); }
+        'then'
+        thenExpr=expression { factory.setConditionalExpressionThenExpression($thenExpr.result); }
+        (
+            elseIfExpr=elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpr.result); }
+            |
+            'else'
+            elseExpr=expression { factory.setConditionalExpressionElseExpression($elseExpr.result); }
+        )
+        ('end' | 'endif')
+        { $result = factory.createConditionalExpression(); }
     ;
 
-elseIfExpression                         // Elsif (CAL Specification Extension)
-    :   'elsif' expression 'then' expression (elseIfExpression | 'else' expression)
+// Elsif (CAL Specification Extension)
+elseIfExpression returns [ExprIfNode result]
+    :
+        'elsif'
+        condition=expression { factory.setConditionalExpressionCondition($condition.result); }
+        'then'
+        thenExpr=expression { factory.setConditionalExpressionThenExpression($thenExpr.result); }
+        (
+            elseIfExpr=elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpr.result); }
+            |
+            'else'
+            elseExpr=expression { factory.setConditionalExpressionElseExpression($elseExpr.result); }
+        )
+        { $result = factory.createConditionalExpression(); }
     ;
 
-letExpression                                         // Local Scope (CLR §6.8)
-    :   'let' blockVariableDeclarations ':' expression ('end' | 'endlet')
+// Local Scope (CLR §6.8)
+letExpression returns [LetExprNode result]
+    //@init { factor.initLetExpression(); }
+    :
+        'let'
+        localVariables=blockVariableDeclarations //{ factor.setLetExpressionLocalVariables($localVariables.result); }
+        ':'
+        body=expression //{ factor.setLetExpressionBody($body.result); }
+        ('end' | 'endlet')
+        //{ $result = factory.createLetExpression(); }
     ;
 
-lambdaExpression                               // Function closure (CLR §6.9.1)
-    :   'const'? 'lambda' '(' formalParameters ')' ('-->' type)?
-        ('var' blockVariableDeclarations)? ':' expression
+// Function closure (CLR §6.9.1)
+lambdaExpression
+    :
+        (
+            'const'
+        )?
+        'lambda'
+        '('
+        formalParameters
+        ')'
+        (
+            '-->'
+            type
+        )?
+        (
+            'var'
+            blockVariableDeclarations
+        )?
+        ':'
+        expression
         ('end' | 'endlambda')
     ;
 
-procExpression                                // Procedure closure (CLR §6.9.2)
-    :   'proc' '(' formalParameters ')' ('var' blockVariableDeclarations)? ('do' | 'begin') statements ('end' | 'endproc')
+// Procedure closure (CLR §6.9.2)
+procExpression
+    :
+        'proc'
+        '('
+        formalParameters
+        ')'
+        (
+            'var'
+            blockVariableDeclarations
+        )?
+         ('do' | 'begin')
+         statements
+         ('end' | 'endproc')
     ;
 
-setComprehension                  // Comprehensions w/ generators (CLR §6.10.2)
+// Comprehensions w/ generators (CLR §6.10.2)
+setComprehension
     :   '{' (expressions (':' generators)?)? '}'
     ;
 
@@ -969,29 +1054,48 @@ mapping
     :   expression '->' expression
     ;
 
-typeAssertionExpr                                 // Type Assertion (CLR §6.11)
-    :   '(' expression ':' type ')'
+// Type Assertion (CLR §6.11)
+typeAssertionExpr
+    :
+        '('
+        expression
+        ':'
+        type
+        ')'
     ;
 
-caseExpression                            // Case (CAL Specification Extension)
-    :   'case' expression 'of' alternativeExpression+ ('end' | 'endcase')
+// Case (CAL Specification Extension)
+caseExpression
+    :
+        'case'
+        expression
+        'of'
+        alternativeExpression+
+        ('end' | 'endcase')
     ;
 
 alternativeExpression
-    :   pattern ('guard' expressions)? ':' expression 'end'
+    :
+        pattern
+        (
+            'guard'
+            expressions
+        )?
+        ':'
+        expression
+        'end'
     ;
 
 // Function / Procedure Call (CAL Specification Extension)
 callExpression returns [CALInvokeNode result]
     :
-        { factory.initializeCallExpression(); }
-        variableExpression { factory.setCallExpressionFunction($variableExpression.result); }
+        function=variableExpression { factory.setCallExpressionFunction($function.result); }
         '('
             (
-                expressions { factory.setCallExpressionArguments($expressions.result); }
+                arguments=expressions { factory.setCallExpressionArguments($arguments.result); }
             )?
         ')'
-        { $result = factory.finalizeCallExpression(); }
+        { $result = factory.createCallExpression(); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -999,19 +1103,18 @@ callExpression returns [CALInvokeNode result]
 // ----------------------------------------------------------------------------
 
 lvalues returns [List<Token> result]
+    @init { factory.initLvalues(); }
     :
-        { factory.initializeLvalues(); }
         lvalue { factory.addLvalue($lvalue.result); }
         (
             ','
             lvalue { factory.addLvalue($lvalue.result); }
         )*
-        { $result = factory.finalizeLvalues(); }
+        { $result = factory.createLvalues(); }
     ;
 
 lvalue returns [Token result]
     :
-        { factory.initializeLvalue(); }
         variable { factory.setLvalueVariable($variable.result); }
         (
             '.'
@@ -1021,18 +1124,19 @@ lvalue returns [Token result]
             expression
             ']'
         )*
-        { $result = factory.finalizeLvalue(); }
+        { $result = factory.createLvalue(); }
     ;
 
 variable returns [Token result]
     :
-        { factory.initializeVariable(); }
-        ID { factory.setVariable($ID); }
-        { $result = factory.finalizeVariable(); }
+        ID
+        { $result = $ID; }
     ;
 
-field
-    :   ID
+field returns [Token result]
+    :
+        ID
+        { $result = $ID; }
     ;
 
 // ----------------------------------------------------------------------------
@@ -1040,22 +1144,21 @@ field
 // ----------------------------------------------------------------------------
 
 statements returns [List<CALStatementNode> result]
+    @init { factory.initStatements(); }
     :
-        { factory.initializeStatements(); }
         (
             statement { factory.addStatement($statement.result); }
         )*
-        { $result = factory.finalizeStatements(); }
+        { $result = factory.createStatements(); }
     ;
 
 statement returns [CALStatementNode result]
     :
-        { factory.initializeStatement(); }
         annotation*
         (
-            assignmentStatement { factory.setAssignmentStatement($assignmentStatement.result); }
+            assignmentStatement { $result = $assignmentStatement.result; }
             |
-            callStatement { factory.setCallStatement($callStatement.result); }
+            callStatement { $result = $callStatement.result; }
             |
             blockStatement
             |
@@ -1075,32 +1178,29 @@ statement returns [CALStatementNode result]
             |
             actionSelectionStatement
         )
-        { $result = factory.finalizeStatement(); }
     ;
 
 // Assignment (CLR §7.1)
 assignmentStatement returns [CALExpressionNode result]
     :
-        { factory.initializeAssignmentStatement(); }
-        lvalue { factory.setAssignmentStatementLvalue($lvalue.result); }
+        var=lvalue { factory.setAssignmentStatementVariable($var.result); }
         ':='
-        expression { factory.setAssignmentStatementExpression($expression.result); }
+        value=expression { factory.setAssignmentStatementValue($value.result); }
         ';'
-        { $result = factory.finalizeAssignmentStatement(); }
+        { $result = factory.createAssignmentStatement(); }
     ;
 
 // Procedure call (CLR §7.2)
 callStatement returns [CALInvokeNode result]
     :
-        { factory.initializeCallStatement(); }
-        variableExpression { factory.setCallStatementFunction($variableExpression.result); }
+        function=variableExpression { factory.setCallStatementFunction($function.result); }
         '('
         (
-            expressions { factory.setCallStatementArguments($expressions.result); }
+            arguments=expressions { factory.setCallStatementArguments($arguments.result); }
         )?
         ')'
         ';'
-        { $result = factory.finalizeCallStatement(); }
+        { $result = factory.createCallStatement(); }
     ;
 
 blockStatement                                    // Statement block (CLR §7.3)

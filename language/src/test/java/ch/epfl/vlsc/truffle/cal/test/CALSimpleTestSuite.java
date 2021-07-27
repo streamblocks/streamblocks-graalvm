@@ -11,7 +11,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("add").build());
     }
 
-    @Ignore
     @Test
     public void precedenceTest() throws IOException {
         runTest(TestCase.newBuilder("precedence").build());
@@ -41,13 +40,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("nested-lambda").build());
     }
 
-    @Ignore
     @Test
     public void printlnTest() throws IOException {
         runTest(TestCase.newBuilder("println").build());
     }
 
-    @Ignore
     @Test
     public void printlnVariablesTest() throws IOException {
         runTest(TestCase.newBuilder("println-var").build());
