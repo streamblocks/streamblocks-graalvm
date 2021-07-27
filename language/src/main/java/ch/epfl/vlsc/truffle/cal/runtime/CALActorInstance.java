@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
+import ch.epfl.vlsc.truffle.cal.nodes.FsmStateCheckNode;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -16,6 +17,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.api.utilities.TriState;
@@ -219,13 +221,26 @@ public class CALActorInstance extends CALValue {
         @Specialization
         protected static Object doIndirect(CALActorInstance function, Object[] arguments,
                                            @Cached IndirectCallNode callNode) {
-            // TODO
-            // Sort actions by priority and filter fireable actions
-            for (ActionNode action : function.actorDecl.getActions()) {
+            // TODO filter fireable actions
+            for(int i = 0; i < function.actorDecl.getActions().length; ++i){
+                FsmStateCheckNode fsmTarget = function.actorDecl.getFsmStateCheckNode();
+                ActionNode action = function.actorDecl.getActions()[i];
+                Boolean actionFsmFireable = true;
+                if(function.actorDecl.getFsmStateCheckNode() != null) {
+                    function.frameDecl.setLong(function.actorDecl.getActorIndexSlot(), i);
+                    try {
+                        actionFsmFireable = !action.isQidTagged() || ((Boolean) fsmTarget.executeBoolean(function.frameDecl));
+                    } catch (UnexpectedResultException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (!actionFsmFireable) continue;
                 CallTarget target = Truffle.getRuntime().createCallTarget(action);
                 Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
-                if (executed)
+                if (executed) {
+                    if(function.actorDecl.getFsmStateCheckNode() != null) function.actorDecl.getFsmStateTransitionNode().executeVoid(function.frameDecl);
                     return true;
+                }
             }
             return false;
         }
