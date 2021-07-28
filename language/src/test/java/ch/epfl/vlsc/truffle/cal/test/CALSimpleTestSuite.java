@@ -172,6 +172,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void lazyEvaluationEdgecaseTest() throws IOException {
+        runTest(TestCase.newBuilder("lazy-evaluation-edgecase").setActorName("test.test").build());
+    }
+
+    @Test
     public void idctTest() throws IOException {
         runTest(TestCase.newBuilder("dct/src/TopIDCT").setActorName("RVC.TopIDCT").setDirLookup(true).build());
     }
