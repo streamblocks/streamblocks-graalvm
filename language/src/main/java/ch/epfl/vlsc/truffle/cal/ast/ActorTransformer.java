@@ -11,8 +11,10 @@ import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.CalActor;
+import se.lth.cs.tycho.ir.entity.cal.ScheduleFSM;
 import se.lth.cs.tycho.ir.entity.cal.Transition;
 import se.lth.cs.tycho.ir.util.ImmutableList;
+import se.lth.cs.tycho.transformation.regexp.RegExpConverter;
 
 import java.util.*;
 
@@ -70,14 +72,31 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             topologicalSortByPriorities(initializeractions, this.actor.getPriorities());
         }
 
+        // Variables for Handling of Regex/FSM schedules
         FsmStateCheckNode fsmStateCheckNode = null;
         FsmStateTransitionNode fsmStateTransitionNode = null;
         FrameSlot actorIndSlot = null;
-        if(actor.getScheduleFSM() != null){
+        ScheduleFSM actorScheduleFsm = null;
+
+        // If the schedule is given as a Regex, convert it to FSM
+        if(actor.getScheduleRegExp() != null){
+            RegExpConverter regExpConverter = new RegExpConverter(actor.getScheduleRegExp());
+            actorScheduleFsm = regExpConverter.convert();
+        }else if(actor.getScheduleFSM() != null){
+            // If it is given as an FSM, then store it for processing
+            actorScheduleFsm = actor.getScheduleFSM();
+        }
+
+        // If a schedule is present in the actor, convert it
+        if(actorScheduleFsm != null){
+            // Create Frameslot for storing actor index during processing checks
+            // See the implementation of doIndirect in CALActorInstance for more details
             String actionIndexSlotName = String.valueOf(actor.hashCode() + "#fsmActorIndex");
             headStatements.add(createAssignment(actionIndexSlotName, new LongLiteralNode(0)));
             ++i;
 
+            // Create Frameslot for storing the number of current state
+            // See the implementation of doIndirect in CALActorInstance for more details
             String currStateSlotName = String.valueOf(actor.hashCode()) + "#fsmCurrState";
             headStatements.add(createAssignment(currStateSlotName, new LongLiteralNode(0)));
             ++i;
@@ -85,7 +104,8 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             actorIndSlot = context.getFrameDescriptor().findFrameSlot(actionIndexSlotName);
             FrameSlot currStateSlot = context.getFrameDescriptor().findFrameSlot(currStateSlotName);
 
-            ArrayList<HashMap<Integer, Integer>> transitions = transformFsm(actor, actions, headStatements, actorIndSlot);
+            // Convert the states from strings to numbers and transitions correspondingly
+            ArrayList<HashMap<Integer, Integer>> transitions = transformFsm(actorScheduleFsm, actions, headStatements, actorIndSlot);
 
             fsmStateCheckNode = new FsmStateCheckNode(transitions, currStateSlot, actorIndSlot);
             fsmStateTransitionNode = new FsmStateTransitionNode(transitions, currStateSlot, actorIndSlot);
@@ -98,17 +118,17 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, initializeractions, head, actorSrc, name, fsmStateCheckNode, fsmStateTransitionNode, actorIndSlot);
     }
 
-    private ArrayList<HashMap<Integer, Integer>> transformFsm(CalActor actor, ActionNode[] actions, List<CALStatementNode> headStatements, FrameSlot actorIndSlot) {
+    private ArrayList<HashMap<Integer, Integer>> transformFsm(ScheduleFSM actorScheduleFsm, ActionNode[] actions, List<CALStatementNode> headStatements, FrameSlot actorIndSlot) {
         int i = 0;
         HashMap<String, Integer> stateToIndex = new HashMap<String, Integer>();
-        stateToIndex.put(actor.getScheduleFSM().getInitialState(), i++);
-        for(Transition t: actor.getScheduleFSM().getTransitions()){
+        stateToIndex.put(actorScheduleFsm.getInitialState(), i++);
+        for(Transition t: actorScheduleFsm.getTransitions()){
             if(!stateToIndex.containsKey(t.getSourceState())) stateToIndex.put(t.getSourceState(), i++);
             if(!stateToIndex.containsKey(t.getDestinationState())) stateToIndex.put(t.getDestinationState(), i++);
         }
         ArrayList<HashMap<Integer, Integer>> transitions = new ArrayList<HashMap<Integer, Integer>>(stateToIndex.size());
         for(int j = 0; j < stateToIndex.size(); ++j) transitions.add(new HashMap<Integer, Integer>());
-        for(Transition t: actor.getScheduleFSM().getTransitions()){
+        for(Transition t: actorScheduleFsm.getTransitions()){
             HashMap<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSourceState()));
             int finalStateIndex = stateToIndex.get(t.getDestinationState());
             for(QID tQID: t.getActionTags()){

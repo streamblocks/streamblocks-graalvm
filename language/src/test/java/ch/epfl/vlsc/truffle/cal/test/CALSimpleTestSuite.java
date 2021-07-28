@@ -23,7 +23,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Not implemented yet")
     public void actionSelectionRegexTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-scheduleregex").setIterations(10).build());
     }
