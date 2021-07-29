@@ -126,7 +126,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             i++;
         }
         for (Statement statement : action.getBody()) {
-            body[i] = transformSatement(statement);
+            body[i] = transformStatement(statement);
             i++;
         }
         // get the variables name linked to the output and add a write to the FIFO

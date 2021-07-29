@@ -12,7 +12,6 @@ import java.util.function.Function;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
@@ -38,7 +37,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.Generator;
-import se.lth.cs.tycho.ir.IRNode;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.expr.ExprApplication;
@@ -396,7 +394,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         }
         return result;
     }
-    public CALStatementNode transformSatement(Statement statement) {
+    public CALStatementNode transformStatement(Statement statement) {
     	CALStatementNode output;
         if (statement instanceof StmtCall) {
         	output = transformStmtCall((StmtCall) statement);
@@ -415,7 +413,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     private CALStatementNode transformStatementsList(List<Statement> statements) {
         CALStatementNode[] statementNodes = new CALStatementNode[statements.size()];
         for (int i = 0; i < statements.size(); i++) {
-            statementNodes[i] = transformSatement(statements.get(i));
+            statementNodes[i] = transformStatement(statements.get(i));
         }
         return new StmtBlockNode(statementNodes);
     }
@@ -439,7 +437,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
         CALStatementNode[] bodyNodes = new CALStatementNode[foreach.getBody().size()];
         for (int i = 0; i < foreach.getBody().size(); i++) {
-            bodyNodes[i] = transformSatement(foreach.getBody().get(i));
+            bodyNodes[i] = transformStatement(foreach.getBody().get(i));
         }
 
         CALStatementNode statement = new StmtBlockNode(bodyNodes);
