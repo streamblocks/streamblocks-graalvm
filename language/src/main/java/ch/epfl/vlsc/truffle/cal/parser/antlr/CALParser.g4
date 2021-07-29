@@ -55,20 +55,19 @@ options { tokenVocab=CALLexer; }
 
 @parser::header
 {
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.graalvm.collections.Pair;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.RootCallTarget;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-//import ch.epfl.vlsc.truffle.cal.parser.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.CALNodeFactory;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.*;
 }
 
 @parser::members
@@ -671,7 +670,9 @@ blockVariableDeclaration returns [CALExpressionNode result]
 explicitVariableDeclaration returns [CALExpressionNode result]
     :
         /*'mutable'?*/
-        type?
+        (
+            type
+        )?
         name=ID { factory.setExplicitVariableName($name); }
         (
             '['
@@ -701,12 +702,23 @@ procedureVariableDeclaration
 // -- Formal Parameters (CLR §6.9.1, but extended)
 // ----------------------------------------------------------------------------
 
-formalParameters
-    :   (formalParameter (',' formalParameter)*)?
+formalParameters returns [List<CALExpressionNode> result]
+    @init { factory.initFormalParameters(); }
+    :
+        (
+            formalParameter { factory.addFormalParameter($formalParameter.result); }
+            (
+                ','
+                formalParameter { factory.addFormalParameter($formalParameter.result); }
+            )*
+        )?
+        { $result = factory.createFormalParameters(); }
     ;
 
-formalParameter
-    :   explicitVariableDeclaration
+formalParameter returns [CALExpressionNode result]
+    :
+        explicitVariable=explicitVariableDeclaration
+        { $result = $explicitVariable.result; }
     ;
 
 // ----------------------------------------------------------------------------
@@ -882,8 +894,10 @@ expression returns [CALExpressionNode result]
         { $result = $ifExpression.result; }
         |
         letExpression
+        { $result = $letExpression.result; }
         |
         lambdaExpression
+        { $result = $lambdaExpression.result; }
         |
         procExpression
         |
@@ -925,7 +939,6 @@ literalExpression returns [CALExpressionNode result]
 
 // Variable reference (CLR §6.2)
 variableExpression returns [CALExpressionNode result]
-    @init { factory.initVariableExpression(); }
     :
         (
             'old' { factory.setVariableExpressionAsOld(); }
@@ -957,7 +970,7 @@ ifExpression returns [ExprIfNode result]
         'then'
         thenExpr=expression { factory.setConditionalExpressionThenExpression($thenExpr.result); }
         (
-            elseIfExpr=elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpr.result); }
+            elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpression.result); }
             |
             'else'
             elseExpr=expression { factory.setConditionalExpressionElseExpression($elseExpr.result); }
@@ -974,7 +987,7 @@ elseIfExpression returns [ExprIfNode result]
         'then'
         thenExpr=expression { factory.setConditionalExpressionThenExpression($thenExpr.result); }
         (
-            elseIfExpr=elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpr.result); }
+            elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpression.result); }
             |
             'else'
             elseExpr=expression { factory.setConditionalExpressionElseExpression($elseExpr.result); }
@@ -984,25 +997,26 @@ elseIfExpression returns [ExprIfNode result]
 
 // Local Scope (CLR §6.8)
 letExpression returns [LetExprNode result]
-    //@init { factor.initLetExpression(); }
+    @init { factory.initLetExpression(); }
     :
         'let'
-        localVariables=blockVariableDeclarations //{ factor.setLetExpressionLocalVariables($localVariables.result); }
+        localVariables=blockVariableDeclarations { factory.setLetExpressionLocalVariables($localVariables.result); }
         ':'
-        body=expression //{ factor.setLetExpressionBody($body.result); }
+        body=expression { factory.setLetExpressionBody($body.result); }
         ('end' | 'endlet')
-        //{ $result = factory.createLetExpression(); }
+        { $result = factory.createLetExpression(); }
     ;
 
 // Function closure (CLR §6.9.1)
-lambdaExpression
+lambdaExpression returns [LambdaNode result]
+    @init { factory.initLambdaExpression(); }
     :
         (
             'const'
         )?
         'lambda'
         '('
-        formalParameters
+        formalParameters { factory.setLambdaExpressionFormalParameters($formalParameters.result); }
         ')'
         (
             '-->'
@@ -1010,11 +1024,12 @@ lambdaExpression
         )?
         (
             'var'
-            blockVariableDeclarations
+            localVariables=blockVariableDeclarations { factory.setLambdaExpressionLocalVariables($localVariables.result); }
         )?
         ':'
-        expression
+        body=expression { factory.setLambdaExpressionBody($body.result); }
         ('end' | 'endlambda')
+        { $result = factory.createLambdaExpression(); }
     ;
 
 // Procedure closure (CLR §6.9.2)
@@ -1156,13 +1171,16 @@ statement returns [CALStatementNode result]
     :
         annotation*
         (
-            assignmentStatement { $result = $assignmentStatement.result; }
+            assignmentStatement
+            { $result = $assignmentStatement.result; }
             |
-            callStatement { $result = $callStatement.result; }
+            callStatement
+            { $result = $callStatement.result; }
             |
             blockStatement
             |
             ifStatement
+            { $result = $ifStatement.result; }
             |
             whileStatement
             |
@@ -1203,33 +1221,71 @@ callStatement returns [CALInvokeNode result]
         { $result = factory.createCallStatement(); }
     ;
 
-blockStatement                                    // Statement block (CLR §7.3)
-    :   'begin' ('var' blockVariableDeclarations 'do')? statements 'end'
+// Statement block (CLR §7.3)
+blockStatement
+    :
+        'begin'
+        (
+            'var'
+            blockVariableDeclarations
+            'do'
+        )?
+        statements
+        'end'
     ;
 
-ifStatement                                                    // If (CLR §7.4)
-    :   'if' expression 'then' statements (elseIfStatement | 'else' statements)? ('end' | 'endif')
+// If (CLR §7.4)
+ifStatement returns [StmtIfNode result]
+    :
+        'if'
+        condition=expression { factory.setConditionalStatementCondition($condition.result); }
+        'then'
+        thenStmts=statements { factory.setConditionalStatementThenStatements($thenStmts.result); }
+        (
+            elseIfStatement { factory.setConditionalStatementElseStatements(Arrays.asList($elseIfStatement.result)); }
+            |
+            'else'
+            elseStmts=statements { factory.setConditionalStatementElseStatements($elseStmts.result); }
+        )?
+        ('end' | 'endif')
+        { $result = factory.createConditionalStatement(); }
     ;
 
-elseIfStatement                          // Elsif (CAL Specification Extension)
-    :   'elsif' expression 'then' statements (elseIfStatement | 'else' statements)?
+// Elsif (CAL Specification Extension)
+elseIfStatement returns [StmtIfNode result]
+    :
+        'elsif'
+        condition=expression { factory.setConditionalStatementCondition($condition.result); }
+        'then'
+        thenStmts=statements { factory.setConditionalStatementThenStatements($thenStmts.result); }
+        (
+            elseIfStatement { factory.setConditionalStatementElseStatements(Arrays.asList($elseIfStatement.result)); }
+            |
+            'else'
+            elseStmts=statements { factory.setConditionalStatementElseStatements($elseStmts.result); }
+        )?
+        { $result = factory.createConditionalStatement(); }
     ;
 
-whileStatement                                              // While (CLR §7.5)
+// While (CLR §7.5)
+whileStatement
     :   'while' expression ('var' blockVariableDeclarations)? 'do' statements ('end' | 'endwhile')
     ;
 
-foreachStatement                                          // Foreach (CLR §7.6)
+// Foreach (CLR §7.6)
+foreachStatement
     :   foreachGenerators ('var' blockVariableDeclarations)? 'do' statements ('end' | 'endforeach')
     ;
 
 /*
-chooseStatement                                            // Choose (CLR §7.7)
+// Choose (CLR §7.7)
+chooseStatement
     :   chooseGenerators ('var' blockVariableDeclarations)? 'do' statements ('end' | 'endchoose')
     ;
 */
 
-caseStatement                             // Case (CAL Specification Extension)
+// Case (CAL Specification Extension)
+caseStatement
     :   'case' expression 'of' alternativeStatement+ ('end' | 'endcase')
     ;
 
@@ -1237,14 +1293,17 @@ alternativeStatement
     :   pattern ('guard' expressions )? 'do' statements 'end'
     ;
 
-readStatement                             // Read (CAL Specification Extension)
+// Read (CAL Specification Extension)
+readStatement
     :   ID '-->' lvalues ('repeat' expression)? ';'
     ;
 
-writeStatement                           // Write (CAL Specification Extension)
+// Write (CAL Specification Extension)
+writeStatement
     :   ID '<--' expressions ('repeat' expression)? ';'
     ;
 
-actionSelectionStatement              // Not part of the official specification
+// Not part of the official specification
+actionSelectionStatement
     :   qualifiedID ';'
     ;

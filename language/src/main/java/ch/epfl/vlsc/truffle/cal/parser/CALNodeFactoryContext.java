@@ -53,7 +53,14 @@ public class CALNodeFactoryContext {
 		return globalScope;
 	}
 
+	public void pushScope() {
+		pushScope(false);
+	}
+
 	public void pushScope(boolean isReadOnly) {
+		pushScope(isReadOnly, true);
+	}
+	public void pushScope(boolean isReadOnly, boolean isDeeper) {
     	FrameDescriptor frame;
     	if (currentScope == globalScope) {
     		// Only create new frame for top-level entities (Actors & Networks)
@@ -62,7 +69,11 @@ public class CALNodeFactoryContext {
     		frame = currentScope.getFrame();
 		}
 
-    	int depth = currentScope.getDepth() + 1;
+    	int depth = currentScope.getDepth();
+    	if (isDeeper) {
+    		// Always increase scope depth (except for Let closure!)
+			depth++;
+		}
 
     	LexicalScope.ScopeKind kind;
     	if (isReadOnly) {

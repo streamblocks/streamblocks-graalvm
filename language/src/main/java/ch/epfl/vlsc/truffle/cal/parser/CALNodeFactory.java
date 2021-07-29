@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.parser;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.source.Source;
@@ -115,7 +116,7 @@ public class CALNodeFactory {
     List<ActionNode> actorActions;
 
     public void initActor() {
-        this.context.pushScope(false);
+        context.pushScope();
 
         actorActions = new ArrayList<>();
     }
@@ -138,7 +139,7 @@ public class CALNodeFactory {
                 actorName
         );
 
-        this.context.popScope();
+        context.popScope();
 
         return result;
     }
@@ -148,7 +149,7 @@ public class CALNodeFactory {
     List<CALStatementNode> actionBody;
 
     public void initAction() {
-        this.context.pushScope(false);
+        context.pushScope();
     }
 
     public void setActionLocalVariables(List<CALExpressionNode> localVariables) {
@@ -178,7 +179,7 @@ public class CALNodeFactory {
             "unnamed action"
         );
 
-        this.context.popScope();
+        context.popScope();
 
         return result;
     }
@@ -211,7 +212,23 @@ public class CALNodeFactory {
     }
 
     public CALExpressionNode createExplicitVariable() {
+        // TODO Support variable type & constant variables ('=')
         return context.createWriteNode(explicitVariableName.getText(), explicitVariableValue);
+    }
+
+    // Formal Parameters
+    List<CALExpressionNode> formalParameters;
+
+    public void initFormalParameters() {
+        formalParameters = new ArrayList<>();
+    }
+
+    public void addFormalParameter(CALExpressionNode formalParameter) {
+        formalParameters.add(formalParameter);
+    }
+
+    public List<CALExpressionNode> createFormalParameters() {
+        return formalParameters;
     }
 
     // Expressions
@@ -298,7 +315,7 @@ public class CALNodeFactory {
             case "=":
                 return CALBinaryEqualNodeGen.create(operand1, operand2);
             case "!=":
-                return new CALBinaryNotEqualNode(operand1, operand2);
+                return CALBinaryNotEqualNodeGen.create(operand1, operand2);
             case "&":
                 return CALBinaryBitAndNodeGen.create(operand1, operand2);
             case "|":
@@ -324,7 +341,7 @@ public class CALNodeFactory {
 
     public CALExpressionNode createFloatLiteralExpression(Token floatLiteral) {
         // TODO: Change to FloatLiteralNode
-        return this.createIntegerLiteralExpression(floatLiteral);
+        return createIntegerLiteralExpression(floatLiteral);
     }
 
     public CALExpressionNode createBooleanLiteralExpression(Token booleanLiteral) {
@@ -333,7 +350,7 @@ public class CALNodeFactory {
 
     public CALExpressionNode createCharLiteralExpression(Token charLiteral) {
         // TODO: Change to CharLiteralNode
-        return this.createStringLiteralExpression(charLiteral);
+        return createStringLiteralExpression(charLiteral);
     }
 
     public CALExpressionNode createStringLiteralExpression(Token stringLiteral) {
@@ -348,10 +365,6 @@ public class CALNodeFactory {
     boolean isOldVariableExpression;
     Token variableExpressionVariable;
 
-    public void initVariableExpression() {
-        isOldVariableExpression = false;
-    }
-
     public void setVariableExpressionAsOld() {
         isOldVariableExpression = true;
     }
@@ -361,8 +374,12 @@ public class CALNodeFactory {
     }
 
     public CALExpressionNode createVariableExpression() {
-        // TODO Add support for OLD variables
-        return context.createReadNode(variableExpressionVariable.getText());
+        // TODO Add support for old variables
+        CALExpressionNode result = context.createReadNode(variableExpressionVariable.getText());
+
+        isOldVariableExpression = false;
+
+        return result;
     }
 
     // Symbol Reference Expression
@@ -390,10 +407,90 @@ public class CALNodeFactory {
     }
 
     // Local scope (Let Expression)
+    List<CALExpressionNode> letExpressionLocalVariables;
+    CALExpressionNode letExpressionBody;
 
+    public void initLetExpression() {
+        context.pushScope(true, false);
+    }
+
+    public void setLetExpressionLocalVariables(List<CALExpressionNode> localVariables) {
+        letExpressionLocalVariables = localVariables;
+    }
+
+    public void setLetExpressionBody(CALExpressionNode body) {
+        letExpressionBody = body;
+    }
+
+    public LetExprNode createLetExpression() {
+        LetExprNode result = new LetExprNode(
+            new StmtBlockNode(letExpressionLocalVariables.toArray(new CALStatementNode[0])),
+            letExpressionBody
+        );
+
+        context.popScope();
+
+        return result;
+    }
 
     // Function closure (Lambda Expression)
+    static int LAMBDA_ID = 1;
+    List<CALExpressionNode> lambdaExpressionFormalParameters;
+    List<CALExpressionNode> lambdaExpressionLocalVariables;
+    CALExpressionNode lambdaExpressionBody;
 
+    public void initLambdaExpression() {
+        context.pushScope(true, false);
+    }
+
+    public void setLambdaExpressionFormalParameters(List<CALExpressionNode> formalParameters) {
+        lambdaExpressionFormalParameters = formalParameters;
+    }
+
+    public void setLambdaExpressionLocalVariables(List<CALExpressionNode> localVariables) {
+        context.pushScope(true, false);
+        lambdaExpressionLocalVariables = localVariables;
+    }
+
+    public void setLambdaExpressionBody(CALExpressionNode body) {
+        lambdaExpressionBody = body;
+    }
+
+    public LambdaNode createLambdaExpression() {
+        // TODO Add support for constant lambdas
+        // TODO Add support for lambda return type
+
+        StmtBlockNode lambdaExpressionHead = null;
+        if (lambdaExpressionFormalParameters != null) {
+            lambdaExpressionHead = new StmtBlockNode(lambdaExpressionFormalParameters.toArray(new CALStatementNode[0]));
+        }
+
+        if (lambdaExpressionLocalVariables != null) {
+            lambdaExpressionBody = new LetExprNode(
+                    new StmtBlockNode(lambdaExpressionLocalVariables.toArray(new CALStatementNode[0])),
+                    lambdaExpressionBody
+            );
+
+            context.popScope();
+        }
+
+        LambdaNode result = new LambdaNode(
+            new CALRootNode(
+                context.getLanguage(),
+                context.getCurrentScope().getFrame(),
+                new ReturnsLastBodyNode(lambdaExpressionHead, lambdaExpressionBody),
+                null,
+                "lambda-" + LAMBDA_ID
+            )
+        );
+
+        context.popScope();
+        LAMBDA_ID++;
+        lambdaExpressionFormalParameters = null;
+        lambdaExpressionLocalVariables = null;
+
+        return result;
+    }
 
     // Procedure Closure (Proc Expression)
     // TODO Create CALProcExpressionNode
@@ -495,4 +592,40 @@ public class CALNodeFactory {
         return new CALInvokeNode(callStatementFunction, callStatementArguments.toArray(new CALExpressionNode[0]));
     }
 
+    // Statement block
+    // TODO Use unnamed proc node
+
+    // Conditional Statements
+    CALExpressionNode conditionalStatementCondition;
+    StmtBlockNode conditionalStatementThenStatements;
+    StmtBlockNode conditionalStatementElseStatements;
+
+    public void setConditionalStatementCondition(CALExpressionNode condition) {
+        conditionalStatementCondition = condition;
+    }
+
+    public void setConditionalStatementThenStatements(List<CALStatementNode> thenStatements) {
+        conditionalStatementThenStatements = new StmtBlockNode(thenStatements.toArray(new CALStatementNode[0]));
+    }
+
+    public void setConditionalStatementElseStatements(List<CALStatementNode> elseStatements) {
+        conditionalStatementElseStatements = new StmtBlockNode(elseStatements.toArray(new CALStatementNode[0]));
+    }
+
+    public StmtIfNode createConditionalStatement() {
+        // FIXME Fix circular dependency: Action Statements -> If Statement -> Then Statements
+        if (conditionalStatementThenStatements != null) {
+            statements.removeAll(conditionalStatementThenStatements.getStatements());
+        }
+
+        if (conditionalStatementElseStatements != null) {
+            statements.removeAll(conditionalStatementElseStatements.getStatements());
+        }
+
+        StmtIfNode result = new StmtIfNode(conditionalStatementCondition, conditionalStatementThenStatements, conditionalStatementElseStatements);
+
+        conditionalStatementElseStatements = null;
+
+        return result;
+    }
 }
