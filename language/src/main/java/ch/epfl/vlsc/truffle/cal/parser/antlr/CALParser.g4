@@ -130,16 +130,14 @@ compilationUnit returns [Map<String, RootCallTarget> result]
 
 namespaceDeclaration returns [Map<String, RootCallTarget> result]
     :
-        body=namespaceBody { factory.setNamespaceBody($body.result); }
-        { $result = factory.createNamespace(); }
+        body=namespaceBody
+        { $result = factory.createNamespace(null, $body.result); }
         |
         DOC_COMMENT*
-        'namespace'
-        name=qualifiedID { factory.setNamespaceName($name.result); }
-        ':'
-        body=namespaceBody { factory.setNamespaceBody($body.result); }
+        'namespace' name=qualifiedID ':'
+        body=namespaceBody
         ('end' | 'endnamespace')
-        { $result = factory.createNamespace(); }
+        { $result = factory.createNamespace($name.result, $body.result); }
         |
         DOC_COMMENT*
         'package'
@@ -149,8 +147,8 @@ namespaceDeclaration returns [Map<String, RootCallTarget> result]
 
     ;
 
-namespaceBody returns [Map<String, RootCallTarget> result]
-    @init { factory.initNamespaceBody(); }
+namespaceBody returns [Map<String, RootCallTarget> result] locals [Map<String, CALRootNode> entities]
+    @init { $entities = new HashMap<>(); }
     :
         (
             bodyImport=importDeclaration { factory.addNamespaceBodyImport($bodyImport.result); }
@@ -160,11 +158,11 @@ namespaceBody returns [Map<String, RootCallTarget> result]
             |
             globalVariableDeclaration
             |
-            actor=actorDeclaration { factory.addNamespaceBodyEntity($actor.result); }
+            actorDeclaration { $entities.add($actorDeclaration.result); }
             |
             networkDeclaration
         )*
-        { $result = factory.createNamespaceBody(); }
+        { $result = factory.createNamespaceBody($entities); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -172,14 +170,12 @@ namespaceBody returns [Map<String, RootCallTarget> result]
 // ----------------------------------------------------------------------------
 
 qualifiedID returns [List<Token> result]
-    @init { factory.initQualifiedId(); }
+    @init { $result = new ArrayList<>(); }
     :
-        part=ID { factory.addQualifiedIdPart($part); }
+        part=ID { $result.add($part); }
         (
-            '.'
-            part=ID { factory.addQualifiedIdPart($part); }
+            '.' part=ID { $result.add($part); }
         )*
-        { $result = factory.createQualifiedId(); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -215,19 +211,18 @@ importDeclaration returns [Pair<String, String> result]
         groupImport
     ;
 
-singleImport returns [Pair<String, String> result]
+singleImport returns [Pair<String, String> result] locals [Token localName]
     :
         'import'
         (
             importKind
         )?
-        globalName=qualifiedID { factory.setSingleImportGlobalName($globalName.result); }
+        globalName=qualifiedID
         (
-            '='
-            localName=ID { factory.setSingleImportLocalName($localName); }
+            '=' ID { $localName = $ID; }
         )?
         ';'
-        { $result = factory.createSingleImport(); }
+        { $result = factory.createSingleImport($globalName.result, $localName); }
     ;
 
 groupImport
@@ -376,8 +371,11 @@ portReference
 // -- Actor Declaration (CLR §3)
 // ----------------------------------------------------------------------------
 
-actorDeclaration returns [ActorNode result]
-    @init { factory.initActor(); }
+actorDeclaration returns [ActorNode result] locals [List<ActionNode> actions]
+    @init {
+        factory.createActorScope();
+        $actions = new ArrayList<>();
+    }
     :
         DOC_COMMENT*
         (
@@ -386,12 +384,7 @@ actorDeclaration returns [ActorNode result]
         (
             'external'
         )?
-        'actor'
-        name=ID { factory.setActorName($name); }
-        '('
-        formalParameters
-        ')'
-        ioSignature
+        'actor' name=ID '(' formalParameters ')' ioSignature
         (
             timeCause
         )?
@@ -400,7 +393,7 @@ actorDeclaration returns [ActorNode result]
             (
                 localVariableDeclaration
                 |
-                action=actionDefinition { factory.addActorAction($action.result); }
+                actionDefinition { $actions.add($actionDefinition.result); }
                 |
                 initializeActionDefinition
                 |
@@ -414,7 +407,7 @@ actorDeclaration returns [ActorNode result]
             |
             ';'
         )
-        { $result = factory.createActor(); }
+        { $result = factory.createActor($name, $actions); }
     ;
 
 ioSignature
@@ -443,8 +436,8 @@ processDescription
 // -- Action (CLR §8)
 // ----------------------------------------------------------------------------
 
-actionDefinition returns [ActionNode result]
-    @init { factory.initAction(); }
+actionDefinition returns [ActionNode result] locals [List<CALExpressionNode> localVariables, StmtBlockNode body]
+    @init { factory.createActionScope(); }
     :
         DOC_COMMENT*
         (
@@ -454,25 +447,19 @@ actionDefinition returns [ActionNode result]
             actionTag
             ':'
         )?
-        'action'
-        inputPatterns
-        '==>'
-        outputExpressions
+        'action' inputPatterns '==>' outputExpressions
         (
-            'guard'
-            expressions
+            'guard' expressions
         )?
         (
-            'var'
-            localVariables=blockVariableDeclarations { factory.setActionLocalVariables($localVariables.result); }
+            'var' blockVariableDeclarations { $localVariables = $blockVariableDeclarations.result; }
         )?
         //('delay' expression)?
         (
-            'do'
-            body=statements { factory.setActionBody($body.result); }
+            'do' statements { $body = $statements.result; }
         )?
         ('end' | 'endaction')
-        { $result = factory.createAction(); }
+        { $result = factory.createAction($localVariables, $body); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -644,14 +631,12 @@ localVariableDeclaration
     ;
 
 blockVariableDeclarations returns [List<CALExpressionNode> result]
-    @init { factory.initBlockVariables(); }
+    @init { $result = new ArrayList<>(); }
     :
-        blockVariable=blockVariableDeclaration { factory.addBlockVariable($blockVariable.result); }
+        blockVariable=blockVariableDeclaration { $result.add($blockVariable.result); }
         (
-            ','
-            blockVariable=blockVariableDeclaration { factory.addBlockVariable($blockVariable.result); }
+            ',' blockVariable=blockVariableDeclaration { $result.add($blockVariable.result); }
         )*
-        { $result = factory.createBlockVariables(); }
     ;
 
 blockVariableDeclaration returns [CALExpressionNode result]
@@ -667,13 +652,13 @@ blockVariableDeclaration returns [CALExpressionNode result]
     ;
 
 // Explicit variable declaration (CLR §5.1.1)
-explicitVariableDeclaration returns [CALExpressionNode result]
+explicitVariableDeclaration returns [CALExpressionNode result] locals [CALExpressionNode value]
     :
         /*'mutable'?*/
         (
             type
         )?
-        name=ID { factory.setExplicitVariableName($name); }
+        name=ID
         (
             '['
             expression
@@ -681,9 +666,9 @@ explicitVariableDeclaration returns [CALExpressionNode result]
         )*
         (
             ('=' | ':=')
-            value=expression { factory.setExplicitVariableValue($value.result); }
+            expression { $value = $expression.result; }
         )?
-        { $result = factory.createExplicitVariable(); }
+        { $result = factory.createExplicitVariable($name, $value); }
     ;
 
 functionVariableDeclaration   // Function & procedure declarations (CLR §6.9.3)
@@ -703,22 +688,20 @@ procedureVariableDeclaration
 // ----------------------------------------------------------------------------
 
 formalParameters returns [List<CALExpressionNode> result]
-    @init { factory.initFormalParameters(); }
+    @init { $result = new ArrayList<>(); }
     :
         (
-            formalParameter { factory.addFormalParameter($formalParameter.result); }
+            formalParameter { $result.add($formalParameter.result); }
             (
-                ','
-                formalParameter { factory.addFormalParameter($formalParameter.result); }
+                ',' formalParameter { $result.add($formalParameter.result); }
             )*
         )?
-        { $result = factory.createFormalParameters(); }
     ;
 
 formalParameter returns [CALExpressionNode result]
     :
-        explicitVariable=explicitVariableDeclaration
-        { $result = $explicitVariable.result; }
+        explicitVariableDeclaration
+        { $result = $explicitVariableDeclaration.result; }
     ;
 
 // ----------------------------------------------------------------------------
@@ -783,12 +766,18 @@ generator
     :   'for' generatorBody
     ;
 
-foreachGenerators
-    :   foreachGenerator (',' foreachGenerator)*
+foreachGenerators returns [List<Pair<List<Token>, List<CALExpressionNode>>> result]
+    @init { $result = new ArrayList<>(); }
+    :   foreachGenerator { $result.add($foreachGenerator.result); }
+        (
+            ',' foreachGenerator { $result.add($foreachGenerator.result); }
+        )*
     ;
 
-foreachGenerator
-    :   'foreach' generatorBody
+foreachGenerator returns [Pair<List<Token>, List<CALExpressionNode>> result]
+    :
+        'foreach' generatorBody
+        { $result = $generatorBody.result; }
     ;
 
 /*
@@ -801,8 +790,18 @@ chooseGenerator
     ;
 */
 
-generatorBody
-    :   type? ID (',' ID)? IN expressions
+generatorBody returns [Pair<List<Token>, List<CALExpressionNode>> result] locals [List<Token> variables]
+    @init { $variables = new ArrayList<>(); }
+    :
+        (
+            type
+        )?
+        ID { $variables.add($ID); }
+        (
+            ',' ID { $variables.add($ID); }
+        )?
+        'in' collections=expressions
+        { $result = createGeneratorBody($variables, $collections.result); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -810,14 +809,12 @@ generatorBody
 // ----------------------------------------------------------------------------
 
 expressions returns [List<CALExpressionNode> result]
-    @init { factory.initExpressions(); }
+    @init { $result = new ArrayList<>(); }
     :
-        expression { factory.addExpression($expression.result); }
+        expression { $result.add($expression.result); }
         (
-            ','
-            expression { factory.addExpression($expression.result); }
+            ',' expression { $result.add($expression.result); }
         )*
-        { $result = factory.createExpressions(); }
     ;
 
 // Operation Precedence (CLR §Appendix C.1)
@@ -941,18 +938,16 @@ literalExpression returns [CALExpressionNode result]
 variableExpression returns [CALExpressionNode result]
     :
         (
-            'old' { factory.setVariableExpressionAsOld(); }
+            'old'
         )?
-        variable { factory.setVariableExpressionVariable($variable.result); }
-        { $result = factory.createVariableExpression(); }
+        variable
+        { $result = factory.createVariableExpression($variable.result); }
     ;
 
 // Symbol Reference (CAL Specification Extension)
 symbolReferenceExpression
     :
-        variable
-        '::'
-        ID
+        variable '::' ID
         (
             '('
             (
@@ -963,89 +958,67 @@ symbolReferenceExpression
     ;
 
 // Conditionals (CLR §6.7)
-ifExpression returns [ExprIfNode result]
+ifExpression returns [ExprIfNode result] locals [CALExpressionNode elseExpression]
     :
-        'if'
-        condition=expression { factory.setConditionalExpressionCondition($condition.result); }
-        'then'
-        thenExpr=expression { factory.setConditionalExpressionThenExpression($thenExpr.result); }
+        'if' condition=expression 'then' thenExpression=expression
         (
-            elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpression.result); }
+            elseIfExpression { $elseExpression = $elseIfExpression.result; }
             |
-            'else'
-            elseExpr=expression { factory.setConditionalExpressionElseExpression($elseExpr.result); }
+            'else' expression { $elseExpression = $expression.result; }
         )
-        ('end' | 'endif')
-        { $result = factory.createConditionalExpression(); }
+        { $result = factory.createConditionalExpression($condition.result, $thenExpression.result, $elseExpression); }
     ;
 
 // Elsif (CAL Specification Extension)
-elseIfExpression returns [ExprIfNode result]
+elseIfExpression returns [ExprIfNode result] locals [CALExpressionNode elseExpression]
     :
-        'elsif'
-        condition=expression { factory.setConditionalExpressionCondition($condition.result); }
-        'then'
-        thenExpr=expression { factory.setConditionalExpressionThenExpression($thenExpr.result); }
+        'elsif' condition=expression 'then' thenExpression=expression
         (
-            elseIfExpression { factory.setConditionalExpressionElseExpression($elseIfExpression.result); }
+            elseIfExpression { $elseExpression = $elseIfExpression.result; }
             |
-            'else'
-            elseExpr=expression { factory.setConditionalExpressionElseExpression($elseExpr.result); }
+            'else' expression { $elseExpression = $expression.result; }
         )
-        { $result = factory.createConditionalExpression(); }
+        { $result = factory.createConditionalExpression($condition.result, $thenExpression.result, $elseExpression); }
     ;
 
 // Local Scope (CLR §6.8)
 letExpression returns [LetExprNode result]
-    @init { factory.initLetExpression(); }
+    @init { factory.createLetExpressionScope(); }
     :
-        'let'
-        localVariables=blockVariableDeclarations { factory.setLetExpressionLocalVariables($localVariables.result); }
-        ':'
-        body=expression { factory.setLetExpressionBody($body.result); }
-        ('end' | 'endlet')
-        { $result = factory.createLetExpression(); }
+        'let' localVariables=blockVariableDeclarations ':' body=expression ('end' | 'endlet')
+        { $result = factory.createLetExpression($localVariables.result, $body.result); }
     ;
 
 // Function closure (CLR §6.9.1)
-lambdaExpression returns [LambdaNode result]
-    @init { factory.initLambdaExpression(); }
+lambdaExpression returns [LambdaNode result] locals [List<CALExpressionNode> localVariables]
+    @init { factory.createLambdaExpressionScope(); }
     :
         (
             'const'
         )?
-        'lambda'
-        '('
-        formalParameters { factory.setLambdaExpressionFormalParameters($formalParameters.result); }
-        ')'
+        'lambda' '(' formalParameters ')'
         (
-            '-->'
-            type
+            '-->' type
         )?
         (
-            'var'
-            localVariables=blockVariableDeclarations { factory.setLambdaExpressionLocalVariables($localVariables.result); }
+            'var' blockVariableDeclarations { $localVariables = $blockVariableDeclarations.result; }
         )?
         ':'
-        body=expression { factory.setLambdaExpressionBody($body.result); }
+        body=expression
         ('end' | 'endlambda')
-        { $result = factory.createLambdaExpression(); }
+        { $result = factory.createLambdaExpression($formalParameters.result, $localVariables, $body.result); }
     ;
 
 // Procedure closure (CLR §6.9.2)
 procExpression
     :
-        'proc'
-        '('
-        formalParameters
-        ')'
+        'proc' '(' formalParameters ')'
         (
-            'var'
-            blockVariableDeclarations
+            'var' blockVariableDeclarations
         )?
-         ('do' | 'begin')
-         statements
-         ('end' | 'endproc')
+        ('do' | 'begin')
+        statements
+        ('end' | 'endproc')
     ;
 
 // Comprehensions w/ generators (CLR §6.10.2)
@@ -1102,15 +1075,15 @@ alternativeExpression
     ;
 
 // Function / Procedure Call (CAL Specification Extension)
-callExpression returns [CALInvokeNode result]
+callExpression returns [CALInvokeNode result] locals [List<CALExpressionNode> arguments]
     :
-        function=variableExpression { factory.setCallExpressionFunction($function.result); }
+        function=variableExpression
         '('
             (
-                arguments=expressions { factory.setCallExpressionArguments($arguments.result); }
+                expressions { $arguments = $expressions.result; }
             )?
         ')'
-        { $result = factory.createCallExpression(); }
+        { $result = factory.createCallExpression($function.result, $arguments); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -1118,28 +1091,23 @@ callExpression returns [CALInvokeNode result]
 // ----------------------------------------------------------------------------
 
 lvalues returns [List<Token> result]
-    @init { factory.initLvalues(); }
+    @init { $result = new ArrayList<>(); }
     :
-        lvalue { factory.addLvalue($lvalue.result); }
+        lvalue { $result.add($lvalue.result); }
         (
-            ','
-            lvalue { factory.addLvalue($lvalue.result); }
+            ',' lvalue { $result.add($lvalue.result); }
         )*
-        { $result = factory.createLvalues(); }
     ;
 
 lvalue returns [Token result]
     :
-        variable { factory.setLvalueVariable($variable.result); }
+        variable
         (
-            '.'
-            field
+            '.' field
             |
-            '['
-            expression
-            ']'
+            '[' expression ']'
         )*
-        { $result = factory.createLvalue(); }
+        { $result = factory.createLvalue($variable.result); }
     ;
 
 variable returns [Token result]
@@ -1158,13 +1126,13 @@ field returns [Token result]
 // -- Statements (CLR §7, but extended)
 // ----------------------------------------------------------------------------
 
-statements returns [List<CALStatementNode> result]
-    @init { factory.initStatements(); }
+statements returns [StmtBlockNode result] locals [List<CALStatementNode> stmts]
+    @init { $stmts = new ArrayList<>(); }
     :
         (
-            statement { factory.addStatement($statement.result); }
+            statement { $stmts.add($statement.result); }
         )*
-        { $result = factory.createStatements(); }
+        { $result = factory.createStatements($stmts); }
     ;
 
 statement returns [CALStatementNode result]
@@ -1201,24 +1169,20 @@ statement returns [CALStatementNode result]
 // Assignment (CLR §7.1)
 assignmentStatement returns [CALExpressionNode result]
     :
-        var=lvalue { factory.setAssignmentStatementVariable($var.result); }
-        ':='
-        value=expression { factory.setAssignmentStatementValue($value.result); }
-        ';'
-        { $result = factory.createAssignmentStatement(); }
+        lvalue ':=' value=expression ';'
+        { $result = factory.createAssignmentStatement($lvalue.result, $value.result); }
     ;
 
 // Procedure call (CLR §7.2)
-callStatement returns [CALInvokeNode result]
+callStatement returns [CALInvokeNode result] locals [List<CALExpressionNode> arguments]
     :
-        function=variableExpression { factory.setCallStatementFunction($function.result); }
+        function=variableExpression
         '('
         (
-            arguments=expressions { factory.setCallStatementArguments($arguments.result); }
+            expressions { $arguments = $expressions.result; }
         )?
-        ')'
-        ';'
-        { $result = factory.createCallStatement(); }
+        ')' ';'
+        { $result = factory.createCallStatement($function.result, $arguments); }
     ;
 
 // Statement block (CLR §7.3)
@@ -1235,46 +1199,53 @@ blockStatement
     ;
 
 // If (CLR §7.4)
-ifStatement returns [StmtIfNode result]
+ifStatement returns [StmtIfNode result] locals [CALStatementNode elseStatements]
     :
-        'if'
-        condition=expression { factory.setConditionalStatementCondition($condition.result); }
-        'then'
-        thenStmts=statements { factory.setConditionalStatementThenStatements($thenStmts.result); }
+        'if' condition=expression 'then' thenStatements=statements
         (
-            elseIfStatement { factory.setConditionalStatementElseStatements(Arrays.asList($elseIfStatement.result)); }
+            elseIfStatement { $elseStatements = $elseIfStatement.result; }
             |
-            'else'
-            elseStmts=statements { factory.setConditionalStatementElseStatements($elseStmts.result); }
+            'else' statements { $elseStatements = $statements.result; }
         )?
         ('end' | 'endif')
-        { $result = factory.createConditionalStatement(); }
+        { $result = factory.createConditionalStatement($condition.result, $thenStatements.result, $elseStatements); }
     ;
 
 // Elsif (CAL Specification Extension)
-elseIfStatement returns [StmtIfNode result]
+elseIfStatement returns [StmtIfNode result] locals [CALStatementNode elseStatements]
     :
-        'elsif'
-        condition=expression { factory.setConditionalStatementCondition($condition.result); }
-        'then'
-        thenStmts=statements { factory.setConditionalStatementThenStatements($thenStmts.result); }
+        'elsif' condition=expression 'then' thenStatements=statements
         (
-            elseIfStatement { factory.setConditionalStatementElseStatements(Arrays.asList($elseIfStatement.result)); }
+            elseIfStatement { $elseStatements = $elseIfStatement.result; }
             |
-            'else'
-            elseStmts=statements { factory.setConditionalStatementElseStatements($elseStmts.result); }
+            'else' statements { $elseStatements = $statements.result; }
         )?
-        { $result = factory.createConditionalStatement(); }
+        ('end' | 'endif')
+        { $result = factory.createConditionalStatement($condition.result, $thenStatements.result, $elseStatements); }
     ;
 
 // While (CLR §7.5)
 whileStatement
-    :   'while' expression ('var' blockVariableDeclarations)? 'do' statements ('end' | 'endwhile')
+    :   'while' expression
+        (
+            'var' blockVariableDeclarations
+        )?
+        'do'
+        statements
+        ('end' | 'endwhile')
     ;
 
 // Foreach (CLR §7.6)
-foreachStatement
-    :   foreachGenerators ('var' blockVariableDeclarations)? 'do' statements ('end' | 'endforeach')
+foreachStatement returns [ForeacheNode result] locals [List<CALExpressionNode> localVariables]
+    :
+        foreachGenerators
+        (
+            'var' blockVariableDeclarations { $localVariables = $blockVariableDeclarations.result; }
+        )?
+        'do'
+        body=statements
+        ('end' | 'endforeach')
+        { $result = factory.createForeachStatement($foreachGenerators.result, $localVariables, $body.result); }
     ;
 
 /*

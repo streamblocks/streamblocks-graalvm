@@ -114,7 +114,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("if-statement").build());
     }
 
-    @Ignore
     @Test
     public void ifElseStatementTest() throws IOException {
         runTest(TestCase.newBuilder("if-else-statement").build());

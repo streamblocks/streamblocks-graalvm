@@ -4,6 +4,7 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.source.Source;
@@ -13,6 +14,7 @@ import org.graalvm.collections.Pair;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
@@ -35,109 +37,42 @@ public class CALNodeFactory {
     }
 
     // Namespace Declaration
-    String namespaceName;
-    Map<String, RootCallTarget> namespaceEntities;
-
-    public void setNamespaceName(List<Token> name) {
-        namespaceName = CALNodeFactory.qualifiedIdToString(name);
-    }
-
-    public void setNamespaceBody(Map<String, RootCallTarget> body) {
-        namespaceEntities = new HashMap<>();
-        for (Map.Entry<String, RootCallTarget> entry: body.entrySet()) {
-            namespaceEntities.put((namespaceName != null ? namespaceName + "."  : "") + entry.getKey(), entry.getValue());
-        }
-    }
-
-    public Map<String, RootCallTarget> createNamespace() {
-        return namespaceEntities;
+    public Map<String, RootCallTarget> createNamespace(List<Token> name, Map<String, RootCallTarget> body) {
+        return body.entrySet().stream().collect(Collectors.toMap(e -> (name != null ? CALNodeFactory.qualifiedIdToString(name) + "."  : "") + e.getKey(), Map.Entry::getValue));
     }
 
     // Namespace Body
-    Map<String, RootCallTarget> namespaceBodyEntities;
-
-    public void initNamespaceBody() {
-        namespaceBodyEntities = new HashMap<>();
-    }
-
     public void addNamespaceBodyImport(Pair<String, String> bodyImport) {
         context.addImport(bodyImport);
     }
 
-    public void addNamespaceBodyEntity(CALRootNode entity) {
-        namespaceBodyEntities.put(entity.getName(), Truffle.getRuntime().createCallTarget(entity));
-    }
-
-    public Map<String, RootCallTarget> createNamespaceBody() {
-        return namespaceBodyEntities;
+    public Map<String, RootCallTarget> createNamespaceBody(Map<String, CALRootNode> entities) {
+        return entities.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Truffle.getRuntime().createCallTarget(e.getValue())));
     }
 
     // Qualified ID
-    List<Token> qualifiedIdParts;
-
-    public void initQualifiedId() {
-        qualifiedIdParts = new ArrayList<>();
-    }
-
-    public void addQualifiedIdPart(Token part) {
-        qualifiedIdParts.add(part);
-    }
-
-    public List<Token> createQualifiedId() {
-        return qualifiedIdParts;
-    }
-
     public static String qualifiedIdToString(List<Token> qualifiedId) {
         return qualifiedId.stream().map(Token::getText).collect(Collectors.joining("."));
     }
 
     // Single Import
-    List<Token> singleImportGlobalName;
-    String singleImportLocalName;
-
-    public void setSingleImportGlobalName(List<Token> globalName) {
-        singleImportGlobalName = globalName;
-    }
-
-    public void setSingleImportLocalName(Token localName) {
-        singleImportLocalName = localName.getText();
-    }
-
-    public Pair<String, String> createSingleImport() {
-        if (singleImportLocalName == null) {
-            singleImportLocalName = singleImportGlobalName.get(singleImportGlobalName.size() - 1).getText();
-        }
-
-        return Pair.create(singleImportLocalName, CALNodeFactory.qualifiedIdToString(singleImportGlobalName));
+    public Pair<String, String> createSingleImport(List<Token> globalName, Token localName) {
+        return Pair.create(
+            localName != null ? localName.getText() : globalName.get(globalName.size() - 1).getText(),
+            CALNodeFactory.qualifiedIdToString(globalName)
+        );
     }
 
     // Actor Declaration
-    String actorName;
-    List<ActionNode> actorActions;
-
-    public void initActor() {
+    public void createActorScope() {
         context.pushScope();
-
-        actorActions = new ArrayList<>();
     }
 
-    public void setActorName(Token name) {
-        actorName = name.getText();
-    }
+    public ActorNode createActor(Token name, List<ActionNode> actions) {
+        // TODO Finish actor head statements
+        StmtBlockNode head = new StmtBlockNode(new CALStatementNode[0]);
 
-    public void addActorAction(ActionNode action) {
-        actorActions.add(action);
-    }
-
-    public ActorNode createActor() {
-        ActorNode result = new ActorNode(
-                context.getLanguage(),
-                context.getCurrentScope().getFrame(),
-                actorActions.toArray(new ActionNode[0]),
-                new StmtBlockNode(new CALStatementNode[0]),
-                null,
-                actorName
-        );
+        ActorNode result = new ActorNode(context.getLanguage(), context.getCurrentScope().getFrame(), actions.toArray(new ActionNode[0]), head, null, name.getText());
 
         context.popScope();
 
@@ -145,105 +80,43 @@ public class CALNodeFactory {
     }
 
     // Action Declaration
-    List<CALExpressionNode> actionLocalVariables;
-    List<CALStatementNode> actionBody;
-
-    public void initAction() {
+    public void createActionScope() {
         context.pushScope();
     }
 
-    public void setActionLocalVariables(List<CALExpressionNode> localVariables) {
-        actionLocalVariables = localVariables;
-    }
-
-    public void setActionBody(List<CALStatementNode> body) {
-        actionBody = body;
-    }
-
-    public ActionNode createAction() {
+    public ActionNode createAction(List<CALExpressionNode> localVariables, StmtBlockNode body) {
         List<CALStatementNode> actionStatements = new ArrayList<>();
 
-        if (actionLocalVariables != null) {
-            actionStatements.addAll(actionLocalVariables);
+        if (localVariables != null) {
+            actionStatements.addAll(localVariables);
         }
-        if (actionBody != null) {
-            actionStatements.addAll(actionBody);
+        if (body != null) {
+            actionStatements.addAll(body.getStatements());
         }
 
-        ActionNode result = new ActionNode(
-            context.getLanguage(),
-            context.getCurrentScope().getFrame(),
-            new ActionBodyNode(new StmtBlockNode(actionStatements.toArray(new CALStatementNode[0]))),
-            new BooleanLiteralNode(true),
-            null,
-            "unnamed action"
-        );
+        StmtBlockNode bodyNode = new StmtBlockNode(actionStatements.toArray(new CALStatementNode[0]));
+        ActionBodyNode actionBodyNode = new ActionBodyNode(bodyNode);
+        // TODO Finish action firing conditions
+        CALExpressionNode firingCondition = new BooleanLiteralNode(true);
+        ActionNode result = new ActionNode(context.getLanguage(), context.getCurrentScope().getFrame(), actionBodyNode, firingCondition, null, "unnamed action");
 
         context.popScope();
 
         return result;
     }
 
-    // Block Variables
-    List<CALExpressionNode> blockVariables;
-
-    public void initBlockVariables() {
-        blockVariables = new ArrayList<>();
-    }
-
-    public void addBlockVariable(CALExpressionNode blockVariable) {
-        blockVariables.add(blockVariable);
-    }
-
-    public List<CALExpressionNode> createBlockVariables() {
-        return blockVariables;
-    }
-
     // Explicit Variable Declaration
-    Token explicitVariableName;
-    CALExpressionNode explicitVariableValue;
+    public CALExpressionNode createExplicitVariable(Token name, CALExpressionNode value) {
+        // TODO Add support for variable type
+        // TODO Add support for constant variables ('=')
+        // TODO Add support for mutable variables ('mutable')
 
-    public void setExplicitVariableName(Token name) {
-        explicitVariableName = name;
+        return context.createWriteNode(name.getText(), value);
     }
 
-    public void setExplicitVariableValue(CALExpressionNode value) {
-        explicitVariableValue = value;
-    }
-
-    public CALExpressionNode createExplicitVariable() {
-        // TODO Support variable type & constant variables ('=')
-        return context.createWriteNode(explicitVariableName.getText(), explicitVariableValue);
-    }
-
-    // Formal Parameters
-    List<CALExpressionNode> formalParameters;
-
-    public void initFormalParameters() {
-        formalParameters = new ArrayList<>();
-    }
-
-    public void addFormalParameter(CALExpressionNode formalParameter) {
-        formalParameters.add(formalParameter);
-    }
-
-    public List<CALExpressionNode> createFormalParameters() {
-        return formalParameters;
-    }
-
-    // Expressions
-    List<CALExpressionNode> expressions;
-
-    public void initExpressions() {
-        expressions = new ArrayList<>();
-    }
-
-    public void addExpression(CALExpressionNode expression) {
-        expressions.add(expression);
-    }
-
-    public List<CALExpressionNode> createExpressions() {
-        return expressions;
+    // Generator Body
+    public Pair<List<Token>, List<CALExpressionNode>> createGeneratorBody(List<Token> variables, List<CALExpressionNode> collections) {
+        return Pair.create(variables, collections);
     }
 
     // Indexer Expression
@@ -362,72 +235,27 @@ public class CALNodeFactory {
     }
 
     // Variable Expression
-    boolean isOldVariableExpression;
-    Token variableExpressionVariable;
-
-    public void setVariableExpressionAsOld() {
-        isOldVariableExpression = true;
-    }
-
-    public void setVariableExpressionVariable(Token variable) {
-        variableExpressionVariable = variable;
-    }
-
-    public CALExpressionNode createVariableExpression() {
+    public CALExpressionNode createVariableExpression(Token variable) {
         // TODO Add support for old variables
-        CALExpressionNode result = context.createReadNode(variableExpressionVariable.getText());
-
-        isOldVariableExpression = false;
-
-        return result;
+        return context.createReadNode(variable.getText());
     }
 
     // Symbol Reference Expression
     // TODO Create CALSymbolReferenceNode
 
     // Conditional Expression
-    CALExpressionNode conditionalExpressionCondition;
-    CALExpressionNode conditionalExpressionThenExpression;
-    CALExpressionNode conditionalExpressionElseExpression;
-
-    public void setConditionalExpressionCondition(CALExpressionNode condition) {
-        conditionalExpressionCondition = condition;
-    }
-
-    public void setConditionalExpressionThenExpression(CALExpressionNode thenExpression) {
-        conditionalExpressionThenExpression = thenExpression;
-    }
-
-    public void setConditionalExpressionElseExpression(CALExpressionNode elseExpression) {
-        conditionalExpressionElseExpression = elseExpression;
-    }
-
-    public ExprIfNode createConditionalExpression() {
-        return new ExprIfNode(conditionalExpressionCondition, conditionalExpressionThenExpression, conditionalExpressionElseExpression);
+    public ExprIfNode createConditionalExpression(CALExpressionNode condition, CALExpressionNode thenExpression, CALExpressionNode elseExpression) {
+        return new ExprIfNode(condition, thenExpression, elseExpression);
     }
 
     // Local scope (Let Expression)
-    List<CALExpressionNode> letExpressionLocalVariables;
-    CALExpressionNode letExpressionBody;
-
-    public void initLetExpression() {
+    public void createLetExpressionScope() {
         context.pushScope(true, false);
     }
 
-    public void setLetExpressionLocalVariables(List<CALExpressionNode> localVariables) {
-        letExpressionLocalVariables = localVariables;
-    }
-
-    public void setLetExpressionBody(CALExpressionNode body) {
-        letExpressionBody = body;
-    }
-
-    public LetExprNode createLetExpression() {
-        LetExprNode result = new LetExprNode(
-            new StmtBlockNode(letExpressionLocalVariables.toArray(new CALStatementNode[0])),
-            letExpressionBody
-        );
-
+    public LetExprNode createLetExpression(List<CALExpressionNode> localVariables, CALExpressionNode body) {
+        StmtBlockNode head = new StmtBlockNode(localVariables.toArray(new CALStatementNode[0]));
+        LetExprNode result = new LetExprNode(head, body);
         context.popScope();
 
         return result;
@@ -435,59 +263,32 @@ public class CALNodeFactory {
 
     // Function closure (Lambda Expression)
     static int LAMBDA_ID = 1;
-    List<CALExpressionNode> lambdaExpressionFormalParameters;
-    List<CALExpressionNode> lambdaExpressionLocalVariables;
-    CALExpressionNode lambdaExpressionBody;
 
-    public void initLambdaExpression() {
-        context.pushScope(true, false);
+    public void createLambdaExpressionScope() {
+        context.pushScope(true);
     }
 
-    public void setLambdaExpressionFormalParameters(List<CALExpressionNode> formalParameters) {
-        lambdaExpressionFormalParameters = formalParameters;
-    }
-
-    public void setLambdaExpressionLocalVariables(List<CALExpressionNode> localVariables) {
-        context.pushScope(true, false);
-        lambdaExpressionLocalVariables = localVariables;
-    }
-
-    public void setLambdaExpressionBody(CALExpressionNode body) {
-        lambdaExpressionBody = body;
-    }
-
-    public LambdaNode createLambdaExpression() {
+    public LambdaNode createLambdaExpression(List<CALExpressionNode> formalParameters, List<CALExpressionNode> localVariables, CALExpressionNode body) {
         // TODO Add support for constant lambdas
         // TODO Add support for lambda return type
 
-        StmtBlockNode lambdaExpressionHead = null;
-        if (lambdaExpressionFormalParameters != null) {
-            lambdaExpressionHead = new StmtBlockNode(lambdaExpressionFormalParameters.toArray(new CALStatementNode[0]));
+        StmtBlockNode head = null;
+        if (formalParameters != null) {
+            head = new StmtBlockNode(formalParameters.toArray(new CALStatementNode[0]));
         }
 
-        if (lambdaExpressionLocalVariables != null) {
-            lambdaExpressionBody = new LetExprNode(
-                    new StmtBlockNode(lambdaExpressionLocalVariables.toArray(new CALStatementNode[0])),
-                    lambdaExpressionBody
-            );
-
+        if (localVariables != null) {
+            StmtBlockNode letHead = new StmtBlockNode(localVariables.toArray(new CALStatementNode[0]));
+            body = new LetExprNode(letHead, body);
             context.popScope();
         }
 
-        LambdaNode result = new LambdaNode(
-            new CALRootNode(
-                context.getLanguage(),
-                context.getCurrentScope().getFrame(),
-                new ReturnsLastBodyNode(lambdaExpressionHead, lambdaExpressionBody),
-                null,
-                "lambda-" + LAMBDA_ID
-            )
-        );
+        ReturnsLastBodyNode bodyNode = new ReturnsLastBodyNode(head, body);
+        CALRootNode bodyRootNode = new CALRootNode(context.getLanguage(), context.getCurrentScope().getFrame(), bodyNode, null, "lambda-" + LAMBDA_ID);
+        LambdaNode result = new LambdaNode(bodyRootNode);
 
         context.popScope();
         LAMBDA_ID++;
-        lambdaExpressionFormalParameters = null;
-        lambdaExpressionLocalVariables = null;
 
         return result;
     }
@@ -504,128 +305,54 @@ public class CALNodeFactory {
     // TODO Create CALTypeAssertionExpressionNode
 
     // Call Expression
-    CALExpressionNode callExpressionFunction;
-    List<CALExpressionNode> callExpressionArguments;
-
-    public void setCallExpressionFunction(CALExpressionNode variableExpression) {
-        callExpressionFunction = variableExpression;
-    }
-
-    public void setCallExpressionArguments(List<CALExpressionNode> expressions) {
-        callExpressionArguments = expressions;
-    }
-
-    public CALInvokeNode createCallExpression() {
-        return new CALInvokeNode(callExpressionFunction, callExpressionArguments.toArray(new CALExpressionNode[0]));
-    }
-
-    // Lvalues
-    List<Token> lvalues;
-
-    public void initLvalues() {
-        lvalues = new ArrayList<>();
-    }
-
-    public void addLvalue(Token lvalue) {
-        lvalues.add(lvalue);
-    }
-
-    public List<Token> createLvalues() {
-        return lvalues;
+    public CALInvokeNode createCallExpression(CALExpressionNode function, List<CALExpressionNode> arguments) {
+        return new CALInvokeNode(function, arguments != null ? arguments.toArray(new CALExpressionNode[0]) : new CALExpressionNode[0]);
     }
 
     // Lvalue
-    Token lvalueVariable;
-
-    public void setLvalueVariable(Token variable) {
-        lvalueVariable = variable;
-    }
-
-    public Token createLvalue() {
-        return lvalueVariable;
+    public Token createLvalue(Token variable) {
+        return variable;
     }
 
     // Statements
-    List<CALStatementNode> statements;
-
-    public void initStatements() {
-        statements = new ArrayList<>();
-    }
-
-    public void addStatement(CALStatementNode statement) {
-        statements.add(statement);
-    }
-
-    public List<CALStatementNode> createStatements() {
-        return statements;
+    public StmtBlockNode createStatements(List<CALStatementNode> statements) {
+        return new StmtBlockNode(statements.toArray(new CALStatementNode[0]));
     }
 
     // Assignment Statement
-    Token assignmentStatementVariable;
-    CALExpressionNode assignmentStatementValue;
-
-    public void setAssignmentStatementVariable(Token variable) {
-        assignmentStatementVariable = variable;
-    }
-
-    public void setAssignmentStatementValue(CALExpressionNode value) {
-        assignmentStatementValue = value;
-    }
-
-    public CALExpressionNode createAssignmentStatement() {
-        return context.createWriteNode(assignmentStatementVariable.getText(), assignmentStatementValue);
+    public CALExpressionNode createAssignmentStatement(Token lvalue, CALExpressionNode value) {
+        return context.createWriteNode(lvalue.getText(), value);
     }
 
     // Call Statement
-    CALExpressionNode callStatementFunction;
-    List<CALExpressionNode> callStatementArguments;
-
-    public void setCallStatementFunction(CALExpressionNode function) {
-        callStatementFunction = function;
-    }
-
-    public void setCallStatementArguments(List<CALExpressionNode> arguments) {
-        callStatementArguments = arguments;
-    }
-
-    public CALInvokeNode createCallStatement() {
-        return new CALInvokeNode(callStatementFunction, callStatementArguments.toArray(new CALExpressionNode[0]));
+    public CALInvokeNode createCallStatement(CALExpressionNode function, List<CALExpressionNode> arguments) {
+        return new CALInvokeNode(function, arguments != null ? arguments.toArray(new CALExpressionNode[0]) : new CALExpressionNode[0]);
     }
 
     // Statement block
     // TODO Use unnamed proc node
 
     // Conditional Statements
-    CALExpressionNode conditionalStatementCondition;
-    StmtBlockNode conditionalStatementThenStatements;
-    StmtBlockNode conditionalStatementElseStatements;
-
-    public void setConditionalStatementCondition(CALExpressionNode condition) {
-        conditionalStatementCondition = condition;
-    }
-
-    public void setConditionalStatementThenStatements(List<CALStatementNode> thenStatements) {
-        conditionalStatementThenStatements = new StmtBlockNode(thenStatements.toArray(new CALStatementNode[0]));
-    }
-
-    public void setConditionalStatementElseStatements(List<CALStatementNode> elseStatements) {
-        conditionalStatementElseStatements = new StmtBlockNode(elseStatements.toArray(new CALStatementNode[0]));
-    }
-
-    public StmtIfNode createConditionalStatement() {
-        // FIXME Fix circular dependency: Action Statements -> If Statement -> Then Statements
-        if (conditionalStatementThenStatements != null) {
-            statements.removeAll(conditionalStatementThenStatements.getStatements());
+    public StmtIfNode createConditionalStatement(CALExpressionNode condition, StmtBlockNode thenStatements, CALStatementNode elseStatements) {
+        if (!(elseStatements instanceof StmtBlockNode)) {
+            // Wrap Elseif statement in a statement block
+            elseStatements = new StmtBlockNode(new CALStatementNode[]{ elseStatements });
         }
 
-        if (conditionalStatementElseStatements != null) {
-            statements.removeAll(conditionalStatementElseStatements.getStatements());
-        }
+        return new StmtIfNode(condition, thenStatements, elseStatements);
+    }
 
-        StmtIfNode result = new StmtIfNode(conditionalStatementCondition, conditionalStatementThenStatements, conditionalStatementElseStatements);
+    // While Statement
+    // TODO Create CALWhileStatementNode
 
-        conditionalStatementElseStatements = null;
+    // Foreach Statement
+    public ForeacheNode createForeachStatement(List<Pair<List<Token>, List<CALExpressionNode>>> generators, List<CALExpressionNode> localVariables, StmtBlockNode body) {
+        Pair<List<Token>, List<CALExpressionNode>> generator = generators.get(0);
+        Token variable = generator.getLeft().get(0);
+        // TODO Finish getting foreach variable (like in variable declaration)
+        CALExpressionNode variableNode = null;
+        CALExpressionNode collection = generator.getRight().get(0);
 
-        return result;
+        return ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) variableNode, collection);
     }
 }
