@@ -167,6 +167,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void ProcedureTest() throws IOException {
+        runTest(TestCase.newBuilder("procedure").setIterations(10).build());
+    }
+
+    @Test
     public void importsTest() throws IOException {
         runTest(TestCase.newBuilder("import/Network").setActorName("test.SourceSink").setDirLookup(true).build());
     }
