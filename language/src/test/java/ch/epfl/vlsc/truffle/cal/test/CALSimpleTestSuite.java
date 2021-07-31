@@ -152,6 +152,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore("Not implemented yet")
+    public void whileLoopTest() throws IOException {
+        runTest(TestCase.newBuilder("while-loop").build());
+    }
+
+    @Test
     public void nestedForLoopsTest() throws IOException {
         runTest(TestCase.newBuilder("nested-for-loop").build());
     }

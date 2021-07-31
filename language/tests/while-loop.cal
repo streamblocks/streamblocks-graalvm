@@ -1,0 +1,9 @@
+namespace test:
+	actor test() ==> :
+	    i := 0;
+		action ==>
+		do
+            while i < 10 do println(i); end
+		end
+	end
+end
