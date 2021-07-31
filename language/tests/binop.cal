@@ -6,6 +6,8 @@ namespace test:
             println(15&12&8);
             println(8 >> 1);
             println(15 >> 2);
+            println(8 mod 3);
+            println(8 mod 5);
 		end
 	end
 end

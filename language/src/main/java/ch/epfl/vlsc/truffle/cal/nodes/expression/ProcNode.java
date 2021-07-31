@@ -20,7 +20,6 @@ public final class ProcNode extends CALExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        System.out.println("Called");
         return new CALProcedure(body, frame.materialize());
     }
 }
