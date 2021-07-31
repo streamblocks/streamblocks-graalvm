@@ -36,7 +36,7 @@ public class ProcExprTransformer extends ScopedTransformer<ProcNode> {
             i++;
         }
         StmtBlockNode bodyStmt = new StmtBlockNode(body);
-        ReturnsLastBodyNode bodyNode = new ReturnsLastBodyNode(bodyStmt, new BooleanLiteralNode(true));
+        ReturnsLastBodyNode bodyNode = new ReturnsLastBodyNode(bodyStmt, null);
 
         SourceSection procSrc = getSourceSection(proc);
 
