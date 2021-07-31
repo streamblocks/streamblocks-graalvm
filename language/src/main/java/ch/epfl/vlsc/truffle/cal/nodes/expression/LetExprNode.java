@@ -6,10 +6,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 
 public final class LetExprNode extends CALExpressionNode {
-    @Child
-    private CALExpressionNode body;
-    @Child
-    private CALStatementNode head;
+    @Child private CALExpressionNode body;
+    @Child private CALStatementNode head;
 
     // FIXME add parameters and return type
     public LetExprNode(CALStatementNode head, CALExpressionNode body) {

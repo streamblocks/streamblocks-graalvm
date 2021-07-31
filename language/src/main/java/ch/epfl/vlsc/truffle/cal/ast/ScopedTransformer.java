@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
@@ -22,16 +22,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerThanNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryDivNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
@@ -47,22 +37,11 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.Generator;
-import se.lth.cs.tycho.ir.IRNode;
+import se.lth.cs.tycho.ir.decl.ParameterVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
-import se.lth.cs.tycho.ir.expr.ExprApplication;
-import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
-import se.lth.cs.tycho.ir.expr.ExprComprehension;
-import se.lth.cs.tycho.ir.expr.ExprIf;
-import se.lth.cs.tycho.ir.expr.ExprIndexer;
-import se.lth.cs.tycho.ir.expr.ExprLambda;
-import se.lth.cs.tycho.ir.expr.ExprLet;
-import se.lth.cs.tycho.ir.expr.ExprList;
-import se.lth.cs.tycho.ir.expr.ExprLiteral;
+import se.lth.cs.tycho.ir.expr.*;
 import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
-import se.lth.cs.tycho.ir.expr.ExprUnaryOp;
-import se.lth.cs.tycho.ir.expr.ExprVariable;
-import se.lth.cs.tycho.ir.expr.Expression;
 import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
@@ -190,11 +169,21 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         	output = transformExprComprehension((ExprComprehension) expr);
         } else if (expr instanceof ExprIf) {
         	output = transformExprIf((ExprIf) expr);
+        } else if (expr instanceof ExprProc) {
+            output = transformExprProc(((ExprProc) expr));
+            // System.out.println("ExprProc encountered: " + ((ExprProc) expr).toString());
+            //throw new TransformException("unknown expr " + expr.getClass().getName(), context.getSource(), expr);
+            //output = (new ProcExprTransformer((ExprProc) expr, context.deeper(false))).transform();
         } else {
             throw new TransformException("unknown expr " + expr.getClass().getName(), context.getSource(), expr);
         }
         return withSourceSection(output, expr);
-    } 
+    }
+
+    private CALExpressionNode transformExprProc(ExprProc expr) {
+        // return new BooleanLiteralNode(true);
+        return (new ProcExprTransformer((ExprProc) expr, context.deeper(false))).transform();
+    }
 
     private CALExpressionNode transformExprVariable(ExprVariable expr) {
             ExprVariable v = (ExprVariable) expr;
@@ -330,7 +319,8 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
                 entry("mod", 5),
                 entry("*", 5),
                 entry("/", 5),
-                entry("^", 6)
+                entry("^", 6),
+                entry(">>", 6)
                 );
 
         int lower = 7;
@@ -339,6 +329,8 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         List<String> reverseOperations = new ArrayList<>(operations);
         Collections.reverse(reverseOperations);
         for( String opeString : reverseOperations) {
+            //System.out.println(opeString);
+            //System.out.println(precedence);
             if ( precedence.get(opeString) < lower) {
                 lower = precedence.get(opeString);
                 operationIndex = i;
@@ -376,6 +368,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "-":
             result = CALBinarySubNodeGen.create(left, right);
             break;
+        case "%":
+            result = CALBinaryModNodeGen.create(left, right);
+            break;
         case "*":
             result = CALBinaryMulNodeGen.create(left, right);
             break;
@@ -397,11 +392,20 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "=":
             result = CALBinaryEqualNodeGen.create(left, right);
             break;
+        case "!=":
+            result = CALBinaryNotEqualNodeGen.create(left, right);
+            break;
         case "..":
             result = ListRangeInitNodeGen.create(left, right);
             break;
         case "and":
             result = new CALBinaryLogicalAndNode(left, right);
+            break;
+        case ">>":
+            result = CALBinaryShiftRightNodeGen.create(left, right);
+            break;
+        case "&":
+            result = CALBinaryBitAndNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);
@@ -481,7 +485,6 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     private CALInvokeNode transformStmtCall(StmtCall stmtCall) {
-
         return new CALInvokeNode(transformExpr(stmtCall.getProcedure()),
                 stmtCall.getArgs().map(new Function<Expression, CALExpressionNode>() {
                     public CALExpressionNode apply(Expression expr) {
