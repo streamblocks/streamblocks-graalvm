@@ -167,6 +167,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore("Not implemented yet")
     public void ProcedureTest() throws IOException {
         runTest(TestCase.newBuilder("procedure").setIterations(10).build());
     }

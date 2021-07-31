@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.SourceSection;
@@ -22,16 +23,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryBiggerThanNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryDivNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
@@ -330,7 +321,8 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
                 entry("mod", 5),
                 entry("*", 5),
                 entry("/", 5),
-                entry("^", 6)
+                entry("^", 6),
+                entry(">>", 6)
                 );
 
         int lower = 7;
@@ -402,6 +394,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             break;
         case "and":
             result = new CALBinaryLogicalAndNode(left, right);
+            break;
+        case ">>":
+            result = CALBinaryShiftRightNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);
