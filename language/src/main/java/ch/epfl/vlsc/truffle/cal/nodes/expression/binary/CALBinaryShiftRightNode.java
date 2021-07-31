@@ -19,7 +19,7 @@ public abstract class CALBinaryShiftRightNode extends CALBinaryNode {
     @Specialization
     @CompilerDirectives.TruffleBoundary
     protected CALBigNumber shiftRight(CALBigNumber left, CALBigNumber right) {
-        return new CALBigNumber(right.getValue().shiftRight(left.getValue().intValue()));
+        return new CALBigNumber(left.getValue().shiftRight(right.getValue().intValue()));
     }
 
     @CompilerDirectives.TruffleBoundary

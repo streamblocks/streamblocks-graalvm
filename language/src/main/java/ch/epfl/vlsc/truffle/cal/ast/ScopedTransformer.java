@@ -305,6 +305,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         if (operations.size() < 2)
             return expr;
 
+        // TODO: Get the precendence corrected
         Map<String, Integer> precedence = Map.ofEntries(
                 entry("and", 1),
                 entry("or", 1),
@@ -322,6 +323,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
                 entry("*", 5),
                 entry("/", 5),
                 entry("^", 6),
+                entry("&", 6),
                 entry(">>", 6)
                 );
 
@@ -397,6 +399,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             break;
         case ">>":
             result = CALBinaryShiftRightNodeGen.create(left, right);
+            break;
+        case "&":
+            result = CALBinaryBitAndNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);
