@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileRepeatingNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -414,10 +416,16 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         	output = transformStmtIf((StmtIf) statement);
         } else if (statement instanceof StmtBlock) {
             output = transformStmtBlock((StmtBlock) statement);
+        } else if (statement instanceof StmtWhile) {
+            output = transformStmtWhile((StmtWhile) statement);
         } else {
             throw new Error("unknown statement " + statement.getClass().getName());
         }
         return withSourceSection(output, statement);
+    }
+
+    private StmtWhileNode transformStmtWhile(StmtWhile statement) {
+        return new StmtWhileNode(transformExpr(statement.getCondition()), transformStatementsList(statement.getBody()));
     }
 
     private StmtBlockNode transformStmtBlock(StmtBlock statement) {

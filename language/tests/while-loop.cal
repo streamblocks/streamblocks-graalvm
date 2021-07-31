@@ -3,7 +3,7 @@ namespace test:
 	    i := 0;
 		action ==>
 		do
-            while i < 10 do println(i); end
+            while i < 10 do println(i); i := i + 1; end
 		end
 	end
 end
