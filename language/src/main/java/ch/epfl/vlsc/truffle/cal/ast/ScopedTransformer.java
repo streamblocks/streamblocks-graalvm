@@ -41,19 +41,8 @@ import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.IRNode;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
-import se.lth.cs.tycho.ir.expr.ExprApplication;
-import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
-import se.lth.cs.tycho.ir.expr.ExprComprehension;
-import se.lth.cs.tycho.ir.expr.ExprIf;
-import se.lth.cs.tycho.ir.expr.ExprIndexer;
-import se.lth.cs.tycho.ir.expr.ExprLambda;
-import se.lth.cs.tycho.ir.expr.ExprLet;
-import se.lth.cs.tycho.ir.expr.ExprList;
-import se.lth.cs.tycho.ir.expr.ExprLiteral;
+import se.lth.cs.tycho.ir.expr.*;
 import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
-import se.lth.cs.tycho.ir.expr.ExprUnaryOp;
-import se.lth.cs.tycho.ir.expr.ExprVariable;
-import se.lth.cs.tycho.ir.expr.Expression;
 import se.lth.cs.tycho.ir.stmt.Statement;
 import se.lth.cs.tycho.ir.stmt.StmtAssignment;
 import se.lth.cs.tycho.ir.stmt.StmtCall;
@@ -181,11 +170,17 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         	output = transformExprComprehension((ExprComprehension) expr);
         } else if (expr instanceof ExprIf) {
         	output = transformExprIf((ExprIf) expr);
+        } else if (expr instanceof ExprProc) {
+            output = transformExprProc(((ExprProc) expr));
         } else {
             throw new TransformException("unknown expr " + expr.getClass().getName(), context.getSource(), expr);
         }
         return withSourceSection(output, expr);
-    } 
+    }
+
+    private CALExpressionNode transformExprProc(ExprProc expr) {
+        return (new ProcExprTransformer((ExprProc) expr, context.deeper(false))).transform();
+    }
 
     private CALExpressionNode transformExprVariable(ExprVariable expr) {
             ExprVariable v = (ExprVariable) expr;
