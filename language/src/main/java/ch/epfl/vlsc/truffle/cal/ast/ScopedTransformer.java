@@ -394,6 +394,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "=":
             result = CALBinaryEqualNodeGen.create(left, right);
             break;
+        case "!=":
+            result = CALBinaryNotEqualNodeGen.create(left, right);
+            break;
         case "..":
             result = ListRangeInitNodeGen.create(left, right);
             break;
