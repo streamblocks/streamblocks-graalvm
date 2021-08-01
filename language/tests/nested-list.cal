@@ -1,0 +1,18 @@
+namespace test:
+
+	actor test() ==> :
+		action ==>
+		var
+			List(type: List(type: int, size=2), size=2) a := [[1,2], [0,1]]
+		do
+		    println(a[0][0]);
+            println(a[0][1]);
+			a[0][a[1][1]] := 10;
+			a[a[1][0]][0] := a[a[1][0]][a[1][1]]+10;
+			println(a[0][0]);
+			println(a[0][1]);
+		end
+	end
+end
+
+

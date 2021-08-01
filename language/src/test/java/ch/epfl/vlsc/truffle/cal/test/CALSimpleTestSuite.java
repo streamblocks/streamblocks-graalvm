@@ -132,6 +132,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void listNestedTest() throws IOException {
+        runTest(TestCase.newBuilder("nested-list").build());
+    }
+
+    @Test
     public void repeatInputTest() throws IOException {
         runTest(TestCase.newBuilder("repeat-input").setActorName("simple.dwf.SourceSink").build());
     }
