@@ -406,6 +406,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case ">>":
             result = CALBinaryShiftRightNodeGen.create(left, right);
             break;
+        case "<<":
+            result = CALBinaryShiftLeftNodeGen.create(left, right);
+            break;
         case "&":
             result = CALBinaryBitAndNodeGen.create(left, right);
             break;
