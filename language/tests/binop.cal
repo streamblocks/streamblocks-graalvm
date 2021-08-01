@@ -14,6 +14,8 @@ namespace test:
             println(1 != 2);
             // println([1,2] != [2,2]);
             println("12" != "32");
+            println(8 | 4 | 2 | 1);
+            println(4 | 1);
 		end
 	end
 end
