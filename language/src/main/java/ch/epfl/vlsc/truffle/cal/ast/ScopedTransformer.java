@@ -41,6 +41,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.IRNode;
+import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.expr.*;
@@ -432,8 +433,8 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         CALStatementNode[] body = new CALStatementNode[statement.getVarDecls().size() + statement.getStatements().size()];
         int i = 0;
 
-        for (VarDecl varDecl : statement.getVarDecls()) {
-            body[i] = transformArgument(varDecl, i);
+        for (LocalVarDecl varDecl : statement.getVarDecls()) {
+            body[i] = transformVarDecl(varDecl);
             i++;
         }
         for(Statement stmt: statement.getStatements()){
