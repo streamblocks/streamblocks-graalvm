@@ -10,11 +10,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileRepeatingNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
@@ -40,7 +38,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.Generator;
-import se.lth.cs.tycho.ir.IRNode;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
@@ -301,27 +298,35 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
 
         // TODO: Get the precendence corrected
         Map<String, Integer> precedence = Map.ofEntries(
-                entry("and", 1),
-                entry("or", 1),
-                entry("=", 2),
-                entry("!=", 2),
-                entry("<", 2),
-                entry("<=", 2),
-                entry(">", 2),
-                entry(">=", 2),
-                entry("in", 3),
-                entry("+", 4),
-                entry("-", 4),
-                entry("div", 5),
-                entry("mod", 5),
-                entry("*", 5),
-                entry("/", 5),
-                entry("^", 6),
-                entry("&", 6),
-                entry(">>", 6)
-                );
+                entry("..", 1),
+                entry("||", 7),
+                entry("or", 7),
+                entry("&&", 8),
+                entry("and", 8),
+                entry("|", 9),
+                entry("^", 10),
+                entry("&", 11),
+                entry("==", 12),
+                entry("=", 12),
+                entry("!=", 12),
+                entry(">=", 13),
+                entry(">", 13),
+                entry("<=", 13),
+                entry("<", 13),
+                entry("<<", 14),
+                entry(">>", 14),
+                entry("in", 14),
+                entry("-", 15),
+                entry("+", 15),
+                entry("/", 16),
+                entry("*", 16),
+                entry("div", 16),
+                entry("%", 16),
+                entry("mod", 16),
+                entry("**", 18)
+        );
 
-        int lower = 7;
+        int lower = Integer.MAX_VALUE;
         int operationIndex = 0;
         int i = 0;
         List<String> reverseOperations = new ArrayList<>(operations);
