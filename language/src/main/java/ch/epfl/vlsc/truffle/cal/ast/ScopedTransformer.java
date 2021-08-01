@@ -403,6 +403,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "and":
             result = new CALBinaryLogicalAndNode(left, right);
             break;
+        case "or":
+            result = new CALBinaryLogicalOrNode(left, right);
+            break;
         case ">>":
             result = CALBinaryShiftRightNodeGen.create(left, right);
             break;
