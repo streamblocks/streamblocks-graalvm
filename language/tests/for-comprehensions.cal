@@ -4,10 +4,14 @@ namespace test:
         List(type: int, size=2) a := [1,2];
 		action ==>
 		var
-			List(type: int, size=2) b := [a[i] * a[i]: for int i in [0,1]]
+			List(type: int, size=2) b := [a[i] * a[i]: for int i in [0,1]],
+			List(type: int, size=10) d:= [x, x+y, x+y+z : for x in [1,2,3], x > 1, x < 20, for y in 0..x, y > 1, for z in [5,6,7], y + z > x]
 		do
             foreach int c in b do
 			    println(c);
+            end
+            foreach int c in d do
+                println(c);
             end
 		end
 	end
