@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.IRNodeTreePrinterConsumer;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
@@ -206,16 +208,33 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
-        if (comprehension.getFilters().size() > 0)
-            throw new TransformException("filters not implemented", context.getSource(), comprehension);
+        return (new ExprComprehensionRootTransformer((ExprComprehension) comprehension, context)).transform();
+    }
+
+    private CALExpressionNode transformExprComprehensionOld(ExprComprehension comprehension) {
+        System.out.println("Walk begin");
+//        for(Object o: comprehension.walk().toArray()){
+//            System.out.println(o);
+//        }
+        Consumer c = new IRNodeTreePrinterConsumer();
+        comprehension.forEachChild(c);
+        System.out.println("Walk end");
+        System.out.println(comprehension.getCollection());
+        System.out.println(comprehension.getGenerator());
+        System.out.println(comprehension.getFilters());
+//        if (comprehension.getFilters().size() > 0)
+//            throw new TransformException("filters not implemented", context.getSource(), comprehension);
         Generator generator = comprehension.getGenerator();
+
         // FIXME filters
         ImmutableList<Expression> filters = comprehension.getFilters();
-        if (filters.size() > 0)
-            throw new TransformException("Filters not supported", context.getSource(), comprehension);
-        if (!(comprehension.getCollection() instanceof ExprList))
+
+        if(comprehension.getCollection() instanceof ExprComprehension){
             throw new TransformException("for comp should have a collection", context.getSource(), comprehension);
-        // [ f(x) : for x in originalList ] 
+        } else if (!(comprehension.getCollection() instanceof ExprList)){
+            throw new TransformException("for comp should have a collection", context.getSource(), comprehension);
+        }
+        // [ f(x) : for x in originalList ]
         ExprList collection = (ExprList) comprehension.getCollection();
 
         CALStatementNode[] init = new CALStatementNode[3];

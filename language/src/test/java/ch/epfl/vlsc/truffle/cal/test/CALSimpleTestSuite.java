@@ -167,6 +167,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore()
     public void forComprehensionTest() throws IOException {
         runTest(TestCase.newBuilder("for-comprehensions").build());
     }
