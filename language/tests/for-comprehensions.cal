@@ -7,10 +7,13 @@ namespace test:
 			List l1 := [a[i] * a[i]: for int i in [0,1]],
 			List l2 := [x, x+y, x+y+z : for x in [1,2,3], x > 1, x < 20, for y in 0..x, y > 1, for z in [5,6,7], y + z > x],
 		    List l3 := [x : for x in [1,2,3,4]],
-		    List l4 := [x+y : for x in [1,2,3], for y in [5,6,7]]
+		    List l4 := [x+y : for x in [1,2,3], for y in [5,6,7]],
+		    List l5 := let b = 5 : [a*b : for a in [1,2,3], b > 2*a, for b in [4,5,6]] end,
+		    List l6 := let b = 5, c = 6 : [a*b, c : for a in (b-4)..(c-3), b > 2*a, for b in (b-1)..(c), b < c, for c in (c+1)..(c+3)] end
+		    // List l6 := let b = 5, c = 6 : [a*b, c : for a in [1,2,3], b > 2*a, for b in [4,5,6], b < c, for c in [7,8,9]] end
 		    //List l5 := [x+y : for x, y, z in [1,2,3], [4,5,6,7], [8,9,10,11,12]]
 		do
-            foreach List l in [l1, l2, l3, l4] do
+            foreach List l in [l1, l2, l3, l4, l5, l6] do
                 foreach int c in l do
                     println(c);
                 end

@@ -6,9 +6,13 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import se.lth.cs.tycho.ir.Generator;
+import se.lth.cs.tycho.ir.decl.GeneratorVarDecl;
 import se.lth.cs.tycho.ir.expr.ExprComprehension;
 import se.lth.cs.tycho.ir.expr.ExprList;
 import se.lth.cs.tycho.ir.expr.Expression;
@@ -31,15 +35,15 @@ public class ExprComprehensionTransformer extends ScopedTransformer<CALComprehen
 
     @Override
     public CALComprehensionNode transform() {
-        Generator generator = comprehension.getGenerator();
         // Resolve original list
+        Generator generator = comprehension.getGenerator();
         CALExpressionNode generatorList = transformExpr(generator.getCollection());
         if (generator.getVarDecls().size() != 1) {
             throw new TransformException("Exactly 1 variable declaration in comprehension loops generator supported", context.getSource(), generator);
         }
         // x = originalList[i]
         // CALExpressionNode[] write = (CALExpressionNode[]) generator.getVarDecls().map(varDecl -> transformVarDecl(varDecl)).toArray();
-        CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
+        CALExpressionNode write = transformShadowVarDecl(generator.getVarDecls().get(0));
 
         ImmutableList<Expression> filters = comprehension.getFilters();
         CALExpressionNode filter;
@@ -86,5 +90,24 @@ public class ExprComprehensionTransformer extends ScopedTransformer<CALComprehen
         }else{
             throw new TransformException("Node write error", context.getSource(), comprehension);
         }
+    }
+
+    private CALExpressionNode transformShadowVarDecl(GeneratorVarDecl varDecl) {
+        String name = varDecl.getName();
+        Expression value = varDecl.getValue();
+        CALExpressionNode valueNode = transformExpr(value);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, FrameSlotKind.Illegal);
+        boolean newVariable = true;
+        FrameSlotAndDepth slot;
+        slot = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
+        context.getLexicalScope().put(name, slot);
+
+        CALExpressionNode nameNode = new StringLiteralNode(name);
+
+        final CALExpressionNode result = slot.createWriteNode(valueNode, nameNode, newVariable, context.getDepth());
+
+        // result.addExpressionTag();
+
+        return result;
     }
 }
