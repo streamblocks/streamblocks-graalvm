@@ -17,7 +17,6 @@ public class ProcExprTransformer extends ScopedTransformer<ProcNode> {
     ExprProc proc;
 
     public ProcExprTransformer(ExprProc procArg, TransformContext context) {
-        // lambda are side-effect-free
         super(context);
         this.proc = procArg;
     }

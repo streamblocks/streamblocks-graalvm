@@ -50,7 +50,6 @@ public abstract class CALReadFrameSlotNode extends Node implements FrameSlotNode
 
 	protected boolean isKind(Frame frame, FrameSlotKind kind) {
 		return frame.getFrameDescriptor().getFrameSlotKind(slot) == kind;
-
 	}
 
 	@Override
