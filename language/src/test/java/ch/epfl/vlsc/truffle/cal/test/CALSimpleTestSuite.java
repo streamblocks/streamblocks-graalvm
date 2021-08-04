@@ -33,13 +33,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("actor-parameters").setActorName("simple.dwf.SourceSink").build());
     }
 
-    @Ignore
     @Test
     public void lambdaTest() throws IOException {
         runTest(TestCase.newBuilder("lambda").build());
     }
 
-    @Ignore
     @Test
     public void nestedLambdaTest() throws IOException {
         runTest(TestCase.newBuilder("nested-lambda").build());
@@ -67,7 +65,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("network-input").setActorName("simple.dwf.SourceSink").build());
     }
 
-    @Ignore
     @Test
     public void listInitTest() throws IOException {
         runTest(TestCase.newBuilder("init-list").build());
@@ -85,19 +82,16 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("repeat-output").setActorName("simple.dwf.SourceSink").build());
     }
 
-    @Ignore
     @Test
     public void letExprTest() throws IOException {
         runTest(TestCase.newBuilder("let-expr").build());
     }
 
-    @Ignore
     @Test
     public void foreachTest() throws IOException {
         runTest(TestCase.newBuilder("for-loop").build());
     }
 
-    @Ignore
     @Test
     public void nestedForLoopsTest() throws IOException {
         runTest(TestCase.newBuilder("nested-for-loop").build());

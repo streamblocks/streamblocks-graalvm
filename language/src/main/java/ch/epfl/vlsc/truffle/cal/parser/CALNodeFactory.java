@@ -5,8 +5,11 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.Token;
@@ -14,7 +17,6 @@ import org.graalvm.collections.Pair;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
@@ -46,8 +48,8 @@ public class CALNodeFactory {
         context.addImport(bodyImport);
     }
 
-    public Map<String, RootCallTarget> createNamespaceBody(Map<String, CALRootNode> entities) {
-        return entities.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> Truffle.getRuntime().createCallTarget(e.getValue())));
+    public Map<String, RootCallTarget> createNamespaceBody(List<CALRootNode> entities) {
+        return entities.stream().collect(Collectors.toMap(CALRootNode::getName, entity -> Truffle.getRuntime().createCallTarget(entity)));
     }
 
     // Qualified ID
@@ -68,9 +70,15 @@ public class CALNodeFactory {
         context.pushScope();
     }
 
-    public ActorNode createActor(Token name, List<ActionNode> actions) {
+    public ActorNode createActor(Token name, List<CALExpressionNode> localVariables, List<ActionNode> initializers, List<ActionNode> actions) {
         // TODO Finish actor head statements
-        StmtBlockNode head = new StmtBlockNode(new CALStatementNode[0]);
+        // TODO Add support for initialization actions
+        List<CALStatementNode> headStatements = new ArrayList<>();
+
+        if (localVariables != null) {
+            headStatements.addAll(localVariables);
+        }
+        StmtBlockNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[0]));
 
         ActorNode result = new ActorNode(context.getLanguage(), context.getCurrentScope().getFrame(), actions.toArray(new ActionNode[0]), head, null, name.getText());
 
@@ -84,7 +92,7 @@ public class CALNodeFactory {
         context.pushScope();
     }
 
-    public ActionNode createAction(List<CALExpressionNode> localVariables, StmtBlockNode body) {
+    public ActionNode createAction(List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, StmtBlockNode body) {
         List<CALStatementNode> actionStatements = new ArrayList<>();
 
         if (localVariables != null) {
@@ -105,6 +113,9 @@ public class CALNodeFactory {
         return result;
     }
 
+    // Local Variable Declaration
+    // TODO Add support for external variables ('external')
+
     // Explicit Variable Declaration
     public CALExpressionNode createExplicitVariable(Token name, CALExpressionNode value) {
         // TODO Add support for variable type
@@ -114,9 +125,40 @@ public class CALNodeFactory {
         return context.createWriteNode(name.getText(), value);
     }
 
+    // Function Variable Declaration
+    public void createFunctionVariableScope() {
+        createLambdaExpressionScope();
+    }
+
+
+
+    public CALExpressionNode createFunctionVariable(Token name, List<InitializeArgNode> formalParameters, List<CALExpressionNode> localVariables, CALExpressionNode body) {
+        // TODO Add support for constant functions
+        // TODO Add support for function return type
+
+        return context.createWriteNode(name.getText(), createLambdaExpression(formalParameters, localVariables, body));
+    }
+
+    // Formal Parameter
+    public InitializeArgNode createFormalParameter(CALExpressionNode explicitVariable, int position) {
+        if (explicitVariable instanceof CALWriteLocalVariableNodeGen) {
+            StringLiteralNode variableNameNode = (StringLiteralNode) ((CALWriteLocalVariableNodeGen) explicitVariable).getNameNode();
+            String variableName = variableNameNode.getValue();
+            DepthFrameSlot readOnlySlot = new DepthFrameSlot(context.getCurrentScope().get(variableName));
+            context.getCurrentScope().put(variableName, readOnlySlot);
+
+            return new InitializeArgNode(context.getCurrentScope().get(variableName).getSlot(), position);
+        }
+
+        return null;
+    }
+
+    // Procedure Variable Declaration
+    // TODO Use named proc closure
+
     // Generator Body
-    public Pair<List<Token>, List<CALExpressionNode>> createGeneratorBody(List<Token> variables, List<CALExpressionNode> collections) {
-        return Pair.create(variables, collections);
+    public Pair<List<Token>, List<CALExpressionNode>> createGeneratorBody(List<Token> variables, List<CALExpressionNode> expressions) {
+        return Pair.create(variables, expressions);
     }
 
     // Indexer Expression
@@ -268,7 +310,7 @@ public class CALNodeFactory {
         context.pushScope(true);
     }
 
-    public LambdaNode createLambdaExpression(List<CALExpressionNode> formalParameters, List<CALExpressionNode> localVariables, CALExpressionNode body) {
+    public LambdaNode createLambdaExpression(List<InitializeArgNode> formalParameters, List<CALExpressionNode> localVariables, CALExpressionNode body) {
         // TODO Add support for constant lambdas
         // TODO Add support for lambda return type
 
@@ -278,9 +320,7 @@ public class CALNodeFactory {
         }
 
         if (localVariables != null) {
-            StmtBlockNode letHead = new StmtBlockNode(localVariables.toArray(new CALStatementNode[0]));
-            body = new LetExprNode(letHead, body);
-            context.popScope();
+            body = createLetExpression(localVariables, body);
         }
 
         ReturnsLastBodyNode bodyNode = new ReturnsLastBodyNode(head, body);
@@ -297,6 +337,66 @@ public class CALNodeFactory {
     // TODO Create CALProcExpressionNode
 
     // Comprehensions w/ generators
+    public CALExpressionNode createComprehension(List<CALExpressionNode> expressions, List<Pair<List<Token>, List<CALExpressionNode>>> generators) {
+        // TODO Add support for multiple computation expressions
+        // TODO Add support for multiple variables in a generator
+        // TODO Add support for multiple generators
+        // TODO Add support for generator filters
+        if (generators == null) {
+            // Simple collection expression
+            return new ListInitNode(expressions.toArray(new CALExpressionNode[0]));
+        }
+
+        // Comprehensions w/ generators
+        Pair<List<Token>, List<CALExpressionNode>> generator = generators.get(0);
+
+        CALExpressionNode computationExpression = expressions.get(0);
+        Token variable = generator.getLeft().get(0);
+        CALExpressionNode variableNode = context.createWriteNode(variable.getText(), null);
+        fixComprehensionComputationExpression(variable, computationExpression);
+        CALExpressionNode collection = generator.getRight().get(0);
+        List<CALExpressionNode> filters;
+        if (generator.getRight().size() > 1) {
+            filters = generator.getRight().subList(1, generator.getRight().size() - 1);
+        }
+
+        CALStatementNode[] comprehensionBody = new CALStatementNode[3];
+        // Initialization
+        comprehensionBody[0] = context.createWriteNode("$tempList", new UnknownSizeListInitNode());
+        comprehensionBody[1] = context.createWriteNode("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
+        // Loop iteration body
+        CALStatementNode[] loopBody = new CALStatementNode[2];
+        loopBody[0] = ListWriteNodeGen.create(context.createReadNode("$tempList"), context.createReadNode("$comprehensionCounter"), computationExpression);
+        loopBody[1] = context.createWriteNode(
+            "$comprehensionCounter",
+            CALBinaryAddNodeGen.create(
+                context.createReadNode("$comprehensionCounter"),
+                new BigIntegerLiteralNode(new BigInteger("1"))
+            )
+        );
+        CALStatementNode loopBodyNode = new StmtBlockNode(loopBody);
+
+        if (variableNode instanceof CALWriteLocalVariableNode) {
+            comprehensionBody[2] = ForeacheNodeGen.create(loopBodyNode, (CALWriteLocalVariableNode) variableNode, collection);
+            CALStatementNode comprehensionBodyNode = new StmtBlockNode(comprehensionBody);
+
+            return new ReturnsLastBodyNode(comprehensionBodyNode, context.createReadNode("$tempList"));
+        } else {
+            throw new Error("Comprehension Expression: Variable name re-use is unsupported.");
+        }
+    }
+
+    private void fixComprehensionComputationExpression(Token variable, CALExpressionNode expression) {
+        // FIXME Finish fixing previously unknown loop variable
+        if (expression instanceof FunctionLiteralNode && ((FunctionLiteralNode) expression).getFunctionName().equals(variable.getText())) {
+            CALExpressionNode correctExpression = context.createReadNode(variable.getText());
+            expression.replace(correctExpression);
+        }
+
+        for (Node child: expression.getChildren()) {
+            fixComprehensionComputationExpression(variable, (CALExpressionNode) child);
+        }
+    }
 
     // Case Expression
     // TODO Create CALCaseExpressionNode
@@ -310,8 +410,9 @@ public class CALNodeFactory {
     }
 
     // Lvalue
-    public Token createLvalue(Token variable) {
-        return variable;
+    public Pair<Token, List<CALExpressionNode>> createLvalue(Token variable, List<CALExpressionNode> indices) {
+        // TODO Add support for fields
+        return Pair.create(variable, indices);
     }
 
     // Statements
@@ -320,8 +421,22 @@ public class CALNodeFactory {
     }
 
     // Assignment Statement
-    public CALExpressionNode createAssignmentStatement(Token lvalue, CALExpressionNode value) {
-        return context.createWriteNode(lvalue.getText(), value);
+    public CALStatementNode createAssignmentStatement(Pair<Token, List<CALExpressionNode>> lvalue, CALExpressionNode value) {
+        Token variable = lvalue.getLeft();
+        List<CALExpressionNode> indices = lvalue.getRight();
+        if (indices.size() > 0) {
+            CALStatementNode expression = context.createReadNode(variable.getText());
+            for (CALExpressionNode index : indices) {
+                if (indices.indexOf(index) < indices.size() - 1) {
+                    expression = ListReadNodeGen.create((CALExpressionNode) expression, index);
+                } else {
+                    expression = ListWriteNodeGen.create((CALExpressionNode) expression, index, value);
+                }
+            }
+            return expression;
+        } else {
+            return context.createWriteNode(variable.getText(), value);
+        }
     }
 
     // Call Statement
@@ -330,7 +445,7 @@ public class CALNodeFactory {
     }
 
     // Statement block
-    // TODO Use unnamed proc node
+    // TODO Use unnamed proc closure
 
     // Conditional Statements
     public StmtIfNode createConditionalStatement(CALExpressionNode condition, StmtBlockNode thenStatements, CALStatementNode elseStatements) {
@@ -346,13 +461,62 @@ public class CALNodeFactory {
     // TODO Create CALWhileStatementNode
 
     // Foreach Statement
-    public ForeacheNode createForeachStatement(List<Pair<List<Token>, List<CALExpressionNode>>> generators, List<CALExpressionNode> localVariables, StmtBlockNode body) {
+    public List<List<CALExpressionNode>> createForeachStatementGeneratorVariables(List<Pair<List<Token>, List<CALExpressionNode>>> generators) {
+        // Needs to be called before evaluating loop body so that the loop variables can be accessed properly
+        // TODO Add support for multiple variables in a generator
+        // TODO Add support for multiple generators
         Pair<List<Token>, List<CALExpressionNode>> generator = generators.get(0);
         Token variable = generator.getLeft().get(0);
-        // TODO Finish getting foreach variable (like in variable declaration)
-        CALExpressionNode variableNode = null;
+        CALExpressionNode variableNode = context.createWriteNode(variable.getText(), null);
+
+        return new ArrayList<>(List.of(List.of(variableNode)));
+    }
+
+    public List<CALExpressionNode> getForeachStatementGeneratorCollections(List<Pair<List<Token>, List<CALExpressionNode>>> generators) {
+        // TODO Add support for multiple generators
+        Pair<List<Token>, List<CALExpressionNode>> generator = generators.get(0);
         CALExpressionNode collection = generator.getRight().get(0);
 
-        return ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) variableNode, collection);
+        return new ArrayList<>(List.of(collection));
     }
+
+    public List<List<CALExpressionNode>> getForeachStatementGeneratorFilters(List<Pair<List<Token>, List<CALExpressionNode>>> generators) {
+        // TODO Add support for multiple generators
+        Pair<List<Token>, List<CALExpressionNode>> generator = generators.get(0);
+        List<CALExpressionNode> filters = new ArrayList<>();
+        if (generator.getRight().size() > 1) {
+            filters = generator.getRight().subList(1, generator.getRight().size() - 1);
+        }
+
+        return new ArrayList<>(List.of(filters));
+    }
+
+    public ForeacheNode createForeachStatement(List<List<CALExpressionNode>> variables, List<CALExpressionNode> collections, List<List<CALExpressionNode>> filters, List<CALExpressionNode> localVariables, StmtBlockNode body) {
+        // TODO Add support for multiple variables in a generator
+        // TODO Add support for multiple generators
+        // TODO Add support for generator filters?
+        CALExpressionNode variable = variables.get(0).get(0);
+        CALExpressionNode collection = collections.get(0);
+
+        if (variable instanceof CALWriteLocalVariableNode) {
+            return ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) variable, collection);
+        } else {
+            throw new Error("Foreach Statement: Variable name re-use is unsupported.");
+        }
+    }
+
+    // Choose Statement
+    // TODO Create CALChooseStatementNode
+
+    // Case Statement
+    // TODO Create CALCaseStatementNode
+
+    // Read Statement
+    // TODO Create CALReadStatementNode
+
+    // Write Statement
+    // TODO Create CALWriteStatementNode
+
+    // Action Selection Statement
+    // TODO Create Action Selection statement
 }
