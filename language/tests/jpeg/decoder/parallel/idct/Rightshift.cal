@@ -1,0 +1,29 @@
+namespace jpeg.decoder.parallel.idct:
+
+import var System.bitops.rshift;
+
+	
+	@pipeline(flushing=true)
+	actor Rightshift () int(size=32) IN ==> uint(size=8) OUT :
+	
+		function clip_i32(int(size=32) Value, int(size=32) minVal, int(size=32) maxVal)
+				-->
+			uint(size=8)
+		:
+			if Value > maxVal then
+				maxVal
+			else
+				if Value < minVal then
+					minVal
+				else
+					Value
+				end
+			end
+		end
+
+		shift: action IN:[ x ] repeat 64 ==> OUT: [ [ clip_i32(rshift(x[i], 13) + 128, 0, 255): for int i in 0 .. 63 ] ] repeat 64
+		end
+	
+	end
+
+end

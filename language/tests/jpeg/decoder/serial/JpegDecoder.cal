@@ -1,0 +1,29 @@
+namespace jpeg.decoder:
+
+	
+	network JpegDecoder() uint(size=8) BYTE ==> uint(size=8) YCbCr, uint(size=16) SOI:
+	entities
+		parser = SyntaxParser();
+		huffman = HuffmanDecoder();
+		dequant = Dequantizer();
+		idct2d = IDCT();	
+	structure
+		BYTE --> parser.Byte;
+		
+		parser.Bits --> huffman.Bit;
+		parser.HT --> huffman.HT;
+		parser.SOI --> huffman.SOI;
+		parser.QT --> dequant.QT;
+		parser.SOI --> dequant.SOI;
+		
+		huffman.Block --> dequant.Block;
+		
+		dequant.Out --> idct2d.IN;
+		
+		idct2d.OUT --> YCbCr;
+		
+		parser.SOI --> SOI;
+	end	
+
+
+end

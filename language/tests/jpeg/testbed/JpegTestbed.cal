@@ -1,0 +1,52 @@
+namespace jpeg.decoder:
+
+	import entity ART.art_Display_yuv;
+	import entity ART.art_Source_byte;
+	import entity ART.art_Sink_8bit_txt;
+	import entity ART.art_Sink_txt;
+	
+	network Top_JPEG_Decoder_ART() ==> :
+	entities 
+		source = art_Source_byte(fileName="./foreman_qcif.mjpg", loops=0);
+		display = art_Display_yuv(title="Foreman QCIF", width=176, height=144);
+		decoder = JpegDecoder() {partition = "hw";};
+	structure
+		source.Out --> decoder.BYTE; 
+		decoder.YCbCr --> display.In;
+	end
+
+	network Top_JPEG_Decoder_Trace() ==> :
+	entities
+		source = art_Source_byte(fileName="./foreman_qcif.mjpg", loops=0);
+		display = art_Display_yuv(title="Foreman QCIF", width=176, height=144);
+		decoder = JpegDecoder();
+
+		byte_sink = art_Sink_8bit_txt(fileName="./byte.txt");
+		vid_sink = art_Sink_txt(fileName="./ycbcr.txt");
+
+	structure
+		source.Out --> decoder.BYTE;
+		decoder.YCbCr --> display.In;
+		source.Out --> byte_sink.In;
+		decoder.YCbCr --> vid_sink.In;
+	end
+
+	actor SinkSOI() int(size=16) SOI ==> :
+	
+		action SOI:[w,h] ==>
+		do
+			println("Width : " + w + ", Height : " + h);
+		end
+
+	end
+
+	actor SinkVID() int VID ==> :
+	
+		action VID:[vid] ==>
+		do
+			println("VID : " + vid);
+		end
+	
+	end
+
+end

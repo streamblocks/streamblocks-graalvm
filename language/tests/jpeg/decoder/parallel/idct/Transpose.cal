@@ -1,0 +1,11 @@
+namespace jpeg.decoder.parallel.idct:
+
+	@pipeline(flushing=true)
+	actor Transpose () int IN ==> int OUT :
+
+		action IN:[ x ] repeat 64 ==> OUT:[ [ x[8 * c + r] : for int r in 0 .. 7, for int c in 0 .. 7 ] ] repeat 64
+		end
+	
+	end
+
+end

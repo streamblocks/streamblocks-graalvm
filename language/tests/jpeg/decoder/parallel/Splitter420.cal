@@ -1,0 +1,32 @@
+namespace jpeg.decoder.parallel:
+
+	//@pipeline(flushing=true)
+	actor Splitter420 () int YCbCr ==> int(size=24) Y, int(size=24) Cb, int(size=24) Cr:
+		
+		// Select the Y blocks 
+		@loop_merge 
+		Y:action YCbCr:[y] repeat 64 ==> Y:[y] repeat 64
+		end
+	
+		// Select the Cb blocks
+		@loop_merge  
+		Cb:action YCbCr:[cb] repeat 64 ==> Cb:[cb] repeat 64
+		end
+	
+		// Select the Cr blocks
+		@loop_merge  
+		Cr:action YCbCr:[cr] repeat 64 ==> Cr:[cr] repeat 64
+		end
+	
+		schedule fsm Y0:
+			Y0 (Y) --> Y1;
+			Y1 (Y) --> Y2;
+			Y2 (Y) --> Y3;
+			Y3 (Y) --> Cb;
+			
+			Cb(Cb)-->Cr;
+			Cr(Cr)-->Y0;
+		end
+	end
+
+end
