@@ -14,6 +14,10 @@ public final class StringLiteralNode extends CALExpressionNode {
         this.value = value;
     }
 
+    public String getValue() {
+        return value;
+    }
+
     @Override
     public String executeGeneric(VirtualFrame frame) {
         return value;

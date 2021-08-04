@@ -22,6 +22,10 @@ public final class FunctionLiteralNode extends CALExpressionNode {
         this.functionName = functionName;
     }
 
+    public String getFunctionName() {
+        return functionName;
+    }
+
     @Override
     public CALFunction executeGeneric(VirtualFrame frame) {
         if (cachedFunction == null) {

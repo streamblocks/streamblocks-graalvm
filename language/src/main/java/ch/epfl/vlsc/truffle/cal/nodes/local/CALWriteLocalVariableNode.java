@@ -20,6 +20,9 @@ public abstract class CALWriteLocalVariableNode extends CALExpressionNode implem
 		return writeFrameSlotNode.getSlot();
 	}
 
+	public CALExpressionNode getNameNode() {
+		return writeFrameSlotNode.getNameNode();
+	}
 
 	@Override
 	public String toString() {

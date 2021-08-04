@@ -12,6 +12,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.ListLibrary;
 @NodeChild(value = "index")
 public abstract class ListReadNode extends CALExpressionNode {
     @Specialization(guards = "lists.isList(list)", limit = "2")
+    Object doDefault(Object list, Long index, @CachedLibrary("list") ListLibrary lists) {
+        return lists.read(list, index.intValue());
+    }
+
+    @Specialization(guards = "lists.isList(list)", limit = "2")
     Object doDefault(Object list, CALBigNumber index, @CachedLibrary("list") ListLibrary lists) {
         return lists.read(list, index.getValue().intValue());
     }
