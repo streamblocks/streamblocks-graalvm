@@ -1,9 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.parser;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.ast.TransformException;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
@@ -25,6 +28,10 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import se.lth.cs.tycho.ir.entity.cal.InputPattern;
+import se.lth.cs.tycho.ir.expr.Expression;
+import se.lth.cs.tycho.ir.expr.pattern.Pattern;
+import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 
 /**
  * Helper class used by the CAL {@link Parser} to create nodes.
@@ -71,8 +78,10 @@ public class CALNodeFactory {
     }
 
     public ActorNode createActor(Token name, List<CALExpressionNode> localVariables, List<ActionNode> initializers, List<ActionNode> actions) {
-        // TODO Finish actor head statements
+        // FIXME Finish implementing actor head statements
         // TODO Add support for initialization actions
+        // TODO Add support for action priorities
+        // TODO Add support for action schedules
         List<CALStatementNode> headStatements = new ArrayList<>();
 
         if (localVariables != null) {
@@ -92,7 +101,9 @@ public class CALNodeFactory {
         context.pushScope();
     }
 
-    public ActionNode createAction(List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, StmtBlockNode body) {
+    public ActionNode createAction(List<CALWriteFIFONode> outputExpressions, List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, CALExpressionNode delay, StmtBlockNode body) {
+        // TODO Add support for action tags
+        // TODO Add support for action delay
         List<CALStatementNode> actionStatements = new ArrayList<>();
 
         if (localVariables != null) {
@@ -101,16 +112,41 @@ public class CALNodeFactory {
         if (body != null) {
             actionStatements.addAll(body.getStatements());
         }
+        if (outputExpressions != null) {
+            actionStatements.addAll(outputExpressions);
+        }
 
         StmtBlockNode bodyNode = new StmtBlockNode(actionStatements.toArray(new CALStatementNode[0]));
         ActionBodyNode actionBodyNode = new ActionBodyNode(bodyNode);
-        // TODO Finish action firing conditions
-        CALExpressionNode firingCondition = new BooleanLiteralNode(true);
+
+        // Firing condition = Sufficient input tokens + Guards
+        List<CALExpressionNode> firingConditions = new LinkedList<>();
+        // FIXME Implement conditions for input tokens
+        firingConditions.addAll(guards);
+
+        CALExpressionNode firingCondition;
+        if (firingConditions.size() > 0) {
+            firingCondition = firingConditions.remove(0);
+            for (CALExpressionNode cond : firingConditions)
+                firingCondition = new CALBinaryLogicalAndNode(firingCondition, cond);
+        } else {
+            firingCondition = new BooleanLiteralNode(true);
+        }
+
         ActionNode result = new ActionNode(context.getLanguage(), context.getCurrentScope().getFrame(), actionBodyNode, firingCondition, null, "unnamed action");
 
         context.popScope();
 
         return result;
+    }
+
+    // Output Expressions
+    public CALWriteFIFONode createOutputExpression(Token port, List<CALExpressionNode> expressions, CALExpressionNode repeatExpression) {
+        // FIXME Implement repeated expressions
+        // TODO Add support for channel selector
+        CALExpressionNode portQueue = context.createReadNode(port.getText());
+
+        return new CALWriteFIFONode(portQueue, expressions.get(0));
     }
 
     // Local Variable Declaration

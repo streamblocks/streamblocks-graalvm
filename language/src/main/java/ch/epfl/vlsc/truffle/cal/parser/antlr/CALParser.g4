@@ -69,6 +69,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.*;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
 }
 
 @parser::members
@@ -464,7 +465,7 @@ processDescription
 // -- Action (CLR §8)
 // ----------------------------------------------------------------------------
 
-actionDefinition returns [ActionNode result] locals [List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, StmtBlockNode body]
+actionDefinition returns [ActionNode result] locals [List<CALWriteFIFONode> outputExprs, List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, StmtBlockNode body]
     @init { factory.createActionScope(); }
     :
         DOC_COMMENT*
@@ -475,7 +476,14 @@ actionDefinition returns [ActionNode result] locals [List<CALExpressionNode> gua
             actionTag
             ':'
         )?
-        'action' inputPatterns '==>' outputExpressions
+        'action'
+        (
+            inputPatterns
+        )?
+        '==>'
+        (
+            outputExpressions { $outputExprs = $outputExpressions.result; }
+        )?
         (
             'guard' expressions { $guards = $expressions.result; }
         )?
@@ -489,7 +497,7 @@ actionDefinition returns [ActionNode result] locals [List<CALExpressionNode> gua
             'do' statements { $body = $statements.result; }
         )?
         ('end' | 'endaction')
-        { $result = factory.createAction($guards, $localVariables, $body); }
+        { $result = factory.createAction($outputExprs, $guards, $localVariables, $body); }
     ;
 
 // ----------------------------------------------------------------------------
@@ -497,7 +505,11 @@ actionDefinition returns [ActionNode result] locals [List<CALExpressionNode> gua
 // ----------------------------------------------------------------------------
 
 inputPatterns
-    :   (inputPattern (',' inputPattern)*)?
+    :
+        inputPattern
+        (
+            ',' inputPattern
+        )*
     ;
 
 inputPattern
@@ -539,22 +551,35 @@ patternExpression
 // -- Output Expressions (CLR §8.2)
 // ----------------------------------------------------------------------------
 
-outputExpressions
-    :   (outputExpression (',' outputExpression)*)?
+outputExpressions returns [List<CALWriteFIFONode> result]
+    @init { $result = new ArrayList<>(); }
+    :
+        outputExpression { $result.add($outputExpression.result); }
+        (
+            ',' outputExpression { $result.add($outputExpression.result); }
+        )*
     ;
 
-outputExpression
-    :   (ID ':')?
+outputExpression returns [CALWriteFIFONode result] locals [Token port, CALExpressionNode repeatExpression]
+    :
+        (
+            ID ':' { $port = $ID; }
+        )?
         '[' expressions ']'
-        ('repeat' expression)?
-        channelSelector?
+        (
+            'repeat' expression { $repeatExpression = $expression.result; }
+        )?
+        (
+            channelSelector
+        )?
+        { $result = factory.createOutputExpression($port, $expressions.result, $repeatExpression); }
     ;
 
 // ----------------------------------------------------------------------------
 // -- Initialization Action (CLR §8.5)
 // ----------------------------------------------------------------------------
 
-initializationActionDefinition returns [ActionNode result] locals [List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, StmtBlockNode body]
+initializationActionDefinition returns [ActionNode result] locals [List<CALWriteFIFONode> outputExprs, List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, StmtBlockNode body]
     @init { factory.createActionScope(); }
     :
         DOC_COMMENT*
@@ -564,7 +589,10 @@ initializationActionDefinition returns [ActionNode result] locals [List<CALExpre
             ':'
         )?
         'initialize'
-        '==>' outputExpressions
+        '==>'
+        (
+            outputExpressions { $outputExprs = $outputExpressions.result; }
+        )?
         (
             'guard' expressions { $guards = $expressions.result; }
         )?
@@ -578,19 +606,26 @@ initializationActionDefinition returns [ActionNode result] locals [List<CALExpre
             'do' statements { $body = $statements.result; }
         )?
         ('end' | 'endinitialize')
-        { $result = factory.createAction($guards, $localVariables, $body); }
+        { $result = factory.createAction($outputExprs, $guards, $localVariables, $body); }
     ;
 
 // ----------------------------------------------------------------------------
 // -- Action Tags (CLR §9.1)
 // ----------------------------------------------------------------------------
 
-actionTags
-    :   actionTag (',' actionTag)*
+actionTags returns [List<List<Token>> result]
+    @init { $result = new ArrayList<>(); }
+    :
+        actionTag { $result.add($actionTag.result); }
+        (
+            ',' actionTag { $result.add($actionTag.result); }
+        )*
     ;
 
-actionTag
-    :   qualifiedID
+actionTag returns [List<Token> result]
+    :
+        qualifiedID
+        { $result = $qualifiedID.result; }
     ;
 
 // ----------------------------------------------------------------------------
@@ -598,31 +633,49 @@ actionTag
 // ----------------------------------------------------------------------------
 
 actionSchedule
-    : scheduleFSM
-    | scheduleRegExp
+    :
+        scheduleFSM
+        |
+        scheduleRegExp
     ;
 
-scheduleFSM                                       // FSM schedules (CLR §9.2.1)
-    :   'schedule' 'fsm'? ID ':'
-        (stateTransition ';')*
+// FSM schedules (CLR §9.2.1)
+scheduleFSM
+    :
+        'schedule' 'fsm'? name=ID ':'
+        (
+            stateTransition ';'
+        )*
         ('end' | 'endschedule')
     ;
 
 stateTransition
-    :   ID '(' actionTags ')' '-->' ID ('|' '(' actionTags ')' '-->' ID)*
+    :
+        ID '(' actionTags ')' '-->' ID
+        (
+            '|' '(' actionTags ')' '-->' ID
+        )*
     ;
 
-scheduleRegExp                                 // RegExp schedules (CLR §9.2.2)
-    :   'schedule' 'regexp' regExp ('end' | 'endschedule')
+ // RegExp schedules (CLR §9.2.2)
+scheduleRegExp
+    :
+        'schedule' 'regexp' regExp ('end' | 'endschedule')
     ;
 
 regExp
-    :   actionTag
-    |   '(' regExp ')'
-    |   '[' regExp ']'
-    |   regExp '*'
-    |   regExp regExp
-    |   regExp '|' regExp
+    :
+        actionTag
+        |
+        '(' regExp ')'
+        |
+        '[' regExp ']'
+        |
+        regExp '*'
+        |
+        regExp regExp
+        |
+        regExp '|' regExp
     ;
 
 // ----------------------------------------------------------------------------
@@ -630,28 +683,48 @@ regExp
 // ----------------------------------------------------------------------------
 
 priorityOrder
-    :   'priority' (priorityInequality ';')* ('end' | 'endpriority')
+    :
+        'priority'
+        (
+            priorityInequality ';'
+        )*
+        ('end' | 'endpriority')
     ;
 
 priorityInequality
-    :   actionTag '>' actionTag ('>' actionTag)*
+    :
+        actionTag
+        '>' actionTag
+        (
+            '>' actionTag
+        )*
     ;
 
 // ----------------------------------------------------------------------------
 // -- Variable Declrations (CLR + CAL Specification Extnsion)
 // ----------------------------------------------------------------------------
 
-availability
-    :   'public'
-    |   'private'
-    |   'local'
+availability returns [Token result]
+    :
+        modifier='public'
+        { $result = $modifier; }
+        |
+        modifier='private'
+        { $result = $modifier; }
+        |
+        modifier='local'
+        { $result = $modifier; }
     ;
 
 globalVariableDeclaration
     :   DOC_COMMENT*
         annotation*
-        availability?
-        'external'?
+        (
+            availability
+        )?
+        (
+            'external'
+        )?
         (
             explicitVariableDeclaration ';'
             |
