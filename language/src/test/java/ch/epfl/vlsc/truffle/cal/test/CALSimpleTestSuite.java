@@ -127,6 +127,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void multipleOutputExpressionsTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-output-expressions").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void listInitTest() throws IOException {
         runTest(TestCase.newBuilder("init-list").build());
     }

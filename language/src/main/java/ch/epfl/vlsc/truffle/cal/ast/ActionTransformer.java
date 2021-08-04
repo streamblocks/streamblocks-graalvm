@@ -1,6 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -103,8 +104,8 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
     }
 
     public ActionNode transform() {
-        CALStatementNode[] body = new CALStatementNode[action.getInputPatterns().size()
-                + action.getOutputExpressions().size() + action.getBody().size() + action.getVarDecls().size()];
+        ArrayList<CALStatementNode> bodyArr = new ArrayList<CALStatementNode>();
+        bodyArr.ensureCapacity(action.getInputPatterns().size() + action.getOutputExpressions().size() + action.getBody().size() + action.getVarDecls().size());
         int i = 0;
 
         for (InputPattern input : action.getInputPatterns()) {
@@ -118,33 +119,38 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
                 throw new TransformException("Pattern not implemented", context.getSource(), pat);
 
             if (input.getRepeatExpr() != null)
-                body[i] = createAssignment(name, batchReadInput(input));
+                bodyArr.add(createAssignment(name, batchReadInput(input)));
             else
-                body[i] = createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName())));
+                bodyArr.add(createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
             i++;
         }
         // Prepend local variable declarations to the body nodes
         for (LocalVarDecl varDecl : action.getVarDecls()) {
-            body[i] = transformVarDecl(varDecl);
+            bodyArr.add(transformVarDecl(varDecl));
             i++;
         }
         for (Statement statement : action.getBody()) {
-            body[i] = transformSatement(statement);
+            bodyArr.add(transformSatement(statement));
             i++;
         }
         // get the variables name linked to the output and add a write to the FIFO
         // in the tail of the action
         for (OutputExpression output : action.getOutputExpressions()) {
             CALExpressionNode fifo = getReadNode(output.getPort().getName());
-            if (output.getExpressions().size() > 1)
-                throw new TransformException("More than one output expr not supported", context.getSource(), output);
             if (output.getRepeatExpr() == null) {
-                CALExpressionNode value = transformExpr(output.getExpressions().get(0));
-                body[i] = new CALWriteFIFONode(fifo, value);
+                bodyArr.addAll(output.getExpressions()
+                        .map(
+                            expr -> transformExpr(expr)
+                        ).map(
+                            value -> new CALWriteFIFONode(fifo, value)
+                        ));
+                i += output.getExpressions().size();
             } else {
-                body[i] = batchWriteOutput(output);
+                if (output.getExpressions().size() > 1)
+                    throw new TransformException("More than one output expr not supported", context.getSource(), output);
+                bodyArr.add(batchWriteOutput(output));
+                i++;
             }
-            i++;
         }
 
         // Firing conditions
@@ -180,6 +186,9 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         } else {
             firingCondition = new BooleanLiteralNode(true);
         }
+
+
+        CALStatementNode[] body = bodyArr.toArray(new CALStatementNode[bodyArr.size()]);
 
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
