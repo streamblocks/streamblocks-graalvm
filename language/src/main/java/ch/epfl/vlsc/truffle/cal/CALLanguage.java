@@ -52,6 +52,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.QID;
+import se.lth.cs.tycho.ir.decl.Decl;
 import se.lth.cs.tycho.parsing.cal.CalParser;
 
 @TruffleLanguage.Registration(id = CALLanguage.ID, name = "CAL", defaultMimeType = CALLanguage.MIME_TYPE, characterMimeTypes = CALLanguage.MIME_TYPE, contextPolicy = TruffleLanguage.ContextPolicy.SHARED, fileTypeDetectors = CALFileDetector.class)
@@ -144,11 +145,26 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         else
             allFiles = Arrays.asList(entry);
         Map<QID, RootCallTarget> entities = new HashMap<>();
+        ArrayList<Source> iSourceList = new ArrayList<Source>();
+        iSourceList.ensureCapacity(allFiles.size());
+        ArrayList<NamespaceDecl> declList = new ArrayList<NamespaceDecl>();
+        declList.ensureCapacity(allFiles.size());
+        HashMap<List<String>, LinkedList<String>> namespaceEntities = new HashMap<List<String>, LinkedList<String>>();
         for (File file : allFiles) {
             CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
             NamespaceDecl decl = parser.CompilationUnit();
+            for(Decl d: decl.getAllDecls()){
+                if(!namespaceEntities.containsKey(decl.getQID().parts())) namespaceEntities.put(decl.getQID().parts(), new LinkedList<String>());
+                namespaceEntities.get(decl.getQID().parts()).add(d.getName());
+            }
             Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
-            BlockTransformer astTransformer = new BlockTransformer(new TransformContext(this, iSource, decl), decl);
+            iSourceList.add(iSource);
+            declList.add(decl);
+        }
+        for(int i = 0; i < allFiles.size(); ++i){
+            Source iSource = iSourceList.get(i);
+            NamespaceDecl decl = declList.get(i);
+            BlockTransformer astTransformer = new BlockTransformer(new TransformContext(this, iSource, decl, namespaceEntities), decl);
             entities.putAll(astTransformer.transform());
         }
         Map<String, RootCallTarget> parsedEntities = new HashMap<>(entities.size());
