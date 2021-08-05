@@ -978,118 +978,118 @@ expressions returns [List<CALExpressionNode> result]
 expression returns [CALExpressionNode result]
     :
         <assoc=right> operand1=expression operator='^' operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         composite=expression '[' indices=expressions ']'
-        { $result = factory.createIndexerExpression($composite.result, $indices.result); }
+        { $result = factory.createIndexerExpression($composite.result, $indices.result); } # IndexerExpression
         |
-        composite=expression '.' field
+        composite=expression '.' field # FieldSelectorExpression
         |
         operator='-' operand=expression
-        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); } # UnaryOperationExpression
         |
         operator='rng' operand=expression
-        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); } # UnaryOperationExpression
         |
         operator='dom' operand=expression
-        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); } # UnaryOperationExpression
         |
         operator='#' operand=expression
-        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); } # UnaryOperationExpression
         |
         operator='not' operand=expression
-        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); } # UnaryOperationExpression
         |
         operator='!' operand=expression
-        { $result = factory.createUnaryOperationExpression($operator, $operand.result); }
+        { $result = factory.createUnaryOperationExpression($operator, $operand.result); } # UnaryOperationExpression
         |
         operand1=expression operator='..' operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator=('*' | '/' | '%' | 'div' | 'mod') operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator=('+' | '-') operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator=('<<' | '>>') operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator=('<' | '<=' | '>' | '>=') operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator=('=' | '==' | '!=') operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator='&' operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator='|' operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator='and' operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         operand1=expression operator='or' operand2=expression
-        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); }
+        { $result = factory.createBinaryOperationExpression($operand1.result, $operator, $operand2.result); } # BinaryOperationExpression
         |
         literalExpression
-        { $result = $literalExpression.result; }
+        { $result = $literalExpression.result; } # LiteralExprExpression
         |
         variableExpression
-        { $result = $variableExpression.result; }
+        { $result = $variableExpression.result; } # VariableExprExpression
         |
-        symbolReferenceExpression
+        symbolReferenceExpression # SymbolReferenceExprExpression
         |
         '(' expression ')'
-        { $result = $expression.result; }
+        { $result = $expression.result; } # ExprExpression
         |
         ifExpression
-        { $result = $ifExpression.result; }
+        { $result = $ifExpression.result; } # IfExprExpression
         |
         letExpression
-        { $result = $letExpression.result; }
+        { $result = $letExpression.result; } # LetExprExpression
         |
         lambdaExpression
-        { $result = $lambdaExpression.result; }
+        { $result = $lambdaExpression.result; } # LambdaExprExpression
         |
-        procExpression
+        procExpression # ProcExprExpression
         |
-        setComprehension
+        setComprehension # SetComprehensionExprExpression
         |
         listComprehension
-        { $result = $listComprehension.result; }
+        { $result = $listComprehension.result; } # ListComprehensionExprExpression
         |
-        mapComprehension
+        mapComprehension # MapComprehensionExprExpression
         |
-        typeAssertionExpr
+        typeAssertionExpression # TypeAssertionExprExpression
         |
-        caseExpression
+        caseExpression # CaseExprExpression
         |
         callExpression
-        { $result = $callExpression.result; }
+        { $result = $callExpression.result; } # CallExprExpression
     ;
 
 // Literals (CLR §6.1)
 literalExpression returns [CALExpressionNode result]
     :
         IntegerLiteral
-        { $result = factory.createIntegerLiteralExpression($IntegerLiteral); }
+        { $result = factory.createIntegerLiteralExpression($IntegerLiteral); } # IntegerLiteralExpression
         |
         FloatingPointLiteral
-        { $result = factory.createFloatLiteralExpression($FloatingPointLiteral); }
+        { $result = factory.createFloatLiteralExpression($FloatingPointLiteral); } # FloatingPointLiteralExpression
         |
         BooleanLiteral
-        { $result = factory.createBooleanLiteralExpression($BooleanLiteral); }
+        { $result = factory.createBooleanLiteralExpression($BooleanLiteral); } # BooleanLiteralExpression
         |
         CharacterLiteral
-        { $result = factory.createCharLiteralExpression($CharacterLiteral); }
+        { $result = factory.createCharLiteralExpression($CharacterLiteral); } # CharacterLiteralExpression
         |
         StringLiteral
-        { $result = factory.createStringLiteralExpression($StringLiteral); }
+        { $result = factory.createStringLiteralExpression($StringLiteral); } # StringLiteralExpression
         |
         NullLiteral
-        { $result = factory.createNullLiteralExpression($NullLiteral); }
+        { $result = factory.createNullLiteralExpression($NullLiteral); } # NullLiteralExpression
     ;
 
 // Variable reference (CLR §6.2)
@@ -1118,25 +1118,25 @@ symbolReferenceExpression
 // Conditionals (CLR §6.7)
 ifExpression returns [ExprIfNode result] locals [CALExpressionNode elseExpression]
     :
-        'if' condition=expression 'then' thenExpression=expression
+        'if' condition=expression 'then' then=expression
         (
-            elseIfExpression { $elseExpression = $elseIfExpression.result; }
+            elseIf=elseIfExpression { $elseExpression = $elseIf.result; }
             |
-            'else' expression { $elseExpression = $expression.result; }
+            'else' elze=expression { $elseExpression = $elze.result; }
         )
-        { $result = factory.createConditionalExpression($condition.result, $thenExpression.result, $elseExpression); }
+        { $result = factory.createConditionalExpression($condition.result, $then.result, $elseExpression); }
     ;
 
 // Elsif (CAL Specification Extension)
 elseIfExpression returns [ExprIfNode result] locals [CALExpressionNode elseExpression]
     :
-        'elsif' condition=expression 'then' thenExpression=expression
+        'elsif' condition=expression 'then' then=expression
         (
-            elseIfExpression { $elseExpression = $elseIfExpression.result; }
+            elseIf=elseIfExpression { $elseExpression = $elseIf.result; }
             |
-            'else' expression { $elseExpression = $expression.result; }
+            'else' elze=expression { $elseExpression = $elze.result; }
         )
-        { $result = factory.createConditionalExpression($condition.result, $thenExpression.result, $elseExpression); }
+        { $result = factory.createConditionalExpression($condition.result, $then.result, $elseExpression); }
     ;
 
 // Local Scope (CLR §6.8)
@@ -1148,7 +1148,7 @@ letExpression returns [LetExprNode result]
     ;
 
 // Function closure (CLR §6.9.1)
-lambdaExpression returns [LambdaNode result] locals [List<CALExpressionNode> localVariables]
+lambdaExpression returns [LambdaNode result] locals [List<CALExpressionNode> localVars]
     @init { factory.createLambdaExpressionScope(); }
     :
         (
@@ -1160,12 +1160,12 @@ lambdaExpression returns [LambdaNode result] locals [List<CALExpressionNode> loc
         )?
         (
             { factory.createLetExpressionScope(); }
-            'var' blockVariableDeclarations { $localVariables = $blockVariableDeclarations.result; }
+            'var' localVariables=blockVariableDeclarations { $localVars = $blockVariableDeclarations.result; }
         )?
         ':'
         body=expression
         ('end' | 'endlambda')
-        { $result = factory.createLambdaExpression($formalParameters.result, $localVariables, $body.result); }
+        { $result = factory.createLambdaExpression($formalParameters.result, $localVars, $body.result); }
     ;
 
 // Procedure closure (CLR §6.9.2)
@@ -1189,7 +1189,7 @@ listComprehension returns [CALExpressionNode result] locals [List<Pair<List<Toke
     :
         '['
         (
-            expressions
+            computations=expressions
             (
                 ':' generators { $gens = $generators.result; }
             )?
@@ -1211,7 +1211,7 @@ mapping
     ;
 
 // Type Assertion (CLR §6.11)
-typeAssertionExpr
+typeAssertionExpression
     :
         '('
         expression
@@ -1243,15 +1243,15 @@ alternativeExpression
     ;
 
 // Function / Procedure Call (CAL Specification Extension)
-callExpression returns [CALInvokeNode result] locals [List<CALExpressionNode> arguments]
+callExpression returns [CALInvokeNode result] locals [List<CALExpressionNode> args]
     :
         function=variableExpression
         '('
             (
-                expressions { $arguments = $expressions.result; }
+                arguments=expressions { $args = $expressions.result; }
             )?
         ')'
-        { $result = factory.createCallExpression($function.result, $arguments); }
+        { $result = factory.createCallExpression($function.result, $args); }
     ;
 
 // ----------------------------------------------------------------------------

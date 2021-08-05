@@ -88,7 +88,7 @@ public class CALParser extends Parser {
 		RULE_ifExpression = 87, RULE_elseIfExpression = 88, RULE_letExpression = 89, 
 		RULE_lambdaExpression = 90, RULE_procExpression = 91, RULE_setComprehension = 92, 
 		RULE_listComprehension = 93, RULE_mapComprehension = 94, RULE_mappings = 95, 
-		RULE_mapping = 96, RULE_typeAssertionExpr = 97, RULE_caseExpression = 98, 
+		RULE_mapping = 96, RULE_typeAssertionExpression = 97, RULE_caseExpression = 98, 
 		RULE_alternativeExpression = 99, RULE_callExpression = 100, RULE_lvalues = 101, 
 		RULE_lvalue = 102, RULE_variable = 103, RULE_field = 104, RULE_statements = 105, 
 		RULE_statement = 106, RULE_assignmentStatement = 107, RULE_callStatement = 108, 
@@ -120,7 +120,7 @@ public class CALParser extends Parser {
 		"expression", "literalExpression", "variableExpression", "symbolReferenceExpression", 
 		"ifExpression", "elseIfExpression", "letExpression", "lambdaExpression", 
 		"procExpression", "setComprehension", "listComprehension", "mapComprehension", 
-		"mappings", "mapping", "typeAssertionExpr", "caseExpression", "alternativeExpression", 
+		"mappings", "mapping", "typeAssertionExpression", "caseExpression", "alternativeExpression", 
 		"callExpression", "lvalues", "lvalue", "variable", "field", "statements", 
 		"statement", "assignmentStatement", "callStatement", "blockStatement", 
 		"ifStatement", "elseIfStatement", "whileStatement", "foreachStatement", 
@@ -273,6 +273,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_compilationUnit; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCompilationUnit(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final CompilationUnitContext compilationUnit() throws RecognitionException {
@@ -351,6 +356,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_namespaceDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitNamespaceDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final NamespaceDeclarationContext namespaceDeclaration() throws RecognitionException {
@@ -486,6 +496,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_namespaceBody; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitNamespaceBody(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final NamespaceBodyContext namespaceBody() throws RecognitionException {
@@ -575,6 +590,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_qualifiedID; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitQualifiedID(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final QualifiedIDContext qualifiedID() throws RecognitionException {
@@ -634,6 +654,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_annotation; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAnnotation(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AnnotationContext annotation() throws RecognitionException {
@@ -707,6 +732,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_annotationParameter; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAnnotationParameter(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AnnotationParameterContext annotationParameter() throws RecognitionException {
@@ -759,6 +789,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_unitDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitUnitDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final UnitDeclarationContext unitDeclaration() throws RecognitionException {
@@ -824,6 +859,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_importDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitImportDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ImportDeclarationContext importDeclaration() throws RecognitionException {
@@ -877,6 +917,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_singleImport; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitSingleImport(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final SingleImportContext singleImport() throws RecognitionException {
@@ -940,6 +985,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_groupImport; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitGroupImport(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final GroupImportContext groupImport() throws RecognitionException {
@@ -986,6 +1036,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_importKind; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitImportKind(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ImportKindContext importKind() throws RecognitionException {
@@ -1076,6 +1131,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_networkDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitNetworkDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final NetworkDeclarationContext networkDeclaration() throws RecognitionException {
@@ -1251,6 +1311,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityDeclarationContext entityDeclaration() throws RecognitionException {
@@ -1291,6 +1356,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityExpressions; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityExpressions(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityExpressionsContext entityExpressions() throws RecognitionException {
@@ -1345,6 +1415,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityExpressionContext entityExpression() throws RecognitionException {
@@ -1402,6 +1477,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityInstanceExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityInstanceExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityInstanceExpressionContext entityInstanceExpression() throws RecognitionException {
@@ -1464,6 +1544,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityIfExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityIfExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityIfExpressionContext entityIfExpression() throws RecognitionException {
@@ -1519,6 +1604,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityListExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityListExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityListExpressionContext entityListExpression() throws RecognitionException {
@@ -1570,6 +1660,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityParameters; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityParameters(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityParametersContext entityParameters() throws RecognitionException {
@@ -1619,6 +1714,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityParameter; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityParameter(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityParameterContext entityParameter() throws RecognitionException {
@@ -1657,6 +1757,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_attributeSection; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAttributeSection(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AttributeSectionContext attributeSection() throws RecognitionException {
@@ -1709,6 +1814,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_attributeDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAttributeDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AttributeDeclarationContext attributeDeclaration() throws RecognitionException {
@@ -1777,6 +1887,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_structureStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStructureStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StructureStatementContext structureStatement() throws RecognitionException {
@@ -1851,6 +1966,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_structureConnectorStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStructureConnectorStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StructureConnectorStatementContext structureConnectorStatement() throws RecognitionException {
@@ -1905,6 +2025,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_structureForeachStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStructureForeachStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StructureForeachStatementContext structureForeachStatement() throws RecognitionException {
@@ -1972,6 +2097,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_structureIfStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStructureIfStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StructureIfStatementContext structureIfStatement() throws RecognitionException {
@@ -2073,6 +2203,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_structureElseIfStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStructureElseIfStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StructureElseIfStatementContext structureElseIfStatement() throws RecognitionException {
@@ -2136,6 +2271,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_connector; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitConnector(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ConnectorContext connector() throws RecognitionException {
@@ -2183,6 +2323,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_entityReference; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityReference(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final EntityReferenceContext entityReference() throws RecognitionException {
@@ -2237,6 +2382,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_portReference; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPortReference(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PortReferenceContext portReference() throws RecognitionException {
@@ -2351,6 +2501,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_actorDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitActorDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ActorDeclarationContext actorDeclaration() throws RecognitionException {
@@ -2552,6 +2707,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_portDeclarations; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPortDeclarations(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PortDeclarationsContext portDeclarations() throws RecognitionException {
@@ -2607,6 +2767,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_portDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPortDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PortDeclarationContext portDeclaration() throws RecognitionException {
@@ -2673,6 +2838,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_timeCause; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTimeCause(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TimeCauseContext timeCause() throws RecognitionException {
@@ -2706,6 +2876,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_processDescription; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitProcessDescription(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ProcessDescriptionContext processDescription() throws RecognitionException {
@@ -2787,6 +2962,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_actionDefinition; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitActionDefinition(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ActionDefinitionContext actionDefinition() throws RecognitionException {
@@ -2948,6 +3128,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_inputPatterns; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitInputPatterns(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final InputPatternsContext inputPatterns() throws RecognitionException {
@@ -3003,6 +3188,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_inputPattern; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitInputPattern(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final InputPatternContext inputPattern() throws RecognitionException {
@@ -3083,6 +3273,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_channelSelector; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitChannelSelector(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ChannelSelectorContext channelSelector() throws RecognitionException {
@@ -3169,6 +3364,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_patterns; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPatterns(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PatternsContext patterns() throws RecognitionException {
@@ -3220,6 +3420,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_pattern; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPattern(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PatternContext pattern() throws RecognitionException {
@@ -3282,6 +3487,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_subPatterns; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitSubPatterns(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final SubPatternsContext subPatterns() throws RecognitionException {
@@ -3334,6 +3544,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_subPattern; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitSubPattern(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final SubPatternContext subPattern() throws RecognitionException {
@@ -3408,6 +3623,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_patternExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPatternExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PatternExpressionContext patternExpression() throws RecognitionException {
@@ -3468,6 +3688,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_outputExpressions; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitOutputExpressions(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final OutputExpressionsContext outputExpressions() throws RecognitionException {
@@ -3532,6 +3757,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_outputExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitOutputExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final OutputExpressionContext outputExpression() throws RecognitionException {
@@ -3550,7 +3780,7 @@ public class CALParser extends Parser {
 				((OutputExpressionContext)_localctx).ID = match(ID);
 				setState(817);
 				match(COLON);
-				 ((OutputExpressionContext)_localctx).port =  ((OutputExpressionContext)_localctx).ID;
+				 ((OutputExpressionContext)_localctx).port =  ((OutputExpressionContext)_localctx).ID; 
 				}
 			}
 
@@ -3639,6 +3869,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_initializationActionDefinition; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitInitializationActionDefinition(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final InitializationActionDefinitionContext initializationActionDefinition() throws RecognitionException {
@@ -3792,6 +4027,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_actionTags; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitActionTags(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ActionTagsContext actionTags() throws RecognitionException {
@@ -3845,6 +4085,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_actionTag; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitActionTag(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ActionTagContext actionTag() throws RecognitionException {
@@ -3880,6 +4125,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_actionSchedule; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitActionSchedule(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ActionScheduleContext actionSchedule() throws RecognitionException {
@@ -3929,6 +4179,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_scheduleFSM; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitScheduleFSM(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ScheduleFSMContext scheduleFSM() throws RecognitionException {
@@ -4008,6 +4263,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_stateTransition; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStateTransition(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StateTransitionContext stateTransition() throws RecognitionException {
@@ -4074,6 +4334,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_scheduleRegExp; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitScheduleRegExp(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ScheduleRegExpContext scheduleRegExp() throws RecognitionException {
@@ -4126,6 +4391,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_regExp; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitRegExp(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final RegExpContext regExp() throws RecognitionException {
@@ -4250,6 +4520,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_priorityOrder; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPriorityOrder(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PriorityOrderContext priorityOrder() throws RecognitionException {
@@ -4311,6 +4586,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_priorityInequality; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitPriorityInequality(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final PriorityInequalityContext priorityInequality() throws RecognitionException {
@@ -4362,6 +4642,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_availability; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAvailability(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AvailabilityContext availability() throws RecognitionException {
@@ -4437,6 +4722,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_globalVariableDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitGlobalVariableDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final GlobalVariableDeclarationContext globalVariableDeclaration() throws RecognitionException {
@@ -4563,6 +4853,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_localVariableDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLocalVariableDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final LocalVariableDeclarationContext localVariableDeclaration() throws RecognitionException {
@@ -4667,6 +4962,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_blockVariableDeclarations; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitBlockVariableDeclarations(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final BlockVariableDeclarationsContext blockVariableDeclarations() throws RecognitionException {
@@ -4733,6 +5033,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_blockVariableDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitBlockVariableDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final BlockVariableDeclarationContext blockVariableDeclaration() throws RecognitionException {
@@ -4817,6 +5122,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_explicitVariableDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitExplicitVariableDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ExplicitVariableDeclarationContext explicitVariableDeclaration() throws RecognitionException {
@@ -4926,6 +5236,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_functionVariableDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitFunctionVariableDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final FunctionVariableDeclarationContext functionVariableDeclaration() throws RecognitionException {
@@ -5024,6 +5339,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_procedureVariableDeclaration; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitProcedureVariableDeclaration(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ProcedureVariableDeclarationContext procedureVariableDeclaration() throws RecognitionException {
@@ -5112,6 +5432,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_formalParameters; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitFormalParameters(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final FormalParametersContext formalParameters() throws RecognitionException {
@@ -5179,6 +5504,11 @@ public class CALParser extends Parser {
 			this.index = index;
 		}
 		@Override public int getRuleIndex() { return RULE_formalParameter; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitFormalParameter(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final FormalParameterContext formalParameter(int index) throws RecognitionException {
@@ -5221,6 +5551,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_typeDefinition; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeDefinition(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TypeDefinitionContext typeDefinition() throws RecognitionException {
@@ -5320,6 +5655,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_taggedTuple; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTaggedTuple(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TaggedTupleContext taggedTuple() throws RecognitionException {
@@ -5356,6 +5696,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_tuple; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTuple(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TupleContext tuple() throws RecognitionException {
@@ -5427,6 +5772,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_types; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypes(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TypesContext types() throws RecognitionException {
@@ -5485,6 +5835,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_type; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitType(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TypeContext type() throws RecognitionException {
@@ -5598,6 +5953,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_typeParameters; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeParameters(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TypeParametersContext typeParameters() throws RecognitionException {
@@ -5647,6 +6007,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_typeParameter; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeParameter(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TypeParameterContext typeParameter() throws RecognitionException {
@@ -5694,6 +6059,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_typeAttributes; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeAttributes(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TypeAttributesContext typeAttributes() throws RecognitionException {
@@ -5746,6 +6116,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_typeAttribute; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeAttribute(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final TypeAttributeContext typeAttribute() throws RecognitionException {
@@ -5812,6 +6187,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_generators; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitGenerators(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final GeneratorsContext generators() throws RecognitionException {
@@ -5865,6 +6245,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_generator; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitGenerator(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final GeneratorContext generator() throws RecognitionException {
@@ -5904,6 +6289,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_foreachGenerators; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitForeachGenerators(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ForeachGeneratorsContext foreachGenerators() throws RecognitionException {
@@ -5957,6 +6347,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_foreachGenerator; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitForeachGenerator(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ForeachGeneratorContext foreachGenerator() throws RecognitionException {
@@ -5996,6 +6391,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_chooseGenerators; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitChooseGenerators(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ChooseGeneratorsContext chooseGenerators() throws RecognitionException {
@@ -6049,6 +6449,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_chooseGenerator; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitChooseGenerator(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ChooseGeneratorContext chooseGenerator() throws RecognitionException {
@@ -6094,6 +6499,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_generatorBody; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitGeneratorBody(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final GeneratorBodyContext generatorBody() throws RecognitionException {
@@ -6161,6 +6571,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_expressions; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitExpressions(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ExpressionsContext expressions() throws RecognitionException {
@@ -6208,75 +6623,241 @@ public class CALParser extends Parser {
 
 	public static class ExpressionContext extends ParserRuleContext {
 		public CALExpressionNode result;
-		public ExpressionContext operand1;
+		public ExpressionContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_expression; }
+	 
+		public ExpressionContext() { }
+		public void copyFrom(ExpressionContext ctx) {
+			super.copyFrom(ctx);
+			this.result = ctx.result;
+		}
+	}
+	public static class ListComprehensionExprExpressionContext extends ExpressionContext {
+		public ListComprehensionContext listComprehension;
+		public ListComprehensionContext listComprehension() {
+			return getRuleContext(ListComprehensionContext.class,0);
+		}
+		public ListComprehensionExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitListComprehensionExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ExprExpressionContext extends ExpressionContext {
+		public ExpressionContext expression;
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public ExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class FieldSelectorExpressionContext extends ExpressionContext {
 		public ExpressionContext composite;
+		public FieldContext field() {
+			return getRuleContext(FieldContext.class,0);
+		}
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public FieldSelectorExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitFieldSelectorExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class VariableExprExpressionContext extends ExpressionContext {
+		public VariableExpressionContext variableExpression;
+		public VariableExpressionContext variableExpression() {
+			return getRuleContext(VariableExpressionContext.class,0);
+		}
+		public VariableExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitVariableExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class MapComprehensionExprExpressionContext extends ExpressionContext {
+		public MapComprehensionContext mapComprehension() {
+			return getRuleContext(MapComprehensionContext.class,0);
+		}
+		public MapComprehensionExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitMapComprehensionExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class UnaryOperationExpressionContext extends ExpressionContext {
 		public Token operator;
 		public ExpressionContext operand;
 		public ExpressionContext expression;
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public UnaryOperationExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitUnaryOperationExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ProcExprExpressionContext extends ExpressionContext {
+		public ProcExpressionContext procExpression() {
+			return getRuleContext(ProcExpressionContext.class,0);
+		}
+		public ProcExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitProcExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class SymbolReferenceExprExpressionContext extends ExpressionContext {
+		public SymbolReferenceExpressionContext symbolReferenceExpression() {
+			return getRuleContext(SymbolReferenceExpressionContext.class,0);
+		}
+		public SymbolReferenceExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitSymbolReferenceExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class LiteralExprExpressionContext extends ExpressionContext {
 		public LiteralExpressionContext literalExpression;
-		public VariableExpressionContext variableExpression;
-		public IfExpressionContext ifExpression;
-		public LetExpressionContext letExpression;
-		public LambdaExpressionContext lambdaExpression;
-		public ListComprehensionContext listComprehension;
-		public CallExpressionContext callExpression;
-		public ExpressionContext operand2;
+		public LiteralExpressionContext literalExpression() {
+			return getRuleContext(LiteralExpressionContext.class,0);
+		}
+		public LiteralExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLiteralExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class IndexerExpressionContext extends ExpressionContext {
+		public ExpressionContext composite;
 		public ExpressionsContext indices;
+		public ExpressionContext expression() {
+			return getRuleContext(ExpressionContext.class,0);
+		}
+		public ExpressionsContext expressions() {
+			return getRuleContext(ExpressionsContext.class,0);
+		}
+		public IndexerExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitIndexerExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class SetComprehensionExprExpressionContext extends ExpressionContext {
+		public SetComprehensionContext setComprehension() {
+			return getRuleContext(SetComprehensionContext.class,0);
+		}
+		public SetComprehensionExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitSetComprehensionExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class CaseExprExpressionContext extends ExpressionContext {
+		public CaseExpressionContext caseExpression() {
+			return getRuleContext(CaseExpressionContext.class,0);
+		}
+		public CaseExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCaseExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class BinaryOperationExpressionContext extends ExpressionContext {
+		public ExpressionContext operand1;
+		public Token operator;
+		public ExpressionContext operand2;
+		public ExpressionContext expression;
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
-		public LiteralExpressionContext literalExpression() {
-			return getRuleContext(LiteralExpressionContext.class,0);
+		public BinaryOperationExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitBinaryOperationExpression(this);
+			else return visitor.visitChildren(this);
 		}
-		public VariableExpressionContext variableExpression() {
-			return getRuleContext(VariableExpressionContext.class,0);
-		}
-		public SymbolReferenceExpressionContext symbolReferenceExpression() {
-			return getRuleContext(SymbolReferenceExpressionContext.class,0);
-		}
-		public IfExpressionContext ifExpression() {
-			return getRuleContext(IfExpressionContext.class,0);
-		}
-		public LetExpressionContext letExpression() {
-			return getRuleContext(LetExpressionContext.class,0);
-		}
+	}
+	public static class LambdaExprExpressionContext extends ExpressionContext {
+		public LambdaExpressionContext lambdaExpression;
 		public LambdaExpressionContext lambdaExpression() {
 			return getRuleContext(LambdaExpressionContext.class,0);
 		}
-		public ProcExpressionContext procExpression() {
-			return getRuleContext(ProcExpressionContext.class,0);
+		public LambdaExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLambdaExprExpression(this);
+			else return visitor.visitChildren(this);
 		}
-		public SetComprehensionContext setComprehension() {
-			return getRuleContext(SetComprehensionContext.class,0);
+	}
+	public static class TypeAssertionExprExpressionContext extends ExpressionContext {
+		public TypeAssertionExpressionContext typeAssertionExpression() {
+			return getRuleContext(TypeAssertionExpressionContext.class,0);
 		}
-		public ListComprehensionContext listComprehension() {
-			return getRuleContext(ListComprehensionContext.class,0);
+		public TypeAssertionExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeAssertionExprExpression(this);
+			else return visitor.visitChildren(this);
 		}
-		public MapComprehensionContext mapComprehension() {
-			return getRuleContext(MapComprehensionContext.class,0);
+	}
+	public static class IfExprExpressionContext extends ExpressionContext {
+		public IfExpressionContext ifExpression;
+		public IfExpressionContext ifExpression() {
+			return getRuleContext(IfExpressionContext.class,0);
 		}
-		public TypeAssertionExprContext typeAssertionExpr() {
-			return getRuleContext(TypeAssertionExprContext.class,0);
+		public IfExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitIfExprExpression(this);
+			else return visitor.visitChildren(this);
 		}
-		public CaseExpressionContext caseExpression() {
-			return getRuleContext(CaseExpressionContext.class,0);
+	}
+	public static class LetExprExpressionContext extends ExpressionContext {
+		public LetExpressionContext letExpression;
+		public LetExpressionContext letExpression() {
+			return getRuleContext(LetExpressionContext.class,0);
 		}
+		public LetExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLetExprExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class CallExprExpressionContext extends ExpressionContext {
+		public CallExpressionContext callExpression;
 		public CallExpressionContext callExpression() {
 			return getRuleContext(CallExpressionContext.class,0);
 		}
-		public ExpressionsContext expressions() {
-			return getRuleContext(ExpressionsContext.class,0);
+		public CallExprExpressionContext(ExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCallExprExpression(this);
+			else return visitor.visitChildren(this);
 		}
-		public FieldContext field() {
-			return getRuleContext(FieldContext.class,0);
-		}
-		public ExpressionContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
-		}
-		@Override public int getRuleIndex() { return RULE_expression; }
 	}
 
 	public final ExpressionContext expression() throws RecognitionException {
@@ -6300,152 +6881,213 @@ public class CALParser extends Parser {
 			switch ( getInterpreter().adaptivePredict(_input,151,_ctx) ) {
 			case 1:
 				{
+				_localctx = new UnaryOperationExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
+
 				setState(1321);
-				((ExpressionContext)_localctx).operator = match(MINUS);
+				((UnaryOperationExpressionContext)_localctx).operator = match(MINUS);
 				setState(1322);
-				((ExpressionContext)_localctx).operand = ((ExpressionContext)_localctx).expression = expression(30);
-				 ((ExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand.result); 
+				((UnaryOperationExpressionContext)_localctx).operand = ((UnaryOperationExpressionContext)_localctx).expression = expression(30);
+				 ((UnaryOperationExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((UnaryOperationExpressionContext)_localctx).operator, ((UnaryOperationExpressionContext)_localctx).operand.result); 
 				}
 				break;
 			case 2:
 				{
+				_localctx = new UnaryOperationExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1325);
-				((ExpressionContext)_localctx).operator = match(RNG);
+				((UnaryOperationExpressionContext)_localctx).operator = match(RNG);
 				setState(1326);
-				((ExpressionContext)_localctx).operand = ((ExpressionContext)_localctx).expression = expression(29);
-				 ((ExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand.result); 
+				((UnaryOperationExpressionContext)_localctx).operand = ((UnaryOperationExpressionContext)_localctx).expression = expression(29);
+				 ((UnaryOperationExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((UnaryOperationExpressionContext)_localctx).operator, ((UnaryOperationExpressionContext)_localctx).operand.result); 
 				}
 				break;
 			case 3:
 				{
+				_localctx = new UnaryOperationExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1329);
-				((ExpressionContext)_localctx).operator = match(DOM);
+				((UnaryOperationExpressionContext)_localctx).operator = match(DOM);
 				setState(1330);
-				((ExpressionContext)_localctx).operand = ((ExpressionContext)_localctx).expression = expression(28);
-				 ((ExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand.result); 
+				((UnaryOperationExpressionContext)_localctx).operand = ((UnaryOperationExpressionContext)_localctx).expression = expression(28);
+				 ((UnaryOperationExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((UnaryOperationExpressionContext)_localctx).operator, ((UnaryOperationExpressionContext)_localctx).operand.result); 
 				}
 				break;
 			case 4:
 				{
+				_localctx = new UnaryOperationExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1333);
-				((ExpressionContext)_localctx).operator = match(DASH);
+				((UnaryOperationExpressionContext)_localctx).operator = match(DASH);
 				setState(1334);
-				((ExpressionContext)_localctx).operand = ((ExpressionContext)_localctx).expression = expression(27);
-				 ((ExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand.result); 
+				((UnaryOperationExpressionContext)_localctx).operand = ((UnaryOperationExpressionContext)_localctx).expression = expression(27);
+				 ((UnaryOperationExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((UnaryOperationExpressionContext)_localctx).operator, ((UnaryOperationExpressionContext)_localctx).operand.result); 
 				}
 				break;
 			case 5:
 				{
+				_localctx = new UnaryOperationExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1337);
-				((ExpressionContext)_localctx).operator = match(NOT);
+				((UnaryOperationExpressionContext)_localctx).operator = match(NOT);
 				setState(1338);
-				((ExpressionContext)_localctx).operand = ((ExpressionContext)_localctx).expression = expression(26);
-				 ((ExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand.result); 
+				((UnaryOperationExpressionContext)_localctx).operand = ((UnaryOperationExpressionContext)_localctx).expression = expression(26);
+				 ((UnaryOperationExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((UnaryOperationExpressionContext)_localctx).operator, ((UnaryOperationExpressionContext)_localctx).operand.result); 
 				}
 				break;
 			case 6:
 				{
+				_localctx = new UnaryOperationExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1341);
-				((ExpressionContext)_localctx).operator = match(BIT_NOT);
+				((UnaryOperationExpressionContext)_localctx).operator = match(BIT_NOT);
 				setState(1342);
-				((ExpressionContext)_localctx).operand = ((ExpressionContext)_localctx).expression = expression(25);
-				 ((ExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand.result); 
+				((UnaryOperationExpressionContext)_localctx).operand = ((UnaryOperationExpressionContext)_localctx).expression = expression(25);
+				 ((UnaryOperationExpressionContext)_localctx).result =  factory.createUnaryOperationExpression(((UnaryOperationExpressionContext)_localctx).operator, ((UnaryOperationExpressionContext)_localctx).operand.result); 
 				}
 				break;
 			case 7:
 				{
+				_localctx = new LiteralExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1345);
-				((ExpressionContext)_localctx).literalExpression = literalExpression();
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).literalExpression.result; 
+				((LiteralExprExpressionContext)_localctx).literalExpression = literalExpression();
+				 ((LiteralExprExpressionContext)_localctx).result =  ((LiteralExprExpressionContext)_localctx).literalExpression.result; 
 				}
 				break;
 			case 8:
 				{
+				_localctx = new VariableExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1348);
-				((ExpressionContext)_localctx).variableExpression = variableExpression();
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).variableExpression.result; 
+				((VariableExprExpressionContext)_localctx).variableExpression = variableExpression();
+				 ((VariableExprExpressionContext)_localctx).result =  ((VariableExprExpressionContext)_localctx).variableExpression.result; 
 				}
 				break;
 			case 9:
 				{
+				_localctx = new SymbolReferenceExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1351);
 				symbolReferenceExpression();
 				}
 				break;
 			case 10:
 				{
+				_localctx = new ExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1352);
 				match(LPAREN);
 				setState(1353);
-				((ExpressionContext)_localctx).expression = expression(0);
+				((ExprExpressionContext)_localctx).expression = expression(0);
 				setState(1354);
 				match(RPAREN);
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).expression.result; 
+				 ((ExprExpressionContext)_localctx).result =  ((ExprExpressionContext)_localctx).expression.result; 
 				}
 				break;
 			case 11:
 				{
+				_localctx = new IfExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1357);
-				((ExpressionContext)_localctx).ifExpression = ifExpression();
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).ifExpression.result; 
+				((IfExprExpressionContext)_localctx).ifExpression = ifExpression();
+				 ((IfExprExpressionContext)_localctx).result =  ((IfExprExpressionContext)_localctx).ifExpression.result; 
 				}
 				break;
 			case 12:
 				{
+				_localctx = new LetExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1360);
-				((ExpressionContext)_localctx).letExpression = letExpression();
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).letExpression.result; 
+				((LetExprExpressionContext)_localctx).letExpression = letExpression();
+				 ((LetExprExpressionContext)_localctx).result =  ((LetExprExpressionContext)_localctx).letExpression.result; 
 				}
 				break;
 			case 13:
 				{
+				_localctx = new LambdaExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1363);
-				((ExpressionContext)_localctx).lambdaExpression = lambdaExpression();
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).lambdaExpression.result; 
+				((LambdaExprExpressionContext)_localctx).lambdaExpression = lambdaExpression();
+				 ((LambdaExprExpressionContext)_localctx).result =  ((LambdaExprExpressionContext)_localctx).lambdaExpression.result; 
 				}
 				break;
 			case 14:
 				{
+				_localctx = new ProcExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1366);
 				procExpression();
 				}
 				break;
 			case 15:
 				{
+				_localctx = new SetComprehensionExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1367);
 				setComprehension();
 				}
 				break;
 			case 16:
 				{
+				_localctx = new ListComprehensionExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1368);
-				((ExpressionContext)_localctx).listComprehension = listComprehension();
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).listComprehension.result; 
+				((ListComprehensionExprExpressionContext)_localctx).listComprehension = listComprehension();
+				 ((ListComprehensionExprExpressionContext)_localctx).result =  ((ListComprehensionExprExpressionContext)_localctx).listComprehension.result; 
 				}
 				break;
 			case 17:
 				{
+				_localctx = new MapComprehensionExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1371);
 				mapComprehension();
 				}
 				break;
 			case 18:
 				{
+				_localctx = new TypeAssertionExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1372);
-				typeAssertionExpr();
+				typeAssertionExpression();
 				}
 				break;
 			case 19:
 				{
+				_localctx = new CaseExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1373);
 				caseExpression();
 				}
 				break;
 			case 20:
 				{
+				_localctx = new CallExprExpressionContext(_localctx);
+				_ctx = _localctx;
+				_prevctx = _localctx;
 				setState(1374);
-				((ExpressionContext)_localctx).callExpression = callExpression();
-				 ((ExpressionContext)_localctx).result =  ((ExpressionContext)_localctx).callExpression.result; 
+				((CallExprExpressionContext)_localctx).callExpression = callExpression();
+				 ((CallExprExpressionContext)_localctx).result =  ((CallExprExpressionContext)_localctx).callExpression.result; 
 				}
 				break;
 			}
@@ -6463,47 +7105,44 @@ public class CALParser extends Parser {
 					switch ( getInterpreter().adaptivePredict(_input,152,_ctx) ) {
 					case 1:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1379);
 						if (!(precpred(_ctx, 33))) throw new FailedPredicateException(this, "precpred(_ctx, 33)");
 						setState(1380);
-						((ExpressionContext)_localctx).operator = match(CARET);
+						((BinaryOperationExpressionContext)_localctx).operator = match(CARET);
 						setState(1381);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(33);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(33);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 2:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1384);
 						if (!(precpred(_ctx, 24))) throw new FailedPredicateException(this, "precpred(_ctx, 24)");
 						setState(1385);
-						((ExpressionContext)_localctx).operator = match(DOT_DOT);
+						((BinaryOperationExpressionContext)_localctx).operator = match(DOT_DOT);
 						setState(1386);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(25);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(25);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 3:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1389);
 						if (!(precpred(_ctx, 23))) throw new FailedPredicateException(this, "precpred(_ctx, 23)");
 						setState(1390);
-						((ExpressionContext)_localctx).operator = _input.LT(1);
+						((BinaryOperationExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
 						if ( !(_la==DIV || _la==MOD || ((((_la - 106)) & ~0x3f) == 0 && ((1L << (_la - 106)) & ((1L << (STAR - 106)) | (1L << (SLASH - 106)) | (1L << (MODULO - 106)))) != 0)) ) {
-							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
+							((BinaryOperationExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
 							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
@@ -6511,23 +7150,22 @@ public class CALParser extends Parser {
 							consume();
 						}
 						setState(1391);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(24);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(24);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 4:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1394);
 						if (!(precpred(_ctx, 22))) throw new FailedPredicateException(this, "precpred(_ctx, 22)");
 						setState(1395);
-						((ExpressionContext)_localctx).operator = _input.LT(1);
+						((BinaryOperationExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
 						if ( !(_la==PLUS || _la==MINUS) ) {
-							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
+							((BinaryOperationExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
 							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
@@ -6535,23 +7173,22 @@ public class CALParser extends Parser {
 							consume();
 						}
 						setState(1396);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(23);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(23);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 5:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1399);
 						if (!(precpred(_ctx, 21))) throw new FailedPredicateException(this, "precpred(_ctx, 21)");
 						setState(1400);
-						((ExpressionContext)_localctx).operator = _input.LT(1);
+						((BinaryOperationExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
 						if ( !(_la==SHIFT_LEFT || _la==SHIFT_RIGHT) ) {
-							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
+							((BinaryOperationExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
 							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
@@ -6559,23 +7196,22 @@ public class CALParser extends Parser {
 							consume();
 						}
 						setState(1401);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(22);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(22);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 6:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1404);
 						if (!(precpred(_ctx, 20))) throw new FailedPredicateException(this, "precpred(_ctx, 20)");
 						setState(1405);
-						((ExpressionContext)_localctx).operator = _input.LT(1);
+						((BinaryOperationExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
 						if ( !(((((_la - 100)) & ~0x3f) == 0 && ((1L << (_la - 100)) & ((1L << (LT - 100)) | (1L << (LTE - 100)) | (1L << (GT - 100)) | (1L << (GTE - 100)))) != 0)) ) {
-							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
+							((BinaryOperationExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
 							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
@@ -6583,23 +7219,22 @@ public class CALParser extends Parser {
 							consume();
 						}
 						setState(1406);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(21);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(21);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 7:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1409);
 						if (!(precpred(_ctx, 19))) throw new FailedPredicateException(this, "precpred(_ctx, 19)");
 						setState(1410);
-						((ExpressionContext)_localctx).operator = _input.LT(1);
+						((BinaryOperationExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
 						if ( !(((((_la - 96)) & ~0x3f) == 0 && ((1L << (_la - 96)) & ((1L << (EQ - 96)) | (1L << (EQ_EQ - 96)) | (1L << (NOT_EQ - 96)))) != 0)) ) {
-							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
+							((BinaryOperationExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
 							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
@@ -6607,92 +7242,86 @@ public class CALParser extends Parser {
 							consume();
 						}
 						setState(1411);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(20);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(20);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 8:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1414);
 						if (!(precpred(_ctx, 18))) throw new FailedPredicateException(this, "precpred(_ctx, 18)");
 						setState(1415);
-						((ExpressionContext)_localctx).operator = match(BIT_AND);
+						((BinaryOperationExpressionContext)_localctx).operator = match(BIT_AND);
 						setState(1416);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(19);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(19);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 9:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1419);
 						if (!(precpred(_ctx, 17))) throw new FailedPredicateException(this, "precpred(_ctx, 17)");
 						setState(1420);
-						((ExpressionContext)_localctx).operator = match(VERTICAL_BAR);
+						((BinaryOperationExpressionContext)_localctx).operator = match(VERTICAL_BAR);
 						setState(1421);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(18);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(18);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 10:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1424);
 						if (!(precpred(_ctx, 16))) throw new FailedPredicateException(this, "precpred(_ctx, 16)");
 						setState(1425);
-						((ExpressionContext)_localctx).operator = match(AND);
+						((BinaryOperationExpressionContext)_localctx).operator = match(AND);
 						setState(1426);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(17);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(17);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 11:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.operand1 = _prevctx;
-						_localctx.operand1 = _prevctx;
+						_localctx = new BinaryOperationExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((BinaryOperationExpressionContext)_localctx).operand1 = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1429);
 						if (!(precpred(_ctx, 15))) throw new FailedPredicateException(this, "precpred(_ctx, 15)");
 						setState(1430);
-						((ExpressionContext)_localctx).operator = match(OR);
+						((BinaryOperationExpressionContext)_localctx).operator = match(OR);
 						setState(1431);
-						((ExpressionContext)_localctx).operand2 = ((ExpressionContext)_localctx).expression = expression(16);
-						 ((ExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((ExpressionContext)_localctx).operand1.result, ((ExpressionContext)_localctx).operator, ((ExpressionContext)_localctx).operand2.result); 
+						((BinaryOperationExpressionContext)_localctx).operand2 = ((BinaryOperationExpressionContext)_localctx).expression = expression(16);
+						 ((BinaryOperationExpressionContext)_localctx).result =  factory.createBinaryOperationExpression(((BinaryOperationExpressionContext)_localctx).operand1.result, ((BinaryOperationExpressionContext)_localctx).operator, ((BinaryOperationExpressionContext)_localctx).operand2.result); 
 						}
 						break;
 					case 12:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.composite = _prevctx;
-						_localctx.composite = _prevctx;
+						_localctx = new IndexerExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((IndexerExpressionContext)_localctx).composite = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1434);
 						if (!(precpred(_ctx, 32))) throw new FailedPredicateException(this, "precpred(_ctx, 32)");
 						setState(1435);
 						match(LSQUARE);
 						setState(1436);
-						((ExpressionContext)_localctx).indices = expressions();
+						((IndexerExpressionContext)_localctx).indices = expressions();
 						setState(1437);
 						match(RSQUARE);
-						 ((ExpressionContext)_localctx).result =  factory.createIndexerExpression(((ExpressionContext)_localctx).composite.result, ((ExpressionContext)_localctx).indices.result); 
+						 ((IndexerExpressionContext)_localctx).result =  factory.createIndexerExpression(((IndexerExpressionContext)_localctx).composite.result, ((IndexerExpressionContext)_localctx).indices.result); 
 						}
 						break;
 					case 13:
 						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.composite = _prevctx;
-						_localctx.composite = _prevctx;
+						_localctx = new FieldSelectorExpressionContext(new ExpressionContext(_parentctx, _parentState));
+						((FieldSelectorExpressionContext)_localctx).composite = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(1440);
 						if (!(precpred(_ctx, 31))) throw new FailedPredicateException(this, "precpred(_ctx, 31)");
@@ -6724,22 +7353,76 @@ public class CALParser extends Parser {
 
 	public static class LiteralExpressionContext extends ParserRuleContext {
 		public CALExpressionNode result;
-		public Token IntegerLiteral;
-		public Token FloatingPointLiteral;
-		public Token BooleanLiteral;
-		public Token CharacterLiteral;
-		public Token StringLiteral;
-		public Token NullLiteral;
-		public TerminalNode IntegerLiteral() { return getToken(CALParser.IntegerLiteral, 0); }
-		public TerminalNode FloatingPointLiteral() { return getToken(CALParser.FloatingPointLiteral, 0); }
-		public TerminalNode BooleanLiteral() { return getToken(CALParser.BooleanLiteral, 0); }
-		public TerminalNode CharacterLiteral() { return getToken(CALParser.CharacterLiteral, 0); }
-		public TerminalNode StringLiteral() { return getToken(CALParser.StringLiteral, 0); }
-		public TerminalNode NullLiteral() { return getToken(CALParser.NullLiteral, 0); }
 		public LiteralExpressionContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_literalExpression; }
+	 
+		public LiteralExpressionContext() { }
+		public void copyFrom(LiteralExpressionContext ctx) {
+			super.copyFrom(ctx);
+			this.result = ctx.result;
+		}
+	}
+	public static class FloatingPointLiteralExpressionContext extends LiteralExpressionContext {
+		public Token FloatingPointLiteral;
+		public TerminalNode FloatingPointLiteral() { return getToken(CALParser.FloatingPointLiteral, 0); }
+		public FloatingPointLiteralExpressionContext(LiteralExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitFloatingPointLiteralExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class StringLiteralExpressionContext extends LiteralExpressionContext {
+		public Token StringLiteral;
+		public TerminalNode StringLiteral() { return getToken(CALParser.StringLiteral, 0); }
+		public StringLiteralExpressionContext(LiteralExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStringLiteralExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class IntegerLiteralExpressionContext extends LiteralExpressionContext {
+		public Token IntegerLiteral;
+		public TerminalNode IntegerLiteral() { return getToken(CALParser.IntegerLiteral, 0); }
+		public IntegerLiteralExpressionContext(LiteralExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitIntegerLiteralExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class CharacterLiteralExpressionContext extends LiteralExpressionContext {
+		public Token CharacterLiteral;
+		public TerminalNode CharacterLiteral() { return getToken(CALParser.CharacterLiteral, 0); }
+		public CharacterLiteralExpressionContext(LiteralExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCharacterLiteralExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class BooleanLiteralExpressionContext extends LiteralExpressionContext {
+		public Token BooleanLiteral;
+		public TerminalNode BooleanLiteral() { return getToken(CALParser.BooleanLiteral, 0); }
+		public BooleanLiteralExpressionContext(LiteralExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitBooleanLiteralExpression(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class NullLiteralExpressionContext extends LiteralExpressionContext {
+		public Token NullLiteral;
+		public TerminalNode NullLiteral() { return getToken(CALParser.NullLiteral, 0); }
+		public NullLiteralExpressionContext(LiteralExpressionContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitNullLiteralExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final LiteralExpressionContext literalExpression() throws RecognitionException {
@@ -6750,51 +7433,57 @@ public class CALParser extends Parser {
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case IntegerLiteral:
+				_localctx = new IntegerLiteralExpressionContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(1448);
-				((LiteralExpressionContext)_localctx).IntegerLiteral = match(IntegerLiteral);
-				 ((LiteralExpressionContext)_localctx).result =  factory.createIntegerLiteralExpression(((LiteralExpressionContext)_localctx).IntegerLiteral); 
+				((IntegerLiteralExpressionContext)_localctx).IntegerLiteral = match(IntegerLiteral);
+				 ((IntegerLiteralExpressionContext)_localctx).result =  factory.createIntegerLiteralExpression(((IntegerLiteralExpressionContext)_localctx).IntegerLiteral); 
 				}
 				break;
 			case FloatingPointLiteral:
+				_localctx = new FloatingPointLiteralExpressionContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(1450);
-				((LiteralExpressionContext)_localctx).FloatingPointLiteral = match(FloatingPointLiteral);
-				 ((LiteralExpressionContext)_localctx).result =  factory.createFloatLiteralExpression(((LiteralExpressionContext)_localctx).FloatingPointLiteral); 
+				((FloatingPointLiteralExpressionContext)_localctx).FloatingPointLiteral = match(FloatingPointLiteral);
+				 ((FloatingPointLiteralExpressionContext)_localctx).result =  factory.createFloatLiteralExpression(((FloatingPointLiteralExpressionContext)_localctx).FloatingPointLiteral); 
 				}
 				break;
 			case BooleanLiteral:
+				_localctx = new BooleanLiteralExpressionContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(1452);
-				((LiteralExpressionContext)_localctx).BooleanLiteral = match(BooleanLiteral);
-				 ((LiteralExpressionContext)_localctx).result =  factory.createBooleanLiteralExpression(((LiteralExpressionContext)_localctx).BooleanLiteral); 
+				((BooleanLiteralExpressionContext)_localctx).BooleanLiteral = match(BooleanLiteral);
+				 ((BooleanLiteralExpressionContext)_localctx).result =  factory.createBooleanLiteralExpression(((BooleanLiteralExpressionContext)_localctx).BooleanLiteral); 
 				}
 				break;
 			case CharacterLiteral:
+				_localctx = new CharacterLiteralExpressionContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(1454);
-				((LiteralExpressionContext)_localctx).CharacterLiteral = match(CharacterLiteral);
-				 ((LiteralExpressionContext)_localctx).result =  factory.createCharLiteralExpression(((LiteralExpressionContext)_localctx).CharacterLiteral); 
+				((CharacterLiteralExpressionContext)_localctx).CharacterLiteral = match(CharacterLiteral);
+				 ((CharacterLiteralExpressionContext)_localctx).result =  factory.createCharLiteralExpression(((CharacterLiteralExpressionContext)_localctx).CharacterLiteral); 
 				}
 				break;
 			case StringLiteral:
+				_localctx = new StringLiteralExpressionContext(_localctx);
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(1456);
-				((LiteralExpressionContext)_localctx).StringLiteral = match(StringLiteral);
-				 ((LiteralExpressionContext)_localctx).result =  factory.createStringLiteralExpression(((LiteralExpressionContext)_localctx).StringLiteral); 
+				((StringLiteralExpressionContext)_localctx).StringLiteral = match(StringLiteral);
+				 ((StringLiteralExpressionContext)_localctx).result =  factory.createStringLiteralExpression(((StringLiteralExpressionContext)_localctx).StringLiteral); 
 				}
 				break;
 			case NullLiteral:
+				_localctx = new NullLiteralExpressionContext(_localctx);
 				enterOuterAlt(_localctx, 6);
 				{
 				setState(1458);
-				((LiteralExpressionContext)_localctx).NullLiteral = match(NullLiteral);
-				 ((LiteralExpressionContext)_localctx).result =  factory.createNullLiteralExpression(((LiteralExpressionContext)_localctx).NullLiteral); 
+				((NullLiteralExpressionContext)_localctx).NullLiteral = match(NullLiteral);
+				 ((NullLiteralExpressionContext)_localctx).result =  factory.createNullLiteralExpression(((NullLiteralExpressionContext)_localctx).NullLiteral); 
 				}
 				break;
 			default:
@@ -6822,6 +7511,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_variableExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitVariableExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final VariableExpressionContext variableExpression() throws RecognitionException {
@@ -6869,6 +7563,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_symbolReferenceExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitSymbolReferenceExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final SymbolReferenceExpressionContext symbolReferenceExpression() throws RecognitionException {
@@ -6923,9 +7622,9 @@ public class CALParser extends Parser {
 		public ExprIfNode result;
 		public CALExpressionNode elseExpression;
 		public ExpressionContext condition;
-		public ExpressionContext expression;
-		public ExpressionContext thenExpression;
-		public ElseIfExpressionContext elseIfExpression;
+		public ExpressionContext then;
+		public ElseIfExpressionContext elseIf;
+		public ExpressionContext elze;
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
@@ -6939,6 +7638,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_ifExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitIfExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final IfExpressionContext ifExpression() throws RecognitionException {
@@ -6950,19 +7654,19 @@ public class CALParser extends Parser {
 			setState(1478);
 			match(IF);
 			setState(1479);
-			((IfExpressionContext)_localctx).condition = ((IfExpressionContext)_localctx).expression = expression(0);
+			((IfExpressionContext)_localctx).condition = expression(0);
 			setState(1480);
 			match(THEN);
 			setState(1481);
-			((IfExpressionContext)_localctx).thenExpression = ((IfExpressionContext)_localctx).expression = expression(0);
+			((IfExpressionContext)_localctx).then = expression(0);
 			setState(1489);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case ELSIF:
 				{
 				setState(1482);
-				((IfExpressionContext)_localctx).elseIfExpression = elseIfExpression();
-				 ((IfExpressionContext)_localctx).elseExpression =  ((IfExpressionContext)_localctx).elseIfExpression.result; 
+				((IfExpressionContext)_localctx).elseIf = elseIfExpression();
+				 ((IfExpressionContext)_localctx).elseExpression =  ((IfExpressionContext)_localctx).elseIf.result; 
 				}
 				break;
 			case ELSE:
@@ -6970,14 +7674,14 @@ public class CALParser extends Parser {
 				setState(1485);
 				match(ELSE);
 				setState(1486);
-				((IfExpressionContext)_localctx).expression = expression(0);
-				 ((IfExpressionContext)_localctx).elseExpression =  ((IfExpressionContext)_localctx).expression.result; 
+				((IfExpressionContext)_localctx).elze = expression(0);
+				 ((IfExpressionContext)_localctx).elseExpression =  ((IfExpressionContext)_localctx).elze.result; 
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
-			 ((IfExpressionContext)_localctx).result =  factory.createConditionalExpression(((IfExpressionContext)_localctx).condition.result, ((IfExpressionContext)_localctx).thenExpression.result, _localctx.elseExpression); 
+			 ((IfExpressionContext)_localctx).result =  factory.createConditionalExpression(((IfExpressionContext)_localctx).condition.result, ((IfExpressionContext)_localctx).then.result, _localctx.elseExpression); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -6995,9 +7699,9 @@ public class CALParser extends Parser {
 		public ExprIfNode result;
 		public CALExpressionNode elseExpression;
 		public ExpressionContext condition;
-		public ExpressionContext expression;
-		public ExpressionContext thenExpression;
-		public ElseIfExpressionContext elseIfExpression;
+		public ExpressionContext then;
+		public ElseIfExpressionContext elseIf;
+		public ExpressionContext elze;
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
@@ -7011,6 +7715,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_elseIfExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitElseIfExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ElseIfExpressionContext elseIfExpression() throws RecognitionException {
@@ -7022,19 +7731,19 @@ public class CALParser extends Parser {
 			setState(1493);
 			match(ELSIF);
 			setState(1494);
-			((ElseIfExpressionContext)_localctx).condition = ((ElseIfExpressionContext)_localctx).expression = expression(0);
+			((ElseIfExpressionContext)_localctx).condition = expression(0);
 			setState(1495);
 			match(THEN);
 			setState(1496);
-			((ElseIfExpressionContext)_localctx).thenExpression = ((ElseIfExpressionContext)_localctx).expression = expression(0);
+			((ElseIfExpressionContext)_localctx).then = expression(0);
 			setState(1504);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case ELSIF:
 				{
 				setState(1497);
-				((ElseIfExpressionContext)_localctx).elseIfExpression = elseIfExpression();
-				 ((ElseIfExpressionContext)_localctx).elseExpression =  ((ElseIfExpressionContext)_localctx).elseIfExpression.result; 
+				((ElseIfExpressionContext)_localctx).elseIf = elseIfExpression();
+				 ((ElseIfExpressionContext)_localctx).elseExpression =  ((ElseIfExpressionContext)_localctx).elseIf.result; 
 				}
 				break;
 			case ELSE:
@@ -7042,14 +7751,14 @@ public class CALParser extends Parser {
 				setState(1500);
 				match(ELSE);
 				setState(1501);
-				((ElseIfExpressionContext)_localctx).expression = expression(0);
-				 ((ElseIfExpressionContext)_localctx).elseExpression =  ((ElseIfExpressionContext)_localctx).expression.result; 
+				((ElseIfExpressionContext)_localctx).elze = expression(0);
+				 ((ElseIfExpressionContext)_localctx).elseExpression =  ((ElseIfExpressionContext)_localctx).elze.result; 
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
-			 ((ElseIfExpressionContext)_localctx).result =  factory.createConditionalExpression(((ElseIfExpressionContext)_localctx).condition.result, ((ElseIfExpressionContext)_localctx).thenExpression.result, _localctx.elseExpression); 
+			 ((ElseIfExpressionContext)_localctx).result =  factory.createConditionalExpression(((ElseIfExpressionContext)_localctx).condition.result, ((ElseIfExpressionContext)_localctx).then.result, _localctx.elseExpression); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -7077,6 +7786,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_letExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLetExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final LetExpressionContext letExpression() throws RecognitionException {
@@ -7121,8 +7835,9 @@ public class CALParser extends Parser {
 
 	public static class LambdaExpressionContext extends ParserRuleContext {
 		public LambdaNode result;
-		public List<CALExpressionNode> localVariables;
+		public List<CALExpressionNode> localVars;
 		public FormalParametersContext formalParameters;
+		public BlockVariableDeclarationsContext localVariables;
 		public BlockVariableDeclarationsContext blockVariableDeclarations;
 		public ExpressionContext body;
 		public FormalParametersContext formalParameters() {
@@ -7141,6 +7856,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_lambdaExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLambdaExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final LambdaExpressionContext lambdaExpression() throws RecognitionException {
@@ -7190,8 +7910,8 @@ public class CALParser extends Parser {
 				setState(1527);
 				match(VAR);
 				setState(1528);
-				((LambdaExpressionContext)_localctx).blockVariableDeclarations = blockVariableDeclarations();
-				 ((LambdaExpressionContext)_localctx).localVariables =  ((LambdaExpressionContext)_localctx).blockVariableDeclarations.result; 
+				((LambdaExpressionContext)_localctx).localVariables = ((LambdaExpressionContext)_localctx).blockVariableDeclarations = blockVariableDeclarations();
+				 ((LambdaExpressionContext)_localctx).localVars =  ((LambdaExpressionContext)_localctx).blockVariableDeclarations.result; 
 				}
 			}
 
@@ -7209,7 +7929,7 @@ public class CALParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			 ((LambdaExpressionContext)_localctx).result =  factory.createLambdaExpression(((LambdaExpressionContext)_localctx).formalParameters.result, _localctx.localVariables, ((LambdaExpressionContext)_localctx).body.result); 
+			 ((LambdaExpressionContext)_localctx).result =  factory.createLambdaExpression(((LambdaExpressionContext)_localctx).formalParameters.result, _localctx.localVars, ((LambdaExpressionContext)_localctx).body.result); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -7237,6 +7957,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_procExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitProcExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ProcExpressionContext procExpression() throws RecognitionException {
@@ -7312,6 +8037,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_setComprehension; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitSetComprehension(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final SetComprehensionContext setComprehension() throws RecognitionException {
@@ -7363,6 +8093,7 @@ public class CALParser extends Parser {
 	public static class ListComprehensionContext extends ParserRuleContext {
 		public CALExpressionNode result;
 		public List<Pair<List<Token>, List<CALExpressionNode>>> gens;
+		public ExpressionsContext computations;
 		public ExpressionsContext expressions;
 		public GeneratorsContext generators;
 		public ExpressionsContext expressions() {
@@ -7375,6 +8106,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_listComprehension; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitListComprehension(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ListComprehensionContext listComprehension() throws RecognitionException {
@@ -7392,7 +8128,7 @@ public class CALParser extends Parser {
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << CONST) | (1L << DOM) | (1L << IF) | (1L << LAMBDA) | (1L << LET) | (1L << MAP) | (1L << NOT) | (1L << OLD) | (1L << PROC) | (1L << RNG))) != 0) || ((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (CASE - 67)) | (1L << (LPAREN - 67)) | (1L << (LCURLY - 67)) | (1L << (LSQUARE - 67)) | (1L << (DASH - 67)) | (1L << (BIT_NOT - 67)) | (1L << (MINUS - 67)) | (1L << (IntegerLiteral - 67)) | (1L << (FloatingPointLiteral - 67)) | (1L << (BooleanLiteral - 67)) | (1L << (CharacterLiteral - 67)) | (1L << (StringLiteral - 67)) | (1L << (NullLiteral - 67)) | (1L << (ID - 67)))) != 0)) {
 				{
 				setState(1561);
-				((ListComprehensionContext)_localctx).expressions = expressions();
+				((ListComprehensionContext)_localctx).computations = ((ListComprehensionContext)_localctx).expressions = expressions();
 				setState(1566);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
@@ -7436,6 +8172,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_mapComprehension; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitMapComprehension(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final MapComprehensionContext mapComprehension() throws RecognitionException {
@@ -7497,6 +8238,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_mappings; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitMappings(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final MappingsContext mappings() throws RecognitionException {
@@ -7548,6 +8294,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_mapping; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitMapping(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final MappingContext mapping() throws RecognitionException {
@@ -7575,22 +8326,27 @@ public class CALParser extends Parser {
 		return _localctx;
 	}
 
-	public static class TypeAssertionExprContext extends ParserRuleContext {
+	public static class TypeAssertionExpressionContext extends ParserRuleContext {
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
 		public TypeContext type() {
 			return getRuleContext(TypeContext.class,0);
 		}
-		public TypeAssertionExprContext(ParserRuleContext parent, int invokingState) {
+		public TypeAssertionExpressionContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
-		@Override public int getRuleIndex() { return RULE_typeAssertionExpr; }
+		@Override public int getRuleIndex() { return RULE_typeAssertionExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeAssertionExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
-	public final TypeAssertionExprContext typeAssertionExpr() throws RecognitionException {
-		TypeAssertionExprContext _localctx = new TypeAssertionExprContext(_ctx, getState());
-		enterRule(_localctx, 194, RULE_typeAssertionExpr);
+	public final TypeAssertionExpressionContext typeAssertionExpression() throws RecognitionException {
+		TypeAssertionExpressionContext _localctx = new TypeAssertionExpressionContext(_ctx, getState());
+		enterRule(_localctx, 194, RULE_typeAssertionExpression);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
@@ -7631,6 +8387,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_caseExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCaseExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final CaseExpressionContext caseExpression() throws RecognitionException {
@@ -7697,6 +8458,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_alternativeExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAlternativeExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AlternativeExpressionContext alternativeExpression() throws RecognitionException {
@@ -7741,8 +8507,9 @@ public class CALParser extends Parser {
 
 	public static class CallExpressionContext extends ParserRuleContext {
 		public CALInvokeNode result;
-		public List<CALExpressionNode> arguments;
+		public List<CALExpressionNode> args;
 		public VariableExpressionContext function;
+		public ExpressionsContext arguments;
 		public ExpressionsContext expressions;
 		public VariableExpressionContext variableExpression() {
 			return getRuleContext(VariableExpressionContext.class,0);
@@ -7754,6 +8521,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_callExpression; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCallExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final CallExpressionContext callExpression() throws RecognitionException {
@@ -7773,14 +8545,14 @@ public class CALParser extends Parser {
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << CONST) | (1L << DOM) | (1L << IF) | (1L << LAMBDA) | (1L << LET) | (1L << MAP) | (1L << NOT) | (1L << OLD) | (1L << PROC) | (1L << RNG))) != 0) || ((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (CASE - 67)) | (1L << (LPAREN - 67)) | (1L << (LCURLY - 67)) | (1L << (LSQUARE - 67)) | (1L << (DASH - 67)) | (1L << (BIT_NOT - 67)) | (1L << (MINUS - 67)) | (1L << (IntegerLiteral - 67)) | (1L << (FloatingPointLiteral - 67)) | (1L << (BooleanLiteral - 67)) | (1L << (CharacterLiteral - 67)) | (1L << (StringLiteral - 67)) | (1L << (NullLiteral - 67)) | (1L << (ID - 67)))) != 0)) {
 				{
 				setState(1623);
-				((CallExpressionContext)_localctx).expressions = expressions();
-				 ((CallExpressionContext)_localctx).arguments =  ((CallExpressionContext)_localctx).expressions.result; 
+				((CallExpressionContext)_localctx).arguments = ((CallExpressionContext)_localctx).expressions = expressions();
+				 ((CallExpressionContext)_localctx).args =  ((CallExpressionContext)_localctx).expressions.result; 
 				}
 			}
 
 			setState(1628);
 			match(RPAREN);
-			 ((CallExpressionContext)_localctx).result =  factory.createCallExpression(((CallExpressionContext)_localctx).function.result, _localctx.arguments); 
+			 ((CallExpressionContext)_localctx).result =  factory.createCallExpression(((CallExpressionContext)_localctx).function.result, _localctx.args); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -7807,6 +8579,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_lvalues; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLvalues(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final LvaluesContext lvalues() throws RecognitionException {
@@ -7874,6 +8651,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_lvalue; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitLvalue(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final LvalueContext lvalue() throws RecognitionException {
@@ -7943,6 +8725,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_variable; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitVariable(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final VariableContext variable() throws RecognitionException {
@@ -7975,6 +8762,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_field; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitField(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final FieldContext field() throws RecognitionException {
@@ -8013,6 +8805,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_statements; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStatements(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StatementsContext statements() throws RecognitionException {
@@ -8101,6 +8898,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_statement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StatementContext statement() throws RecognitionException {
@@ -8225,6 +9027,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_assignmentStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAssignmentStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AssignmentStatementContext assignmentStatement() throws RecognitionException {
@@ -8270,6 +9077,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_callStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCallStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final CallStatementContext callStatement() throws RecognitionException {
@@ -8323,6 +9135,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_blockStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitBlockStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final BlockStatementContext blockStatement() throws RecognitionException {
@@ -8388,6 +9205,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_ifStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitIfStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final IfStatementContext ifStatement() throws RecognitionException {
@@ -8477,6 +9299,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_elseIfStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitElseIfStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ElseIfStatementContext elseIfStatement() throws RecognitionException {
@@ -8557,6 +9384,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_whileStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitWhileStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final WhileStatementContext whileStatement() throws RecognitionException {
@@ -8631,6 +9463,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_foreachStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitForeachStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ForeachStatementContext foreachStatement() throws RecognitionException {
@@ -8701,6 +9538,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_chooseStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitChooseStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ChooseStatementContext chooseStatement() throws RecognitionException {
@@ -8765,6 +9607,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_caseStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitCaseStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final CaseStatementContext caseStatement() throws RecognitionException {
@@ -8831,6 +9678,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_alternativeStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitAlternativeStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AlternativeStatementContext alternativeStatement() throws RecognitionException {
@@ -8885,6 +9737,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_readStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitReadStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ReadStatementContext readStatement() throws RecognitionException {
@@ -8939,6 +9796,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_writeStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitWriteStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final WriteStatementContext writeStatement() throws RecognitionException {
@@ -8989,6 +9851,11 @@ public class CALParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_actionSelectionStatement; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitActionSelectionStatement(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ActionSelectionStatementContext actionSelectionStatement() throws RecognitionException {

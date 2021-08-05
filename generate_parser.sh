@@ -41,4 +41,4 @@
 #
 
 curl -O https://www.antlr.org/download/antlr-4.7.1-complete.jar
-java -cp antlr-4.7.1-complete.jar org.antlr.v4.Tool -package ch.epfl.vlsc.truffle.cal.parser.antlr -no-listener language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/antlr/CALLexer.g4 language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/antlr/CALParser.g4
+java -cp antlr-4.7.1-complete.jar org.antlr.v4.Tool -package ch.epfl.vlsc.truffle.cal.parser.antlr -no-listener -visitor language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/antlr/CALLexer.g4 language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/antlr/CALParser.g4

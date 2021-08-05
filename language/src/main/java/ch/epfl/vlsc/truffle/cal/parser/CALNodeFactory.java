@@ -101,7 +101,7 @@ public class CALNodeFactory {
         context.pushScope();
     }
 
-    public ActionNode createAction(List<CALWriteFIFONode> outputExpressions, List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, CALExpressionNode delay, StmtBlockNode body) {
+    public ActionNode createAction(List<CALWriteFIFONode> outputExpressions, List<CALExpressionNode> guards, List<CALExpressionNode> localVariables, StmtBlockNode body) {
         // TODO Add support for action tags
         // TODO Add support for action delay
         List<CALStatementNode> actionStatements = new ArrayList<>();
