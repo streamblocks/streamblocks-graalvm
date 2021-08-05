@@ -4951,7 +4951,7 @@ public class CALParser extends Parser {
 
 	public static class BlockVariableDeclarationsContext extends ParserRuleContext {
 		public List<CALExpressionNode> result;
-		public BlockVariableDeclarationContext blockVariable;
+		public BlockVariableDeclarationContext blockVariableDeclaration;
 		public List<BlockVariableDeclarationContext> blockVariableDeclaration() {
 			return getRuleContexts(BlockVariableDeclarationContext.class);
 		}
@@ -4978,8 +4978,8 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1044);
-			((BlockVariableDeclarationsContext)_localctx).blockVariable = blockVariableDeclaration();
-			 _localctx.result.add(((BlockVariableDeclarationsContext)_localctx).blockVariable.result); 
+			((BlockVariableDeclarationsContext)_localctx).blockVariableDeclaration = blockVariableDeclaration();
+			 _localctx.result.add(((BlockVariableDeclarationsContext)_localctx).blockVariableDeclaration.result); 
 			setState(1052);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -4989,8 +4989,8 @@ public class CALParser extends Parser {
 				setState(1046);
 				match(COMMA);
 				setState(1047);
-				((BlockVariableDeclarationsContext)_localctx).blockVariable = blockVariableDeclaration();
-				 _localctx.result.add(((BlockVariableDeclarationsContext)_localctx).blockVariable.result); 
+				((BlockVariableDeclarationsContext)_localctx).blockVariableDeclaration = blockVariableDeclaration();
+				 _localctx.result.add(((BlockVariableDeclarationsContext)_localctx).blockVariableDeclaration.result); 
 				}
 				}
 				setState(1054);
@@ -5105,9 +5105,10 @@ public class CALParser extends Parser {
 
 	public static class ExplicitVariableDeclarationContext extends ParserRuleContext {
 		public CALExpressionNode result;
-		public CALExpressionNode value;
+		public CALExpressionNode v;
 		public Token name;
 		public ExpressionContext expression;
+		public ExpressionContext value;
 		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public TypeContext type() {
 			return getRuleContext(TypeContext.class,0);
@@ -5192,12 +5193,12 @@ public class CALParser extends Parser {
 					consume();
 				}
 				setState(1087);
-				((ExplicitVariableDeclarationContext)_localctx).expression = expression(0);
-				 ((ExplicitVariableDeclarationContext)_localctx).value =  ((ExplicitVariableDeclarationContext)_localctx).expression.result; 
+				((ExplicitVariableDeclarationContext)_localctx).value = ((ExplicitVariableDeclarationContext)_localctx).expression = expression(0);
+				 ((ExplicitVariableDeclarationContext)_localctx).v =  ((ExplicitVariableDeclarationContext)_localctx).expression.result; 
 				}
 			}
 
-			 ((ExplicitVariableDeclarationContext)_localctx).result =  factory.createExplicitVariable(((ExplicitVariableDeclarationContext)_localctx).name, _localctx.value); 
+			 ((ExplicitVariableDeclarationContext)_localctx).result =  factory.createExplicitVariable(((ExplicitVariableDeclarationContext)_localctx).name, _localctx.v); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -5213,11 +5214,12 @@ public class CALParser extends Parser {
 
 	public static class FunctionVariableDeclarationContext extends ParserRuleContext {
 		public CALExpressionNode result;
-		public List<CALExpressionNode> localVariables;
-		public CALExpressionNode body;
+		public List<CALExpressionNode> localVars;
+		public CALExpressionNode b;
 		public Token name;
 		public FormalParametersContext formalParameters;
-		public BlockVariableDeclarationsContext blockVariableDeclarations;
+		public BlockVariableDeclarationsContext localVariables;
+		public ExpressionContext body;
 		public ExpressionContext expression;
 		public FormalParametersContext formalParameters() {
 			return getRuleContext(FormalParametersContext.class,0);
@@ -5287,16 +5289,16 @@ public class CALParser extends Parser {
 					setState(1104);
 					match(VAR);
 					setState(1105);
-					((FunctionVariableDeclarationContext)_localctx).blockVariableDeclarations = blockVariableDeclarations();
-					 ((FunctionVariableDeclarationContext)_localctx).localVariables =  ((FunctionVariableDeclarationContext)_localctx).blockVariableDeclarations.result; 
+					((FunctionVariableDeclarationContext)_localctx).localVariables = blockVariableDeclarations();
+					 ((FunctionVariableDeclarationContext)_localctx).localVars =  ((FunctionVariableDeclarationContext)_localctx).localVariables.result; 
 					}
 				}
 
 				setState(1110);
 				match(COLON);
 				setState(1111);
-				((FunctionVariableDeclarationContext)_localctx).expression = expression(0);
-				 ((FunctionVariableDeclarationContext)_localctx).body =  ((FunctionVariableDeclarationContext)_localctx).expression.result; 
+				((FunctionVariableDeclarationContext)_localctx).body = ((FunctionVariableDeclarationContext)_localctx).expression = expression(0);
+				 ((FunctionVariableDeclarationContext)_localctx).b =  ((FunctionVariableDeclarationContext)_localctx).expression.result; 
 				}
 			}
 
@@ -5310,7 +5312,7 @@ public class CALParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			 ((FunctionVariableDeclarationContext)_localctx).result =  factory.createFunctionVariable(((FunctionVariableDeclarationContext)_localctx).name, ((FunctionVariableDeclarationContext)_localctx).formalParameters.result, _localctx.localVariables, _localctx.body); 
+			 ((FunctionVariableDeclarationContext)_localctx).result =  factory.createFunctionVariable(((FunctionVariableDeclarationContext)_localctx).name, ((FunctionVariableDeclarationContext)_localctx).formalParameters.result, _localctx.localVars, _localctx.b); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -5492,16 +5494,16 @@ public class CALParser extends Parser {
 	}
 
 	public static class FormalParameterContext extends ParserRuleContext {
-		public int index;
+		public int position;
 		public InitializeArgNode result;
 		public ExplicitVariableDeclarationContext explicitVariableDeclaration;
 		public ExplicitVariableDeclarationContext explicitVariableDeclaration() {
 			return getRuleContext(ExplicitVariableDeclarationContext.class,0);
 		}
 		public FormalParameterContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
-		public FormalParameterContext(ParserRuleContext parent, int invokingState, int index) {
+		public FormalParameterContext(ParserRuleContext parent, int invokingState, int position) {
 			super(parent, invokingState);
-			this.index = index;
+			this.position = position;
 		}
 		@Override public int getRuleIndex() { return RULE_formalParameter; }
 		@Override
@@ -5511,15 +5513,15 @@ public class CALParser extends Parser {
 		}
 	}
 
-	public final FormalParameterContext formalParameter(int index) throws RecognitionException {
-		FormalParameterContext _localctx = new FormalParameterContext(_ctx, getState(), index);
+	public final FormalParameterContext formalParameter(int position) throws RecognitionException {
+		FormalParameterContext _localctx = new FormalParameterContext(_ctx, getState(), position);
 		enterRule(_localctx, 130, RULE_formalParameter);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1147);
 			((FormalParameterContext)_localctx).explicitVariableDeclaration = explicitVariableDeclaration();
-			 ((FormalParameterContext)_localctx).result =  factory.createFormalParameter(((FormalParameterContext)_localctx).explicitVariableDeclaration.result, _localctx.index); 
+			 ((FormalParameterContext)_localctx).result =  factory.createFormalParameter(((FormalParameterContext)_localctx).explicitVariableDeclaration.result, _localctx.position); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -9064,8 +9066,9 @@ public class CALParser extends Parser {
 
 	public static class CallStatementContext extends ParserRuleContext {
 		public CALInvokeNode result;
-		public List<CALExpressionNode> arguments;
+		public List<CALExpressionNode> args;
 		public VariableExpressionContext function;
+		public ExpressionsContext arguments;
 		public ExpressionsContext expressions;
 		public VariableExpressionContext variableExpression() {
 			return getRuleContext(VariableExpressionContext.class,0);
@@ -9101,8 +9104,8 @@ public class CALParser extends Parser {
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << CONST) | (1L << DOM) | (1L << IF) | (1L << LAMBDA) | (1L << LET) | (1L << MAP) | (1L << NOT) | (1L << OLD) | (1L << PROC) | (1L << RNG))) != 0) || ((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (CASE - 67)) | (1L << (LPAREN - 67)) | (1L << (LCURLY - 67)) | (1L << (LSQUARE - 67)) | (1L << (DASH - 67)) | (1L << (BIT_NOT - 67)) | (1L << (MINUS - 67)) | (1L << (IntegerLiteral - 67)) | (1L << (FloatingPointLiteral - 67)) | (1L << (BooleanLiteral - 67)) | (1L << (CharacterLiteral - 67)) | (1L << (StringLiteral - 67)) | (1L << (NullLiteral - 67)) | (1L << (ID - 67)))) != 0)) {
 				{
 				setState(1708);
-				((CallStatementContext)_localctx).expressions = expressions();
-				 ((CallStatementContext)_localctx).arguments =  ((CallStatementContext)_localctx).expressions.result; 
+				((CallStatementContext)_localctx).arguments = ((CallStatementContext)_localctx).expressions = expressions();
+				 ((CallStatementContext)_localctx).args =  ((CallStatementContext)_localctx).expressions.result; 
 				}
 			}
 
@@ -9110,7 +9113,7 @@ public class CALParser extends Parser {
 			match(RPAREN);
 			setState(1714);
 			match(SEMICOLON);
-			 ((CallStatementContext)_localctx).result =  factory.createCallStatement(((CallStatementContext)_localctx).function.result, _localctx.arguments); 
+			 ((CallStatementContext)_localctx).result =  factory.createCallStatement(((CallStatementContext)_localctx).function.result, _localctx.args); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -9186,9 +9189,9 @@ public class CALParser extends Parser {
 		public StmtIfNode result;
 		public CALStatementNode elseStatements;
 		public ExpressionContext condition;
-		public StatementsContext thenStatements;
-		public StatementsContext statements;
-		public ElseIfStatementContext elseIfStatement;
+		public StatementsContext then;
+		public ElseIfStatementContext elseIf;
+		public StatementsContext elze;
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
@@ -9226,15 +9229,15 @@ public class CALParser extends Parser {
 			setState(1729);
 			match(THEN);
 			setState(1730);
-			((IfStatementContext)_localctx).thenStatements = ((IfStatementContext)_localctx).statements = statements();
+			((IfStatementContext)_localctx).then = statements();
 			setState(1738);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case ELSIF:
 				{
 				setState(1731);
-				((IfStatementContext)_localctx).elseIfStatement = elseIfStatement();
-				 ((IfStatementContext)_localctx).elseStatements =  ((IfStatementContext)_localctx).elseIfStatement.result; 
+				((IfStatementContext)_localctx).elseIf = elseIfStatement();
+				 ((IfStatementContext)_localctx).elseStatements =  ((IfStatementContext)_localctx).elseIf.result; 
 				}
 				break;
 			case ELSE:
@@ -9242,8 +9245,8 @@ public class CALParser extends Parser {
 				setState(1734);
 				match(ELSE);
 				setState(1735);
-				((IfStatementContext)_localctx).statements = statements();
-				 ((IfStatementContext)_localctx).elseStatements =  ((IfStatementContext)_localctx).statements.result; 
+				((IfStatementContext)_localctx).elze = statements();
+				 ((IfStatementContext)_localctx).elseStatements =  ((IfStatementContext)_localctx).elze.result; 
 				}
 				break;
 			case END:
@@ -9262,7 +9265,7 @@ public class CALParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			 ((IfStatementContext)_localctx).result =  factory.createConditionalStatement(((IfStatementContext)_localctx).condition.result, ((IfStatementContext)_localctx).thenStatements.result, _localctx.elseStatements); 
+			 ((IfStatementContext)_localctx).result =  factory.createConditionalStatement(((IfStatementContext)_localctx).condition.result, ((IfStatementContext)_localctx).then.result, _localctx.elseStatements); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -9280,9 +9283,9 @@ public class CALParser extends Parser {
 		public StmtIfNode result;
 		public CALStatementNode elseStatements;
 		public ExpressionContext condition;
-		public StatementsContext thenStatements;
-		public StatementsContext statements;
-		public ElseIfStatementContext elseIfStatement;
+		public StatementsContext then;
+		public ElseIfStatementContext elseIf;
+		public StatementsContext elze;
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
@@ -9320,15 +9323,15 @@ public class CALParser extends Parser {
 			setState(1745);
 			match(THEN);
 			setState(1746);
-			((ElseIfStatementContext)_localctx).thenStatements = ((ElseIfStatementContext)_localctx).statements = statements();
+			((ElseIfStatementContext)_localctx).then = statements();
 			setState(1754);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case ELSIF:
 				{
 				setState(1747);
-				((ElseIfStatementContext)_localctx).elseIfStatement = elseIfStatement();
-				 ((ElseIfStatementContext)_localctx).elseStatements =  ((ElseIfStatementContext)_localctx).elseIfStatement.result; 
+				((ElseIfStatementContext)_localctx).elseIf = elseIfStatement();
+				 ((ElseIfStatementContext)_localctx).elseStatements =  ((ElseIfStatementContext)_localctx).elseIf.result; 
 				}
 				break;
 			case ELSE:
@@ -9336,8 +9339,8 @@ public class CALParser extends Parser {
 				setState(1750);
 				match(ELSE);
 				setState(1751);
-				((ElseIfStatementContext)_localctx).statements = statements();
-				 ((ElseIfStatementContext)_localctx).elseStatements =  ((ElseIfStatementContext)_localctx).statements.result; 
+				((ElseIfStatementContext)_localctx).elze = statements();
+				 ((ElseIfStatementContext)_localctx).elseStatements =  ((ElseIfStatementContext)_localctx).elze.result; 
 				}
 				break;
 			case END:
@@ -9356,7 +9359,7 @@ public class CALParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			 ((ElseIfStatementContext)_localctx).result =  factory.createConditionalStatement(((ElseIfStatementContext)_localctx).condition.result, ((ElseIfStatementContext)_localctx).thenStatements.result, _localctx.elseStatements); 
+			 ((ElseIfStatementContext)_localctx).result =  factory.createConditionalStatement(((ElseIfStatementContext)_localctx).condition.result, ((ElseIfStatementContext)_localctx).then.result, _localctx.elseStatements); 
 			}
 		}
 		catch (RecognitionException re) {

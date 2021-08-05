@@ -13,7 +13,9 @@ import org.graalvm.collections.Pair;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CALNodeFactoryContext {
+public class ScopeEnvironment {
+
+	private static ScopeEnvironment instance;
 
 	private CALLanguage language;
 
@@ -25,13 +27,21 @@ public class CALNodeFactoryContext {
 
     private LexicalScope currentScope;
 
-    public CALNodeFactoryContext(CALLanguage language, Source source) {
+    public ScopeEnvironment(CALLanguage language, Source source) {
 		this.language = language;
 		this.source = source;
 		imports = new HashMap<>();
 		globalScope = new LexicalScope(null, null,0, LexicalScope.ScopeKind.RW);
 		currentScope = globalScope;
     }
+
+	public static void createInstance(CALLanguage language, Source source) {
+		instance = new ScopeEnvironment(language, source);
+	}
+
+    public static ScopeEnvironment getInstance() {
+		return instance;
+	}
 
 	public CALLanguage getLanguage() {
 		return language;

@@ -1,11 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.parser;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.ast.TransformException;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
@@ -28,10 +26,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
-import se.lth.cs.tycho.ir.entity.cal.InputPattern;
-import se.lth.cs.tycho.ir.expr.Expression;
-import se.lth.cs.tycho.ir.expr.pattern.Pattern;
-import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 
 /**
  * Helper class used by the CAL {@link Parser} to create nodes.
@@ -39,10 +33,10 @@ import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
  */
 public class CALNodeFactory {
 
-    private CALNodeFactoryContext context;
+    private ScopeEnvironment context;
 
     public CALNodeFactory(CALLanguage language, Source source) {
-        this.context = new CALNodeFactoryContext(language, source);
+        this.context = new ScopeEnvironment(language, source);
     }
 
     // Namespace Declaration
