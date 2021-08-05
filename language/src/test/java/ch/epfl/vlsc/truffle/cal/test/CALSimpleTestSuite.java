@@ -126,6 +126,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void multipleInputExpressionsTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-input-expressions").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void multipleOutputExpressionsTest() throws IOException {
         runTest(TestCase.newBuilder("network-input-multiple-output-expressions").setActorName("simple.dwf.SourceSink").build());
     }
@@ -216,7 +221,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void jpegSingleImageTest() throws IOException {
         runTest(TestCase.newBuilder("jpeg/SingleImageTest").setActorName("jpeg.SingleImagePrinter").setDirLookup(true).build());
     }
