@@ -9,10 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.IRNodeTreePrinterConsumer;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -22,20 +25,10 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
@@ -46,6 +39,8 @@ import se.lth.cs.tycho.ir.stmt.*;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValue;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
+import se.lth.cs.tycho.ir.type.NominalTypeExpr;
+import se.lth.cs.tycho.ir.type.TypeExpr;
 import se.lth.cs.tycho.ir.util.ImmutableList;
 
 public abstract class ScopedTransformer<T> extends Transformer<T> {
@@ -87,8 +82,31 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // TODO handle type with varDecl.getType
         String name = varDecl.getName();
         Expression value = varDecl.getValue();
+        if(value == null && varDecl.getType() instanceof NominalTypeExpr){
+            NominalTypeExpr varDeclType = (NominalTypeExpr) varDecl.getType();
+            return createAssignment(name, fetchDefaultValue(varDeclType));
+        } else
+            return createAssignment(name, value);
+    }
 
-        return createAssignment(name, value);
+    private CALExpressionNode fetchDefaultValue(NominalTypeExpr varDeclType) {
+        if(varDeclType.getName().equals("List")){
+            List<Expression> l = varDeclType.getValueParameters().stream().filter(x -> x.getName().equals("size")).map(x -> x.getValue()).collect(Collectors.toList());
+            List<NominalTypeExpr> t = varDeclType.getTypeParameters().stream().filter(x -> x.getName().equals("type")).map(x -> (NominalTypeExpr) x.getValue()).collect(Collectors.toList());
+            if(l.size() > 0){
+                if(t.size() > 0){
+                    return new ListInitNodeSizeExpression(transformExpr(l.get(0)), fetchDefaultValue(t.get(0)));
+                }else
+                    return new ListInitNodeSizeExpression(transformExpr(l.get(0)), new NullLiteralNode());
+            }else{
+                return new UnknownSizeListInitNode();
+            }
+        } else if (varDeclType.getName().equals("int")){
+            return new LongLiteralNode(0);
+        } else if (varDeclType.getName().equals("uint")) {
+            return new LongLiteralNode(0);
+        } else
+            throw new TransformException("No default value for type " + varDeclType.getName(), context.getSource(), varDeclType);
     }
 
     protected CALExpressionNode createAssignment(String name, Expression value) {
