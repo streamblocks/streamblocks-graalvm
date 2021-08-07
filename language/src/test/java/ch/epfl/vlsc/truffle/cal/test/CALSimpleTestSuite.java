@@ -131,7 +131,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void networkActionselectionGuardInputToken() throws IOException {
         runTest(TestCase.newBuilder("network-actionselection-guard-input-token").setActorName("simple.dwf.SourceSink").build());
     }

@@ -9,23 +9,26 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import se.lth.cs.tycho.ir.QID;
 
 public final class ActionNode extends CALRootNode {
-    @Child
-    private CALExpressionNode body;
-    @Child
-    private CALExpressionNode firingCondition;
+    @Children private CALStatementNode[] transactionCommits;
+    @Children private CALStatementNode[] transactionRollbacks;
+    @Child private CALExpressionNode body;
+    @Child private CALExpressionNode firingCondition;
     private final QID name;
     private boolean isCloningAllowed;
     private boolean isQIDTagged; // TODO Tag as compile time constant
     private final SourceSection sourceSection;
 
     public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body,
-                      CALExpressionNode firingCondition, SourceSection sourceSection, QID name, boolean isQidTagged) {
+                      CALExpressionNode firingCondition, SourceSection sourceSection, QID name, boolean isQidTagged,
+                      CALStatementNode[] transactionCommits, CALStatementNode[] transactionRollbacks) {
         super(language, frameDescriptor, body, sourceSection, name.toString());
         this.body = body;
         this.firingCondition = firingCondition;
         this.sourceSection = sourceSection;
         this.name = name;
         this.isQIDTagged = isQidTagged;
+        this.transactionCommits = transactionCommits;
+        this.transactionRollbacks = transactionRollbacks;
     }
 
     @Override
@@ -41,8 +44,14 @@ public final class ActionNode extends CALRootNode {
             boolean fireable = (Boolean) firingCondition.executeBoolean(frame);
             if (fireable) {
                 body.executeGeneric(frame);
+                for(CALStatementNode commitStmt: transactionCommits){
+                    commitStmt.executeVoid(frame);
+                }
                 return true;
             } else {
+                for(CALStatementNode rollbackStmt: transactionRollbacks){
+                    rollbackStmt.executeVoid(frame);
+                }
                 return false;
             }
         } catch (UnexpectedResultException e) {
