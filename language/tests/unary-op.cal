@@ -1,0 +1,9 @@
+namespace test:
+	actor test() ==> :
+		action ==>
+		var l := [1,2,3]
+		do
+		    println(#l);
+		end
+	end
+end

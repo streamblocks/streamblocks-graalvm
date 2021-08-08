@@ -15,6 +15,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.IRNodeTreePrinterConsumer;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -269,6 +270,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             break;
         case "not":
             result = CALUnaryLogicalNodeGen.create(valueNode);
+            break;
+        case "#":
+            result = CALUnaryListSizeNodeGen.create(valueNode);
             break;
         default:
             throw new Error("unimplemented unary op " + expr.getOperation());
