@@ -2,6 +2,7 @@ namespace test:
 	actor test() ==> :
 	    i := 0;
 		action ==>
+		guard i != 10
 		do
             while i < 10 do println(i); i := i + 1; end
 		end
