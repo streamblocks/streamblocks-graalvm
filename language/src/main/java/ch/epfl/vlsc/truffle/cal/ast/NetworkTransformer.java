@@ -1,12 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.net.PortUnreachableException;
+import java.util.*;
 import java.util.Map.Entry;
 
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutAddFifo;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoTransactionConclude;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
@@ -23,12 +23,7 @@ import se.lth.cs.tycho.ir.ValueParameter;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
-import se.lth.cs.tycho.ir.entity.nl.EntityInstanceExpr;
-import se.lth.cs.tycho.ir.entity.nl.EntityReferenceLocal;
-import se.lth.cs.tycho.ir.entity.nl.InstanceDecl;
-import se.lth.cs.tycho.ir.entity.nl.NlNetwork;
-import se.lth.cs.tycho.ir.entity.nl.StructureConnectionStmt;
-import se.lth.cs.tycho.ir.entity.nl.StructureStatement;
+import se.lth.cs.tycho.ir.entity.nl.*;
 
 public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
 
@@ -99,49 +94,88 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                 } else {
                     throw new UnsupportedOperationException("Unknown entity reference in network");
                 }
-
             } else {
                 throw new UnsupportedOperationException("Unknown entity in network");
             }
-
         }
         int j = 0;
+        Map<String, String> outputPortToFanoutMapping = new HashMap<String, String>();
         // create the fifos and add them to the actors
-        for (StructureStatement struct : network.getStructure()) {
-            if (struct instanceof StructureConnectionStmt) {
+        // TODO: The current Fanout implementation may not work appropriately when the root level network has input ports
+        for(StructureStatement struct: network.getStructure()){
+            if(struct instanceof StructureConnectionStmt) {
                 StructureConnectionStmt connection = (StructureConnectionStmt) struct;
-                // create a FIFO
-                // TODO handle mulitple ports
-                String source = connection.getSrc().getEntityName();
-                String dest = connection.getDst().getEntityName();
-                // If we have a FIFO connections two entities instantiated here 
-                // we have to create a new FIFO
-                if (source != null && dest != null) {
-                    CALExpressionNode assignment = createAssignment("fifo-" + j, new CALCreateFIFONode());
-                    headStatements.add(assignment);
-                    actors.get(source).outputs.add(getReadNode("fifo-" + j));
-                    actors.get(dest).inputs.add(getReadNode("fifo-" + j));
-                    j++;
-                    i++;
-                }
-                // Otherwise we use the FIFO given in arguments
-                else {
-                    String fifoName;
-                    if (source == null)
-                        fifoName = connection.getSrc().getPortName();
-                    else if (dest == null)
-                        fifoName = connection.getDst().getPortName();
-                    else
-                        throw new TransformException("unsupported network local fifo", context.getSource(), connection);
-                    if (source != null)
-                        actors.get(source).outputs.add(getReadNode(fifoName));
-                    if (dest != null)
-                        actors.get(dest).inputs.add(getReadNode(fifoName));
-                }
+                PortReference source = connection.getSrc();
+                PortReference destination = connection.getDst();
 
-            } else {
+                if(source.getEntityName() != null && destination.getEntityName() != null){
+                    // This happens when both the source and destination entity are part of this network
+
+                    // Create a new Fifo for the connection
+                    String fifoName = "$fifo-" + j;
+                    headStatements.add(createAssignment(fifoName, new CALCreateFIFONode()));
+                    ++i;
+
+                    String portName = source.getEntityName() + "." + source.getPortName();
+                    String fanoutNodeName;
+                    if(!outputPortToFanoutMapping.containsKey(portName)){
+                        // We are seeing the output port for the first time
+                        fanoutNodeName = "$fifoFanout" + j;
+                        outputPortToFanoutMapping.put(portName, fanoutNodeName);
+                        headStatements.add(createAssignment(fanoutNodeName, new CALFifoFanoutNode()));
+                        i++;
+
+                        actors.get(source.getEntityName()).outputs.add(getReadNode(fanoutNodeName));
+                    } else
+                        fanoutNodeName = outputPortToFanoutMapping.get(portName);
+
+                    // Add the fifo to the fanout
+                    headStatements.add(new CALFifoFanoutAddFifo(getReadNode(fanoutNodeName), getReadNode(fifoName)));
+                    i++;
+
+                    actors.get(destination.getEntityName()).inputs.add(getReadNode(fifoName));
+                    j++;
+                } else {
+                    // This happens when either the source of destination is one of the external ports of the network
+
+                    if(source.getEntityName() == null && destination.getEntityName() == null) {
+                        // This is when both the source and destination are external ports of the network
+                        throw new TransformException("unsupported network local fifo", context.getSource(), connection);
+                    } else if (source.getEntityName() == null) {
+                        // This is when the source is an external port and destination is an entity within network
+                        String fifoName = "$fifo-" + j;
+                        headStatements.add(createAssignment(fifoName, new CALCreateFIFONode()));
+                        ++i;
+
+                        headStatements.add(new CALFifoFanoutAddFifo(getReadNode(source.getPortName()), getReadNode(fifoName)));
+                        ++i;
+
+                        actors.get(destination.getEntityName()).inputs.add(getReadNode(fifoName));
+                    } else if (destination.getEntityName() == null) {
+                        // This is when the source is a port of an entity in the network and destination is an external port of the network
+
+                        String portName = source.getEntityName() + "." + source.getPortName();
+                        String fanoutNodeName;
+                        if(!outputPortToFanoutMapping.containsKey(portName)){
+                            // We are seeing the output port for the first time
+                            fanoutNodeName = "$fifoFanout" + j;
+                            outputPortToFanoutMapping.put(portName, fanoutNodeName);
+                            headStatements.add(createAssignment(fanoutNodeName, new CALFifoFanoutNode()));
+                            i++;
+
+                            actors.get(source.getEntityName()).outputs.add(getReadNode(fanoutNodeName));
+                        } else
+                            fanoutNodeName = outputPortToFanoutMapping.get(portName);
+
+                        // Add the fifo to the fanout
+                        headStatements.add(new CALFifoFanoutAddFifo(getReadNode(fanoutNodeName), getReadNode(destination.getPortName())));
+                        i++;
+                    } else
+                        throw new RuntimeException("Unreachable code");
+                    ++j;
+                }
+            } else
                 throw new UnsupportedOperationException("Unsupported Structure found");
-            }
         }
 
         // Instansiation nodes for all actors

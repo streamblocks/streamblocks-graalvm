@@ -5,10 +5,11 @@ import java.util.List;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 
-public class CALFifo implements TruffleObject {
+public class CALFifo implements TruffleObject, FifoConsumer {
     private List<Object> content = new LinkedList<>();
     private boolean transactionActive = false;
     private int transactionIndex = 0;
+    private CALFifoFanout fanout;
 
     public int size() {
         return content.size();
@@ -42,6 +43,14 @@ public class CALFifo implements TruffleObject {
     public void rollback(){
         transactionActive = false;
         transactionIndex = 0;
+    }
+
+    public void setFanout(CALFifoFanout fanout) {
+        this.fanout = fanout;
+    }
+
+    public CALFifoFanout getFanout() {
+        return fanout;
     }
 }
 
