@@ -136,6 +136,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void multipleInputPortsTest() throws IOException {
+        runTest(TestCase.newBuilder("network-multiple-input-ports").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void networkActionselectionGuardInputToken() throws IOException {
         runTest(TestCase.newBuilder("network-actionselection-guard-input-token").setActorName("simple.dwf.SourceSink").build());
     }
