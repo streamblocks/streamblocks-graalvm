@@ -1,5 +1,5 @@
-// Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/antlr/CALParser.g4 by ANTLR 4.7.1
-package ch.epfl.vlsc.truffle.cal.parser.antlr;
+// Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/grammars/CALParser.g4 by ANTLR 4.7.1
+package ch.epfl.vlsc.truffle.cal.parser.gen;
 
 import java.util.*;
 
@@ -10,12 +10,15 @@ import com.oracle.truffle.api.RootCallTarget;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.parser.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.CALNodeFactory;
+import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.*;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
+
+import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -28,17 +31,40 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface CALParserVisitor<T> extends ParseTreeVisitor<T> {
 	/**
-	 * Visit a parse tree produced by {@link CALParser#compilationUnit}.
+	 * Visit a parse tree produced by the {@code NamespaceCompilationUnit}
+	 * labeled alternative in {@link CALParser#compilationUnit}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitCompilationUnit(CALParser.CompilationUnitContext ctx);
+	T visitNamespaceCompilationUnit(CALParser.NamespaceCompilationUnitContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CALParser#namespaceDeclaration}.
+	 * Visit a parse tree produced by the {@code UnitCompilationUnit}
+	 * labeled alternative in {@link CALParser#compilationUnit}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNamespaceDeclaration(CALParser.NamespaceDeclarationContext ctx);
+	T visitUnitCompilationUnit(CALParser.UnitCompilationUnitContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code UnnamedNamespaceDeclaration}
+	 * labeled alternative in {@link CALParser#namespaceDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnnamedNamespaceDeclaration(CALParser.UnnamedNamespaceDeclarationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code NamedNamespaceDeclaration}
+	 * labeled alternative in {@link CALParser#namespaceDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNamedNamespaceDeclaration(CALParser.NamedNamespaceDeclarationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code PackageNamespaceDeclaration}
+	 * labeled alternative in {@link CALParser#namespaceDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPackageNamespaceDeclaration(CALParser.PackageNamespaceDeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CALParser#namespaceBody}.
 	 * @param ctx the parse tree
@@ -58,11 +84,19 @@ public interface CALParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAnnotation(CALParser.AnnotationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CALParser#annotationParameter}.
+	 * Visit a parse tree produced by the {@code NamedAnnotationParameter}
+	 * labeled alternative in {@link CALParser#annotationParameter}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAnnotationParameter(CALParser.AnnotationParameterContext ctx);
+	T visitNamedAnnotationParameter(CALParser.NamedAnnotationParameterContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code UnnamedAnnotationParameter}
+	 * labeled alternative in {@link CALParser#annotationParameter}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnnamedAnnotationParameter(CALParser.UnnamedAnnotationParameterContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CALParser#unitDeclaration}.
 	 * @param ctx the parse tree
@@ -70,11 +104,19 @@ public interface CALParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitUnitDeclaration(CALParser.UnitDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CALParser#importDeclaration}.
+	 * Visit a parse tree produced by the {@code SingleImportDeclaration}
+	 * labeled alternative in {@link CALParser#importDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitImportDeclaration(CALParser.ImportDeclarationContext ctx);
+	T visitSingleImportDeclaration(CALParser.SingleImportDeclarationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code GroupImportDeclaration}
+	 * labeled alternative in {@link CALParser#importDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGroupImportDeclaration(CALParser.GroupImportDeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CALParser#singleImport}.
 	 * @param ctx the parse tree
@@ -88,11 +130,26 @@ public interface CALParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitGroupImport(CALParser.GroupImportContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CALParser#importKind}.
+	 * Visit a parse tree produced by the {@code VariableImportKind}
+	 * labeled alternative in {@link CALParser#importKind}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitImportKind(CALParser.ImportKindContext ctx);
+	T visitVariableImportKind(CALParser.VariableImportKindContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code TypeImportKind}
+	 * labeled alternative in {@link CALParser#importKind}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeImportKind(CALParser.TypeImportKindContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code EntityImportKind}
+	 * labeled alternative in {@link CALParser#importKind}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEntityImportKind(CALParser.EntityImportKindContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CALParser#networkDeclaration}.
 	 * @param ctx the parse tree
@@ -225,12 +282,6 @@ public interface CALParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPortDeclaration(CALParser.PortDeclarationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link CALParser#timeCause}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTimeCause(CALParser.TimeCauseContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CALParser#processDescription}.
 	 * @param ctx the parse tree

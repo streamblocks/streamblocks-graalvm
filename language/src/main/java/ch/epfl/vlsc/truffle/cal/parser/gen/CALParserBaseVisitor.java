@@ -1,5 +1,5 @@
-// Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/antlr/CALParser.g4 by ANTLR 4.7.1
-package ch.epfl.vlsc.truffle.cal.parser.antlr;
+// Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/grammars/CALParser.g4 by ANTLR 4.7.1
+package ch.epfl.vlsc.truffle.cal.parser.gen;
 
 import java.util.*;
 
@@ -10,12 +10,15 @@ import com.oracle.truffle.api.RootCallTarget;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.parser.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.CALNodeFactory;
+import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.*;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
+
+import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -34,14 +37,35 @@ public class CALParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCompilationUnit(CALParser.CompilationUnitContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNamespaceCompilationUnit(CALParser.NamespaceCompilationUnitContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNamespaceDeclaration(CALParser.NamespaceDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitUnitCompilationUnit(CALParser.UnitCompilationUnitContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitUnnamedNamespaceDeclaration(CALParser.UnnamedNamespaceDeclarationContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitNamedNamespaceDeclaration(CALParser.NamedNamespaceDeclarationContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitPackageNamespaceDeclaration(CALParser.PackageNamespaceDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -69,7 +93,14 @@ public class CALParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAnnotationParameter(CALParser.AnnotationParameterContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNamedAnnotationParameter(CALParser.NamedAnnotationParameterContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitUnnamedAnnotationParameter(CALParser.UnnamedAnnotationParameterContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -83,7 +114,14 @@ public class CALParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitImportDeclaration(CALParser.ImportDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitSingleImportDeclaration(CALParser.SingleImportDeclarationContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitGroupImportDeclaration(CALParser.GroupImportDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -104,7 +142,21 @@ public class CALParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitImportKind(CALParser.ImportKindContext ctx) { return visitChildren(ctx); }
+	@Override public T visitVariableImportKind(CALParser.VariableImportKindContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitTypeImportKind(CALParser.TypeImportKindContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitEntityImportKind(CALParser.EntityImportKindContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -259,13 +311,6 @@ public class CALParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitPortDeclaration(CALParser.PortDeclarationContext ctx) { return visitChildren(ctx); }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
-	@Override public T visitTimeCause(CALParser.TimeCauseContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -1,5 +1,5 @@
-// Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/antlr/CALLexer.g4 by ANTLR 4.7.1
-package ch.epfl.vlsc.truffle.cal.parser.antlr;
+// Generated from /home/petar/Documents/epfl/repos/streamblocks-graalvm/language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/grammars/CALLexer.g4 by ANTLR 4.9.1
+package ch.epfl.vlsc.truffle.cal.parser.grammars;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class CALLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.9.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -47,82 +47,91 @@ public class CALLexer extends Lexer {
 		"DEFAULT_MODE"
 	};
 
-	public static final String[] ruleNames = {
-		"ACTION", "ACTOR", "ALL", "AND", "ANY", "AT", "AT_STAR", "BEGIN", "CHOOSE", 
-		"CONST", "DELAY", "DIV", "DO", "DOM", "ELSE", "END", "ENDACTION", "ENDACTOR", 
-		"ENDCHOOSE", "ENDFOREACH", "ENDFUNCTION", "ENDIF", "ENDINITIALIZE", "ENDLAMBDA", 
-		"ENDLET", "ENDPRIORITY", "ENDPROC", "ENDPROCEDURE", "ENDSCHEDULE", "ENDWHILE", 
-		"FOR", "FOREACH", "FSM", "FUNCTION", "GUARD", "IF", "IMPORT", "IN", "INITIALIZE", 
-		"LAMBDA", "LET", "MAP", "MOD", "MULTI", "MUTABLE", "NOT", "OLD", "OR", 
-		"PRIORITY", "PROC", "PROCEDURE", "REGEXP", "REPEAT", "RNG", "SCHEDULE", 
-		"THEN", "TIME", "VAR", "WHILE", "ENDNETWORK", "ENDTYPE", "ENTITIES", "ENTITY", 
-		"NETWORK", "STRUCTURE", "TYPE", "CASE", "ELSIF", "ENDCASE", "ENDNAMESPACE", 
-		"ENDUNIT", "EXTERNAL", "LOCAL", "NAMESPACE", "OF", "PACKAGE", "PRIVATE", 
-		"PUBLIC", "UNIT", "LPAREN", "RPAREN", "LCURLY", "RCURLY", "LSQUARE", "RSQUARE", 
-		"DOT", "COMMA", "COLON", "SEMICOLON", "LONG_DOUBLE_ARROW_RIGHT", "LONG_SINGLE_ARROW_RIGHT", 
-		"LONG_SINGLE_ARROW_LEFT", "DONT_CARE", "DASH", "BIT_NOT", "EQ", "COLON_EQ", 
-		"EQ_EQ", "NOT_EQ", "LT", "LTE", "GT", "GTE", "PLUS", "MINUS", "STAR", 
-		"SLASH", "CARET", "VERTICAL_BAR", "SINGLE_ARROW_RIGHT", "DOUBLE_COLON", 
-		"AT_SIGN", "BIT_AND", "SHIFT_LEFT", "SHIFT_RIGHT", "DOT_DOT", "MODULO", 
-		"DOLLAR", "DOT_STAR", "QUESTION", "TILDE", "ELLIPSIS", "IntegerLiteral", 
-		"DecimalIntegerLiteral", "HexIntegerLiteral", "OctalIntegerLiteral", "BinaryIntegerLiteral", 
-		"IntegerTypeSuffix", "DecimalNumeral", "Digits", "Digit", "NonZeroDigit", 
-		"DigitsAndUnderscores", "DigitOrUnderscore", "Underscores", "HexNumeral", 
-		"HexDigits", "HexDigit", "HexDigitsAndUnderscores", "HexDigitOrUnderscore", 
-		"OctalNumeral", "OctalDigits", "OctalDigit", "OctalDigitsAndUnderscores", 
-		"OctalDigitOrUnderscore", "BinaryNumeral", "BinaryDigits", "BinaryDigit", 
-		"BinaryDigitsAndUnderscores", "BinaryDigitOrUnderscore", "FloatingPointLiteral", 
-		"DecimalFloatingPointLiteral", "ExponentPart", "ExponentIndicator", "SignedInteger", 
-		"Sign", "FloatTypeSuffix", "HexadecimalFloatingPointLiteral", "HexSignificand", 
-		"BinaryExponent", "BinaryExponentIndicator", "BooleanLiteral", "CharacterLiteral", 
-		"SingleCharacter", "StringLiteral", "StringCharacters", "StringCharacter", 
-		"EscapeSequence", "OctalEscape", "ZeroToThree", "UnicodeEscape", "NullLiteral", 
-		"ID", "IdentifierStart", "IdentifierPart", "WS", "DOC_COMMENT", "COMMENT", 
-		"LINE_COMMENT", "ERRCHAR"
-	};
+	private static String[] makeRuleNames() {
+		return new String[] {
+			"ACTION", "ACTOR", "ALL", "AND", "ANY", "AT", "AT_STAR", "BEGIN", "CHOOSE", 
+			"CONST", "DELAY", "DIV", "DO", "DOM", "ELSE", "END", "ENDACTION", "ENDACTOR", 
+			"ENDCHOOSE", "ENDFOREACH", "ENDFUNCTION", "ENDIF", "ENDINITIALIZE", "ENDLAMBDA", 
+			"ENDLET", "ENDPRIORITY", "ENDPROC", "ENDPROCEDURE", "ENDSCHEDULE", "ENDWHILE", 
+			"FOR", "FOREACH", "FSM", "FUNCTION", "GUARD", "IF", "IMPORT", "IN", "INITIALIZE", 
+			"LAMBDA", "LET", "MAP", "MOD", "MULTI", "MUTABLE", "NOT", "OLD", "OR", 
+			"PRIORITY", "PROC", "PROCEDURE", "REGEXP", "REPEAT", "RNG", "SCHEDULE", 
+			"THEN", "TIME", "VAR", "WHILE", "ENDNETWORK", "ENDTYPE", "ENTITIES", 
+			"ENTITY", "NETWORK", "STRUCTURE", "TYPE", "CASE", "ELSIF", "ENDCASE", 
+			"ENDNAMESPACE", "ENDUNIT", "EXTERNAL", "LOCAL", "NAMESPACE", "OF", "PACKAGE", 
+			"PRIVATE", "PUBLIC", "UNIT", "LPAREN", "RPAREN", "LCURLY", "RCURLY", 
+			"LSQUARE", "RSQUARE", "DOT", "COMMA", "COLON", "SEMICOLON", "LONG_DOUBLE_ARROW_RIGHT", 
+			"LONG_SINGLE_ARROW_RIGHT", "LONG_SINGLE_ARROW_LEFT", "DONT_CARE", "DASH", 
+			"BIT_NOT", "EQ", "COLON_EQ", "EQ_EQ", "NOT_EQ", "LT", "LTE", "GT", "GTE", 
+			"PLUS", "MINUS", "STAR", "SLASH", "CARET", "VERTICAL_BAR", "SINGLE_ARROW_RIGHT", 
+			"DOUBLE_COLON", "AT_SIGN", "BIT_AND", "SHIFT_LEFT", "SHIFT_RIGHT", "DOT_DOT", 
+			"MODULO", "DOLLAR", "DOT_STAR", "QUESTION", "TILDE", "ELLIPSIS", "IntegerLiteral", 
+			"DecimalIntegerLiteral", "HexIntegerLiteral", "OctalIntegerLiteral", 
+			"BinaryIntegerLiteral", "IntegerTypeSuffix", "DecimalNumeral", "Digits", 
+			"Digit", "NonZeroDigit", "DigitsAndUnderscores", "DigitOrUnderscore", 
+			"Underscores", "HexNumeral", "HexDigits", "HexDigit", "HexDigitsAndUnderscores", 
+			"HexDigitOrUnderscore", "OctalNumeral", "OctalDigits", "OctalDigit", 
+			"OctalDigitsAndUnderscores", "OctalDigitOrUnderscore", "BinaryNumeral", 
+			"BinaryDigits", "BinaryDigit", "BinaryDigitsAndUnderscores", "BinaryDigitOrUnderscore", 
+			"FloatingPointLiteral", "DecimalFloatingPointLiteral", "ExponentPart", 
+			"ExponentIndicator", "SignedInteger", "Sign", "FloatTypeSuffix", "HexadecimalFloatingPointLiteral", 
+			"HexSignificand", "BinaryExponent", "BinaryExponentIndicator", "BooleanLiteral", 
+			"CharacterLiteral", "SingleCharacter", "StringLiteral", "StringCharacters", 
+			"StringCharacter", "EscapeSequence", "OctalEscape", "ZeroToThree", "UnicodeEscape", 
+			"NullLiteral", "ID", "IdentifierStart", "IdentifierPart", "WS", "DOC_COMMENT", 
+			"COMMENT", "LINE_COMMENT", "ERRCHAR"
+		};
+	}
+	public static final String[] ruleNames = makeRuleNames();
 
-	private static final String[] _LITERAL_NAMES = {
-		null, "'action'", "'actor'", "'all'", "'and'", "'any'", "'at'", "'at*'", 
-		"'begin'", "'choose'", "'const'", "'delay'", "'div'", "'do'", "'dom'", 
-		"'else'", "'end'", "'endaction'", "'endactor'", "'endchoose'", "'endforeach'", 
-		"'endfunction'", "'endif'", "'endinitialize'", "'endlambda'", "'endlet'", 
-		"'endpriority'", "'endproc'", "'endprocedure'", "'endschedule'", "'endwhile'", 
-		"'for'", "'foreach'", "'fsm'", "'function'", "'guard'", "'if'", "'import'", 
-		"'in'", "'initialize'", "'lambda'", "'let'", "'map'", "'mod'", "'multi'", 
-		"'mutable'", "'not'", "'old'", "'or'", "'priority'", "'proc'", "'procedure'", 
-		"'regexp'", "'repeat'", "'rng'", "'schedule'", "'then'", "'time'", "'var'", 
-		"'while'", "'endnetwork'", "'endtype'", "'entities'", "'entity'", "'network'", 
-		"'structure'", "'type'", "'case'", "'elsif'", "'endcase'", "'endnamespace'", 
-		"'endunit'", "'external'", "'local'", "'namespace'", "'of'", "'package'", 
-		"'private'", "'public'", "'unit'", "'('", "')'", "'{'", "'}'", "'['", 
-		"']'", "'.'", "','", "':'", "';'", "'==>'", "'-->'", "'<--'", "'_'", "'#'", 
-		"'!'", "'='", "':='", "'=='", "'!='", "'<'", "'<='", "'>'", "'>='", "'+'", 
-		"'-'", "'*'", "'/'", "'^'", "'|'", "'->'", "'::'", "'@'", "'&'", "'<<'", 
-		"'>>'", "'..'", "'%'", "'$'", "'.*'", "'?'", "'~'", "'...'", null, null, 
-		null, null, null, "'null'"
-	};
-	private static final String[] _SYMBOLIC_NAMES = {
-		null, "ACTION", "ACTOR", "ALL", "AND", "ANY", "AT", "AT_STAR", "BEGIN", 
-		"CHOOSE", "CONST", "DELAY", "DIV", "DO", "DOM", "ELSE", "END", "ENDACTION", 
-		"ENDACTOR", "ENDCHOOSE", "ENDFOREACH", "ENDFUNCTION", "ENDIF", "ENDINITIALIZE", 
-		"ENDLAMBDA", "ENDLET", "ENDPRIORITY", "ENDPROC", "ENDPROCEDURE", "ENDSCHEDULE", 
-		"ENDWHILE", "FOR", "FOREACH", "FSM", "FUNCTION", "GUARD", "IF", "IMPORT", 
-		"IN", "INITIALIZE", "LAMBDA", "LET", "MAP", "MOD", "MULTI", "MUTABLE", 
-		"NOT", "OLD", "OR", "PRIORITY", "PROC", "PROCEDURE", "REGEXP", "REPEAT", 
-		"RNG", "SCHEDULE", "THEN", "TIME", "VAR", "WHILE", "ENDNETWORK", "ENDTYPE", 
-		"ENTITIES", "ENTITY", "NETWORK", "STRUCTURE", "TYPE", "CASE", "ELSIF", 
-		"ENDCASE", "ENDNAMESPACE", "ENDUNIT", "EXTERNAL", "LOCAL", "NAMESPACE", 
-		"OF", "PACKAGE", "PRIVATE", "PUBLIC", "UNIT", "LPAREN", "RPAREN", "LCURLY", 
-		"RCURLY", "LSQUARE", "RSQUARE", "DOT", "COMMA", "COLON", "SEMICOLON", 
-		"LONG_DOUBLE_ARROW_RIGHT", "LONG_SINGLE_ARROW_RIGHT", "LONG_SINGLE_ARROW_LEFT", 
-		"DONT_CARE", "DASH", "BIT_NOT", "EQ", "COLON_EQ", "EQ_EQ", "NOT_EQ", "LT", 
-		"LTE", "GT", "GTE", "PLUS", "MINUS", "STAR", "SLASH", "CARET", "VERTICAL_BAR", 
-		"SINGLE_ARROW_RIGHT", "DOUBLE_COLON", "AT_SIGN", "BIT_AND", "SHIFT_LEFT", 
-		"SHIFT_RIGHT", "DOT_DOT", "MODULO", "DOLLAR", "DOT_STAR", "QUESTION", 
-		"TILDE", "ELLIPSIS", "IntegerLiteral", "FloatingPointLiteral", "BooleanLiteral", 
-		"CharacterLiteral", "StringLiteral", "NullLiteral", "ID", "WS", "DOC_COMMENT", 
-		"COMMENT", "LINE_COMMENT", "ERRCHAR"
-	};
+	private static String[] makeLiteralNames() {
+		return new String[] {
+			null, "'action'", "'actor'", "'all'", "'and'", "'any'", "'at'", "'at*'", 
+			"'begin'", "'choose'", "'const'", "'delay'", "'div'", "'do'", "'dom'", 
+			"'else'", "'end'", "'endaction'", "'endactor'", "'endchoose'", "'endforeach'", 
+			"'endfunction'", "'endif'", "'endinitialize'", "'endlambda'", "'endlet'", 
+			"'endpriority'", "'endproc'", "'endprocedure'", "'endschedule'", "'endwhile'", 
+			"'for'", "'foreach'", "'fsm'", "'function'", "'guard'", "'if'", "'import'", 
+			"'in'", "'initialize'", "'lambda'", "'let'", "'map'", "'mod'", "'multi'", 
+			"'mutable'", "'not'", "'old'", "'or'", "'priority'", "'proc'", "'procedure'", 
+			"'regexp'", "'repeat'", "'rng'", "'schedule'", "'then'", "'time'", "'var'", 
+			"'while'", "'endnetwork'", "'endtype'", "'entities'", "'entity'", "'network'", 
+			"'structure'", "'type'", "'case'", "'elsif'", "'endcase'", "'endnamespace'", 
+			"'endunit'", "'external'", "'local'", "'namespace'", "'of'", "'package'", 
+			"'private'", "'public'", "'unit'", "'('", "')'", "'{'", "'}'", "'['", 
+			"']'", "'.'", "','", "':'", "';'", "'==>'", "'-->'", "'<--'", "'_'", 
+			"'#'", "'!'", "'='", "':='", "'=='", "'!='", "'<'", "'<='", "'>'", "'>='", 
+			"'+'", "'-'", "'*'", "'/'", "'^'", "'|'", "'->'", "'::'", "'@'", "'&'", 
+			"'<<'", "'>>'", "'..'", "'%'", "'$'", "'.*'", "'?'", "'~'", "'...'", 
+			null, null, null, null, null, "'null'"
+		};
+	}
+	private static final String[] _LITERAL_NAMES = makeLiteralNames();
+	private static String[] makeSymbolicNames() {
+		return new String[] {
+			null, "ACTION", "ACTOR", "ALL", "AND", "ANY", "AT", "AT_STAR", "BEGIN", 
+			"CHOOSE", "CONST", "DELAY", "DIV", "DO", "DOM", "ELSE", "END", "ENDACTION", 
+			"ENDACTOR", "ENDCHOOSE", "ENDFOREACH", "ENDFUNCTION", "ENDIF", "ENDINITIALIZE", 
+			"ENDLAMBDA", "ENDLET", "ENDPRIORITY", "ENDPROC", "ENDPROCEDURE", "ENDSCHEDULE", 
+			"ENDWHILE", "FOR", "FOREACH", "FSM", "FUNCTION", "GUARD", "IF", "IMPORT", 
+			"IN", "INITIALIZE", "LAMBDA", "LET", "MAP", "MOD", "MULTI", "MUTABLE", 
+			"NOT", "OLD", "OR", "PRIORITY", "PROC", "PROCEDURE", "REGEXP", "REPEAT", 
+			"RNG", "SCHEDULE", "THEN", "TIME", "VAR", "WHILE", "ENDNETWORK", "ENDTYPE", 
+			"ENTITIES", "ENTITY", "NETWORK", "STRUCTURE", "TYPE", "CASE", "ELSIF", 
+			"ENDCASE", "ENDNAMESPACE", "ENDUNIT", "EXTERNAL", "LOCAL", "NAMESPACE", 
+			"OF", "PACKAGE", "PRIVATE", "PUBLIC", "UNIT", "LPAREN", "RPAREN", "LCURLY", 
+			"RCURLY", "LSQUARE", "RSQUARE", "DOT", "COMMA", "COLON", "SEMICOLON", 
+			"LONG_DOUBLE_ARROW_RIGHT", "LONG_SINGLE_ARROW_RIGHT", "LONG_SINGLE_ARROW_LEFT", 
+			"DONT_CARE", "DASH", "BIT_NOT", "EQ", "COLON_EQ", "EQ_EQ", "NOT_EQ", 
+			"LT", "LTE", "GT", "GTE", "PLUS", "MINUS", "STAR", "SLASH", "CARET", 
+			"VERTICAL_BAR", "SINGLE_ARROW_RIGHT", "DOUBLE_COLON", "AT_SIGN", "BIT_AND", 
+			"SHIFT_LEFT", "SHIFT_RIGHT", "DOT_DOT", "MODULO", "DOLLAR", "DOT_STAR", 
+			"QUESTION", "TILDE", "ELLIPSIS", "IntegerLiteral", "FloatingPointLiteral", 
+			"BooleanLiteral", "CharacterLiteral", "StringLiteral", "NullLiteral", 
+			"ID", "WS", "DOC_COMMENT", "COMMENT", "LINE_COMMENT", "ERRCHAR"
+		};
+	}
+	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**
