@@ -4,8 +4,14 @@ import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
-import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParser;
-import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
+import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
+import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +50,19 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALStatementNode visitAssignmentStatement(CALParser.AssignmentStatementContext ctx) {
-        return null;
+        Token variable = ctx.lvalue().variable().ID().getSymbol();
+        CALExpressionNode value = ExpressionVisitor.getInstance().visit(ctx.value);
+        if (ctx.lvalue().expression().size() > 0) {
+            CALExpressionNode expression = ScopeEnvironment.getInstance().createReadNode(variable.getText());
+            for (CALParser.ExpressionContext context : ctx.lvalue().expression().subList(0, ctx.lvalue().expression().size() - 1)) {
+                CALExpressionNode index = ExpressionVisitor.getInstance().visit(context);
+                expression = ListReadNodeGen.create(expression, index);
+            }
+            CALExpressionNode lastIndex = ExpressionVisitor.getInstance().visit(ctx.lvalue().expression(ctx.lvalue().expression().size() - 1));
+            return ListWriteNodeGen.create(expression, lastIndex, value);
+        } else {
+            return ScopeEnvironment.getInstance().createWriteNode(variable.getText(), value);
+        }
     }
 
     /**
@@ -73,7 +91,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
         return new StmtIfNode(
             (CALExpressionNode) ExpressionVisitor.getInstance().visit(ctx.condition),
             visitStatements(ctx.then),
-            ctx.elseIf != null ? visitElseIfStatement(ctx.elseIf): visitStatements(ctx.elze)
+            ctx.elseIf != null ? visitElseIfStatement(ctx.elseIf): ctx.elze != null ? visitStatements(ctx.elze) : null
         );
     }
 
@@ -84,7 +102,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
         return new StmtIfNode(
             (CALExpressionNode) ExpressionVisitor.getInstance().visit(ctx.condition),
             visitStatements(ctx.then),
-            ctx.elseIf != null ? visitElseIfStatement(ctx.elseIf) : visitStatements(ctx.elze)
+            ctx.elseIf != null ? visitElseIfStatement(ctx.elseIf) : ctx.elze != null ? visitStatements(ctx.elze) : null
         );
     }
 
@@ -104,16 +122,23 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
         // TODO Add support for multiple variables in a generator
         // TODO Add support for multiple generators
         // TODO Add support for generator filters?
-       /* CALExpressionNode variable = variables.get(0).get(0);
-        CALExpressionNode collection = collections.get(0);
 
-        if (variable instanceof CALWriteLocalVariableNode) {
-            return ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) variable, collection);
+        CALExpressionNode variableNode = null;
+        CALExpressionNode collectionNode = null;
+        for (CALParser.ForeachGeneratorContext context: ctx.foreachGenerators().foreachGenerator()) {
+            for (Token variable: context.generatorBody().variables) {
+                variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), null);
+                break;
+            }
+            collectionNode = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(context.generatorBody().expressions())).get(0);
+            break;
+        }
+
+        if (variableNode instanceof CALWriteLocalVariableNode) {
+            return ForeacheNodeGen.create(StatementVisitor.getInstance().visit(ctx.body), (CALWriteLocalVariableNode) variableNode, collectionNode);
         } else {
             throw new Error("Foreach Statement: Variable name re-use is unsupported.");
-        }*/
-
-        return null;
+        }
     }
 
     /**

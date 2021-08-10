@@ -4,18 +4,21 @@ import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
-import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParser;
-import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -246,10 +249,10 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      */
     @Override public CALExpressionNode visitIntegerLiteralExpression(CALParser.IntegerLiteralExpressionContext ctx) {
         try {
-            long value = Long.parseLong(ctx.IntegerLiteral.getText());
+            long value = Long.parseLong(ctx.IntegerLiteral().getText());
             return new LongLiteralNode(value);
         } catch (NumberFormatException e) {
-            return new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral.getText()));
+            return new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral().getText()));
         }
     }
 
@@ -260,10 +263,10 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
         // TODO Change to FloatLiteralNode
 
         try {
-            long value = Long.parseLong(ctx.FloatingPointLiteral.getText());
+            long value = Long.parseLong(ctx.FloatingPointLiteral().getText());
             return new LongLiteralNode(value);
         } catch (NumberFormatException e) {
-            return new BigIntegerLiteralNode(new BigInteger(ctx.FloatingPointLiteral.getText()));
+            return new BigIntegerLiteralNode(new BigInteger(ctx.FloatingPointLiteral().getText()));
         }
     }
 
@@ -271,7 +274,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public BooleanLiteralNode visitBooleanLiteralExpression(CALParser.BooleanLiteralExpressionContext ctx) {
-        return new BooleanLiteralNode(Boolean.parseBoolean(ctx.BooleanLiteral.getText()));
+        return new BooleanLiteralNode(Boolean.parseBoolean(ctx.BooleanLiteral().getText()));
     }
 
     /**
@@ -280,14 +283,14 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
     @Override public StringLiteralNode visitCharacterLiteralExpression(CALParser.CharacterLiteralExpressionContext ctx) {
         // TODO Change to CharLiteralNode
 
-        return new StringLiteralNode(ctx.CharacterLiteral.getText());
+        return new StringLiteralNode(ctx.CharacterLiteral().getText());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public StringLiteralNode visitStringLiteralExpression(CALParser.StringLiteralExpressionContext ctx) {
-        return new StringLiteralNode(ctx.StringLiteral.getText());
+        return new StringLiteralNode(ctx.StringLiteral().getText());
     }
 
     /**
@@ -365,8 +368,8 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
         ScopeEnvironment.getInstance().pushScope(true);
 
-        if (ctx.formalParameters != null) {
-            head = new StmtBlockNode(CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters).toArray(new CALStatementNode[0]));
+        if (ctx.formalParameters() != null) {
+            head = new StmtBlockNode(CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters()).toArray(new CALStatementNode[0]));
         } else {
             head = null;
         }
@@ -429,39 +432,44 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
         }
 
         // Comprehensions w/ generators
-        /*Pair<List<Token>, List<CALExpressionNode>> generator = visit(ctx.generators()).get(0);
+        ScopeEnvironment environment = ScopeEnvironment.getInstance();
 
-        Token variable = generator.getLeft().get(0);
-        CALExpressionNode variableNode = context.createWriteNode(variable.getText(), null);
-        CALExpressionNode collection = generator.getRight().get(0);
-        CALExpressionNode computationExpression = expressions.get(0);
+        CALExpressionNode variableNode = null;
+        CALExpressionNode collectionNode = null;
+        for (CALParser.GeneratorContext context: ctx.generators().generator()) {
+            for (Token variable : context.generatorBody().variables) {
+                variableNode = environment.createWriteNode(variable.getText(), null);
+                break;
+            }
+            collectionNode = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(context.generatorBody().expressions())).get(0);
+            break;
+        }
+        CALExpressionNode computationExpression = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.computations)).get(0);
 
         CALStatementNode[] comprehensionBody = new CALStatementNode[3];
         // Initialization
-        comprehensionBody[0] = context.createWriteNode("$tempList", new UnknownSizeListInitNode());
-        comprehensionBody[1] = context.createWriteNode("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
+        comprehensionBody[0] = environment.createWriteNode("$tempList", new UnknownSizeListInitNode());
+        comprehensionBody[1] = environment.createWriteNode("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
         // Loop iteration body
         CALStatementNode[] loopBody = new CALStatementNode[2];
-        loopBody[0] = ListWriteNodeGen.create(context.createReadNode("$tempList"), context.createReadNode("$comprehensionCounter"), computationExpression);
-        loopBody[1] = context.createWriteNode(
+        loopBody[0] = ListWriteNodeGen.create(environment.createReadNode("$tempList"), environment.createReadNode("$comprehensionCounter"), computationExpression);
+        loopBody[1] = environment.createWriteNode(
                 "$comprehensionCounter",
                 CALBinaryAddNodeGen.create(
-                        context.createReadNode("$comprehensionCounter"),
+                        environment.createReadNode("$comprehensionCounter"),
                         new BigIntegerLiteralNode(new BigInteger("1"))
                 )
         );
         CALStatementNode loopBodyNode = new StmtBlockNode(loopBody);
 
         if (variableNode instanceof CALWriteLocalVariableNode) {
-            comprehensionBody[2] = ForeacheNodeGen.create(loopBodyNode, (CALWriteLocalVariableNode) variableNode, collection);
+            comprehensionBody[2] = ForeacheNodeGen.create(loopBodyNode, (CALWriteLocalVariableNode) variableNode, collectionNode);
             CALStatementNode comprehensionBodyNode = new StmtBlockNode(comprehensionBody);
 
-            return new ReturnsLastBodyNode(comprehensionBodyNode, context.createReadNode("$tempList"));
+            return new ReturnsLastBodyNode(comprehensionBodyNode, environment.createReadNode("$tempList"));
         } else {
             throw new Error("Comprehension Expression: Variable name re-use is unsupported.");
-        }*/
-
-        return null;
+        }
     }
 
     /**

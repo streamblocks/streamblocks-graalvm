@@ -7,8 +7,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.DepthFrameSlot;
 import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
-import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParser;
-import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 
 /**
  * Singleton class that provides an implementation for a variable sub-tree.
@@ -84,7 +84,12 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         // TODO Add support for mutable variables ('mutable')
         // TODO Add support for indexing ('[]')
 
-        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), ExpressionVisitor.getInstance().visit(ctx.value));
+        CALExpressionNode valueNode = null;
+        if (ctx.value != null) {
+            valueNode = ExpressionVisitor.getInstance().visit(ctx.value);
+        }
+
+        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode);
     }
 
     /**
@@ -101,8 +106,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         ScopeEnvironment.getInstance().pushScope(true);
 
-        if (ctx.formalParameters != null) {
-            head = new StmtBlockNode(CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters).toArray(new CALStatementNode[0]));
+        if (ctx.formalParameters() != null) {
+            head = new StmtBlockNode(CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters()).toArray(new CALStatementNode[0]));
         } else {
             head = null;
         }
@@ -111,11 +116,11 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             ScopeEnvironment.getInstance().pushScope(true, false);
 
             StmtBlockNode letHead = new StmtBlockNode(CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables).toArray(new CALStatementNode[0]));
-            body = new LetExprNode(letHead, (CALExpressionNode) visit(ctx.body));
+            body = new LetExprNode(letHead, ExpressionVisitor.getInstance().visit(ctx.body));
 
             ScopeEnvironment.getInstance().popScope();
         } else {
-            body = (CALExpressionNode) visit(ctx.body);
+            body = ExpressionVisitor.getInstance().visit(ctx.body);
         }
 
         ReturnsLastBodyNode bodyNode = new ReturnsLastBodyNode(head, body);
