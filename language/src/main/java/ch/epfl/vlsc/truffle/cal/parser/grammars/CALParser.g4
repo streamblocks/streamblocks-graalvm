@@ -55,65 +55,40 @@ options { tokenVocab=CALLexer; }
 
 @parser::header
 {
-import java.util.*;
-
-import org.graalvm.collections.Pair;
+import java.util.Map;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.RootCallTarget;
+
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.parser.CALParseError;
-import ch.epfl.vlsc.truffle.cal.parser.CALNodeFactory;
-import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
+
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.error.CALParserErrorListener;
+import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.*;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
-
-import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 }
 
 @parser::members
 {
-public CALNodeFactory factory;
-private Source source;
-
-/*private static final class BailoutErrorListener extends BaseErrorListener {
-    private final Source source;
-    BailoutErrorListener(Source source) {
-        this.source = source;
-    }
-    @Override
-    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        throwParseError(source, line, charPositionInLine, (Token) offendingSymbol, msg);
-    }
-}
-
-public void SemErr(Token token, String message) {
-    assert token != null;
-    throwParseError(source, token.getLine(), token.getCharPositionInLine(), token, message);
-}
-
-private static void throwParseError(Source source, int line, int charPositionInLine, Token token, String message) {
-    int col = charPositionInLine + 1;
-    String location = "-- line " + line + " col " + col + ": ";
-    int length = token == null ? 1 : Math.max(token.getStopIndex() - token.getStartIndex(), 0);
-    throw new CALParseError(source, line, col, length, String.format("Error(s) parsing script:%n" + location + message));
-}*/
 
 public static Map<String, RootCallTarget> parseCAL(CALLanguage language, Source source) {
     CALLexer lexer = new CALLexer(CharStreams.fromString(source.getCharacters().toString()));
     CALParser parser = new CALParser(new CommonTokenStream(lexer));
+
     lexer.removeErrorListeners();
     parser.removeErrorListeners();
-    //BailoutErrorListener listener = new BailoutErrorListener(source);
-    //lexer.addErrorListener(listener);
-    //parser.addErrorListener(listener);
-    //parser.factory = new CALNodeFactory(language, source);
+
+    CALParserErrorListener listener = new CALParserErrorListener(source);
+    lexer.addErrorListener(listener);
+    parser.addErrorListener(listener);
+
     ScopeEnvironment.createInstance(language, source);
-    parser.source = source;
+
     return (Map<String, RootCallTarget>) CompilationUnitVisitor.getInstance().visit(parser.compilationUnit());
 }
 }
@@ -770,6 +745,7 @@ ifExpression:
     'if' condition=expression 'then'
     then=expression
     (elseIf=elseIfExpression | 'else' elze=expression)
+    ('end' | 'endif')
 ;
 
 // Elsif (CAL Specification Extension)
@@ -777,6 +753,7 @@ elseIfExpression:
     'elsif' condition=expression 'then'
     then=expression
     (elseIf=elseIfExpression | 'else' elze=expression)
+    ('end' | 'endif')
 ;
 
 // Local Scope (CLR §6.8)
