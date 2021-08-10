@@ -27,7 +27,7 @@ public class ScopeEnvironment {
 
     private LexicalScope currentScope;
 
-    public ScopeEnvironment(CALLanguage language, Source source) {
+    private ScopeEnvironment(CALLanguage language, Source source) {
 		this.language = language;
 		this.source = source;
 		imports = new HashMap<>();
@@ -40,6 +40,10 @@ public class ScopeEnvironment {
 	}
 
     public static ScopeEnvironment getInstance() {
+    	if (instance == null) {
+    		throw new Error("Scope Environment: Cannot get the instance, must first be created with 'createInstance'.");
+		}
+
 		return instance;
 	}
 

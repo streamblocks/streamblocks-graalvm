@@ -97,7 +97,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("nested-for-loop").build());
     }
 
-    @Ignore
     @Test
     public void forComprehensionTest() throws IOException {
         runTest(TestCase.newBuilder("for-comprehensions").build());

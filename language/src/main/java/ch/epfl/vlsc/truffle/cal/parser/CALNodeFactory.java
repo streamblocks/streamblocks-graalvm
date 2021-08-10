@@ -36,7 +36,8 @@ public class CALNodeFactory {
     private ScopeEnvironment context;
 
     public CALNodeFactory(CALLanguage language, Source source) {
-        this.context = new ScopeEnvironment(language, source);
+        ScopeEnvironment.createInstance(language, source);
+        this.context = ScopeEnvironment.getInstance();
     }
 
     // Namespace Declaration

@@ -2,7 +2,6 @@ package ch.epfl.vlsc.truffle.cal;
 
 import java.io.File;
 import java.io.FileReader;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,10 +10,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ch.epfl.vlsc.truffle.cal.parser.antlr.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
@@ -36,9 +34,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 
-import ch.epfl.vlsc.truffle.cal.ast.BlockTransformer;
 import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepthRW;
-import ch.epfl.vlsc.truffle.cal.ast.TransformContext;
 import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALEvalRootNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
@@ -51,9 +47,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
-import se.lth.cs.tycho.ir.NamespaceDecl;
-import se.lth.cs.tycho.ir.QID;
-import se.lth.cs.tycho.parsing.cal.CalParser;
 
 @TruffleLanguage.Registration(id = CALLanguage.ID, name = "CAL", defaultMimeType = CALLanguage.MIME_TYPE, characterMimeTypes = CALLanguage.MIME_TYPE, contextPolicy = TruffleLanguage.ContextPolicy.SHARED, fileTypeDetectors = CALFileDetector.class)
 @ProvidedTags({ StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class,
