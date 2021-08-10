@@ -2,28 +2,29 @@ namespace test:
     actor test () ==> :
         state := 0;
 
-        procedure StateChange (X) begin
+        procedure StateChange (X, Y) begin
             state := X;
+            println(Y);
         end
 
         action ==>
         guard state = 0
         do
-                StateChange(1);
+                StateChange(1, 1);
                 println(0);
         end
 
         action ==>
         guard state = 1
         do
-                StateChange(2);
+                StateChange(2, 2);
                 println(1);
         end
 
         action ==>
         guard state = 2
         do
-                StateChange(0);
+                StateChange(0, 0);
                 println(2);
         end
     end
