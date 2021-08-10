@@ -8,7 +8,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
-import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 import org.antlr.v4.runtime.Token;

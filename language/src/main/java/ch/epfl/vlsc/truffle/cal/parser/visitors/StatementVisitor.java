@@ -8,7 +8,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
-import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 import org.antlr.v4.runtime.Token;

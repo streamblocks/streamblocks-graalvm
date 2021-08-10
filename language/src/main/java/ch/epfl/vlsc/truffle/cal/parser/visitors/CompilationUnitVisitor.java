@@ -1,7 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
-import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 import com.oracle.truffle.api.RootCallTarget;

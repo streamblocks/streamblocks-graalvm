@@ -8,6 +8,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.parser.scope.DepthFrameSlot;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.nodes.Node;

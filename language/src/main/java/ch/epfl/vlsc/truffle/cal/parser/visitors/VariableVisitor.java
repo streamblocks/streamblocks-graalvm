@@ -5,8 +5,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
-import ch.epfl.vlsc.truffle.cal.parser.DepthFrameSlot;
-import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.scope.DepthFrameSlot;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 

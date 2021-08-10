@@ -1,18 +1,18 @@
-package ch.epfl.vlsc.truffle.cal.parser;
+package ch.epfl.vlsc.truffle.cal.parser.scope;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class LexicalScope {
+public class Scope {
 
     public enum ScopeKind {
         RW,
         PARENT_RO
     }
 
-    private final LexicalScope outerScope;
+    private final Scope outerScope;
 
     private final Map<String, DepthFrameSlot> localVariables;
 
@@ -24,7 +24,7 @@ public class LexicalScope {
 
     private final ScopeKind kind;
 
-    public LexicalScope(LexicalScope outerScope, FrameDescriptor frame, int depth, ScopeKind kind) {
+    public Scope(Scope outerScope, FrameDescriptor frame, int depth, ScopeKind kind) {
         this.outerScope = outerScope;
         this.frame = frame;
         this.depth = depth;
@@ -38,7 +38,7 @@ public class LexicalScope {
         }
     }
 
-    public LexicalScope getOuterScope() {
+    public Scope getOuterScope() {
         return outerScope;
     }
 

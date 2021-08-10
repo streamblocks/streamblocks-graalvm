@@ -1,4 +1,4 @@
-package ch.epfl.vlsc.truffle.cal.parser;
+package ch.epfl.vlsc.truffle.cal.parser.scope;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadCapturedVariableNodeGen;

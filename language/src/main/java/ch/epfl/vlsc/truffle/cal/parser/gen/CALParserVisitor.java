@@ -1,24 +1,22 @@
 // Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/grammars/CALParser.g4 by ANTLR 4.7.1
 package ch.epfl.vlsc.truffle.cal.parser.gen;
 
-import java.util.*;
-
-import org.graalvm.collections.Pair;
+import java.util.Map;
 
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.RootCallTarget;
+
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.parser.CALParseError;
-import ch.epfl.vlsc.truffle.cal.parser.CALNodeFactory;
-import ch.epfl.vlsc.truffle.cal.parser.ScopeEnvironment;
+
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.error.CALParserErrorListener;
+import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.*;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
-
-import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 

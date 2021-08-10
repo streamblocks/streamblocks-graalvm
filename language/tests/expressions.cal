@@ -3,7 +3,7 @@ namespace test:
 	actor test() ==> :
 		action ==>
 		var
-			//f := lambda (int x) --> int var int y := 2: y - x end,
+			f := lambda (int x) --> int var int y := 2: y - x end,
 			int a := 1
 		do
             a := a ^ a;
@@ -15,7 +15,7 @@ namespace test:
 			a := (a << 1) / 2;
 			a := if (a == 1) then if (a >= 0) then if (a < 2) then a else 0 end else 0 end else 0 end;
             a := let b := a + 1: b - a end;
-            //a := f(a);
+            a := f(a);
 			println(a);
 		end
 	end

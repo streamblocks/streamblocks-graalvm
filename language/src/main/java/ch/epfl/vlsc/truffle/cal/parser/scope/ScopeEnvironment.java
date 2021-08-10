@@ -1,4 +1,4 @@
-package ch.epfl.vlsc.truffle.cal.parser;
+package ch.epfl.vlsc.truffle.cal.parser.scope;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
@@ -23,15 +23,15 @@ public class ScopeEnvironment {
 
 	private Map<String, String> imports;
 
-	private LexicalScope globalScope;
+	private Scope globalScope;
 
-    private LexicalScope currentScope;
+    private Scope currentScope;
 
     private ScopeEnvironment(CALLanguage language, Source source) {
 		this.language = language;
 		this.source = source;
 		imports = new HashMap<>();
-		globalScope = new LexicalScope(null, null,0, LexicalScope.ScopeKind.RW);
+		globalScope = new Scope(null, null,0, Scope.ScopeKind.RW);
 		currentScope = globalScope;
     }
 
@@ -59,11 +59,11 @@ public class ScopeEnvironment {
 		imports.put(importEntity.getLeft(), importEntity.getRight());
 	}
 
-    public LexicalScope getCurrentScope() {
+    public Scope getCurrentScope() {
     	return currentScope;
 	}
 
-	public LexicalScope getGlobalScope() {
+	public Scope getGlobalScope() {
 		return globalScope;
 	}
 
@@ -89,14 +89,14 @@ public class ScopeEnvironment {
 			depth++;
 		}
 
-    	LexicalScope.ScopeKind kind;
+    	Scope.ScopeKind kind;
     	if (isReadOnly) {
-    		kind = LexicalScope.ScopeKind.PARENT_RO;
+    		kind = Scope.ScopeKind.PARENT_RO;
 		} else {
-    		kind = LexicalScope.ScopeKind.RW;
+    		kind = Scope.ScopeKind.RW;
 		}
 
-		currentScope = new LexicalScope(currentScope, frame, depth, kind);
+		currentScope = new Scope(currentScope, frame, depth, kind);
 	}
 
 	public void popScope() {

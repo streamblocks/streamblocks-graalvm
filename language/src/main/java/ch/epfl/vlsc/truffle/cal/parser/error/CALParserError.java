@@ -39,7 +39,7 @@
  * SOFTWARE.
  */
 
-package ch.epfl.vlsc.truffle.cal.parser;
+package ch.epfl.vlsc.truffle.cal.parser.error;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
@@ -52,7 +52,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 @ExportLibrary(InteropLibrary.class)
-public class CALParseError extends AbstractTruffleException {
+public class CALParserError extends AbstractTruffleException {
 
     public static final long serialVersionUID = 1L;
     private final Source source;
@@ -60,7 +60,7 @@ public class CALParseError extends AbstractTruffleException {
     private final int column;
     private final int length;
 
-    public CALParseError(Source source, int line, int column, int length, String message) {
+    public CALParserError(Source source, int line, int column, int length, String message) {
         super(message);
         this.source = source;
         this.line = line;
@@ -68,12 +68,6 @@ public class CALParseError extends AbstractTruffleException {
         this.length = length;
     }
 
-    /**
-     * Note that any subclass of {@link AbstractTruffleException} must always return
-     * <code>true</code> for {@link InteropLibrary#isException(Object)}. That is why it is correct
-     * to export {@link #getExceptionType()} without implementing
-     * {@link InteropLibrary#isException(Object)}.
-     */
     @ExportMessage
     ExceptionType getExceptionType() {
         return ExceptionType.PARSE_ERROR;
