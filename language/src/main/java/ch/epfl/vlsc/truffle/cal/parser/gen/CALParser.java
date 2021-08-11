@@ -9,7 +9,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
-import ch.epfl.vlsc.truffle.cal.parser.error.CALParserErrorListener;
+import ch.epfl.vlsc.truffle.cal.parser.error.ErrorListener;
 import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
@@ -224,7 +224,7 @@ public class CALParser extends Parser {
 	    lexer.removeErrorListeners();
 	    parser.removeErrorListeners();
 
-	    CALParserErrorListener listener = new CALParserErrorListener(source);
+	    ErrorListener listener = new ErrorListener(source);
 	    lexer.addErrorListener(listener);
 	    parser.addErrorListener(listener);
 
@@ -7402,7 +7402,7 @@ public class CALParser extends Parser {
 	}
 
 	public static class VariableExpressionContext extends ParserRuleContext {
-		public Token old;
+		public Token isOld;
 		public VariableContext variable() {
 			return getRuleContext(VariableContext.class,0);
 		}
@@ -7430,7 +7430,7 @@ public class CALParser extends Parser {
 			if (_la==OLD) {
 				{
 				setState(1313);
-				((VariableExpressionContext)_localctx).old = match(OLD);
+				((VariableExpressionContext)_localctx).isOld = match(OLD);
 				}
 			}
 
@@ -8611,6 +8611,7 @@ public class CALParser extends Parser {
 	}
 
 	public static class VariableContext extends ParserRuleContext {
+		public Token name;
 		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public VariableContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -8630,7 +8631,7 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1486);
-			match(ID);
+			((VariableContext)_localctx).name = match(ID);
 			}
 		}
 		catch (RecognitionException re) {
@@ -8645,6 +8646,7 @@ public class CALParser extends Parser {
 	}
 
 	public static class FieldContext extends ParserRuleContext {
+		public Token name;
 		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public FieldContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -8664,7 +8666,7 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(1488);
-			match(ID);
+			((FieldContext)_localctx).name = match(ID);
 			}
 		}
 		catch (RecognitionException re) {

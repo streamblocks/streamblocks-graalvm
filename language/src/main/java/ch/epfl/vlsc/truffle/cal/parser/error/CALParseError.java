@@ -50,9 +50,10 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 @ExportLibrary(InteropLibrary.class)
-public class CALParserError extends AbstractTruffleException {
+public class CALParseError extends AbstractTruffleException {
 
     public static final long serialVersionUID = 1L;
     private final Source source;
@@ -60,12 +61,16 @@ public class CALParserError extends AbstractTruffleException {
     private final int column;
     private final int length;
 
-    public CALParserError(Source source, int line, int column, int length, String message) {
-        super(message);
+    public CALParseError(Source source, int line, int column, int length, String message) {
+        super(String.format("Error: " + message + "%n\tat " + source.getName() + ":" + line + ":" + column));
         this.source = source;
         this.line = line;
         this.column = column;
         this.length = length;
+    }
+
+    public CALParseError(Source source, ParserRuleContext context, String message) {
+        this(source, context.getStart().getLine(), context.getStart().getCharPositionInLine() + 1, Math.max(context.getStop().getStopIndex() - context.getStart().getStartIndex(), 0), message);
     }
 
     @ExportMessage

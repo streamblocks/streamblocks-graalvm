@@ -27,6 +27,8 @@ public class ScopeEnvironment {
 
     private Scope currentScope;
 
+    private static int LAMBDA_ID;
+
     private ScopeEnvironment(CALLanguage language, Source source) {
 		this.language = language;
 		this.source = source;
@@ -37,6 +39,7 @@ public class ScopeEnvironment {
 
 	public static void createInstance(CALLanguage language, Source source) {
 		instance = new ScopeEnvironment(language, source);
+		LAMBDA_ID = 1;
 	}
 
     public static ScopeEnvironment getInstance() {
@@ -131,5 +134,12 @@ public class ScopeEnvironment {
 
 			return slot.createWriteNode(valueNode, nameNode, false, currentScope.getDepth());
 		}
+	}
+
+	public static String generateLambdaName() {
+    	String lambdaName = "lambda" + LAMBDA_ID;
+		LAMBDA_ID++;
+
+		return lambdaName;
 	}
 }

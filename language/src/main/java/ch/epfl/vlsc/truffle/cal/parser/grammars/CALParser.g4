@@ -63,7 +63,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
-import ch.epfl.vlsc.truffle.cal.parser.error.CALParserErrorListener;
+import ch.epfl.vlsc.truffle.cal.parser.error.ErrorListener;
 import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
@@ -83,7 +83,7 @@ public static Map<String, RootCallTarget> parseCAL(CALLanguage language, Source 
     lexer.removeErrorListeners();
     parser.removeErrorListeners();
 
-    CALParserErrorListener listener = new CALParserErrorListener(source);
+    ErrorListener listener = new ErrorListener(source);
     lexer.addErrorListener(listener);
     parser.addErrorListener(listener);
 
@@ -732,7 +732,7 @@ literalExpression:
 
 // Variable reference (CLR §6.2)
 variableExpression:
-    old='old'? variable
+    isOld='old'? variable
 ;
 
 // Symbol Reference (CAL Specification Extension)
@@ -835,11 +835,11 @@ lvalue:
 ;
 
 variable:
-    ID
+    name=ID
 ;
 
 field:
-    ID
+    name=ID
 ;
 
 // ----------------------------------------------------------------------------

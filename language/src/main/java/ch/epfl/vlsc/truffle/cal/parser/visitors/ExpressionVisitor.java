@@ -12,6 +12,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import ch.epfl.vlsc.truffle.cal.parser.error.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -20,6 +21,7 @@ import org.antlr.v4.runtime.Token;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Singleton class that provides an implementation for a expression sub-tree.
@@ -49,16 +51,15 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitExprExpression(CALParser.ExprExpressionContext ctx) {
-        return (CALExpressionNode) visit(ctx.expression());
+        return visit(ctx.expression());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitFieldSelectorExpression(CALParser.FieldSelectorExpressionContext ctx) {
-        // TODO Create CALFieldSelectorNode
-
-        return null;
+        // TODO Create Field Selector expression node
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Field Selector expression is not yet supported");
     }
 
     /**
@@ -80,9 +81,9 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      */
     @Override public CALExpressionNode visitUnaryOperationExpression(CALParser.UnaryOperationExpressionContext ctx) {
         CALExpressionNode operand = (CALExpressionNode) visit(ctx.operand);
-        Token operator = ctx.operator;
+        String operator = ctx.operator.getText();
 
-        switch (operator.getText()) {
+        switch (operator) {
             case "-":
                 return CALUnaryMinusNodeGen.create(operand);
             case "!":
@@ -96,7 +97,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             case "#":
                 // TODO: Create CALUnaryCollectionSizeNode
             default:
-                throw new Error("Unary operator " + operator.getText() + " is not (yet) supported.");
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unary operator \"" + operator + "\" is not yet supported");
         }
     }
 
@@ -118,21 +119,20 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitLiteralExprExpression(CALParser.LiteralExprExpressionContext ctx) {
-        return (CALExpressionNode) visit(ctx.literalExpression());
+        return visit(ctx.literalExpression());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitIndexerExpression(CALParser.IndexerExpressionContext ctx) {
-        CALExpressionNode expression = (CALExpressionNode) visit(ctx.composite);
+        CALExpressionNode resultNode = visit(ctx.composite);
         Collection<CALExpressionNode> indices = CollectionVisitor.getInstance().visitExpressions(ctx.indices);
-
-        for (CALExpressionNode index: indices) {
-            expression = ListReadNodeGen.create(expression, index);
+        for (CALExpressionNode indexNode: indices) {
+            resultNode = ListReadNodeGen.create(resultNode, indexNode);
         }
 
-        return expression;
+        return resultNode;
     }
 
     /**
@@ -153,13 +153,13 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitBinaryOperationExpression(CALParser.BinaryOperationExpressionContext ctx) {
-        CALExpressionNode operand1 = (CALExpressionNode) visit(ctx.operand1);
-        Token operator = ctx.operator;
-        CALExpressionNode operand2 = (CALExpressionNode) visit(ctx.operand2);
+        CALExpressionNode operand1 = visit(ctx.operand1);
+        String operator = ctx.operator.getText();
+        CALExpressionNode operand2 = visit(ctx.operand2);
 
-        switch (operator.getText()) {
+        switch (operator) {
             case "^":
-                // TODO: Change to CALBinaryPowerNode
+                // TODO: Change to Power expression node
                 return CALBinaryXorNodeGen.create(operand1, operand2);
             case "..":
                 return ListRangeInitNodeGen.create(operand1, operand2);
@@ -170,7 +170,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             case "*":
                 return CALBinaryMulNodeGen.create(operand1, operand2);
             case "div":
-                // TODO: Change to CALBinaryIntDivNode
+                // TODO: Change to Integer Division expression node
             case "/":
                 return CALBinaryDivNodeGen.create(operand1, operand2);
             case "%":
@@ -202,15 +202,12 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             case "or":
                 return new CALBinaryLogicalOrNode(operand1, operand2);
             default:
-                throw new Error("Binary operator " + operator.getText() + " is not (yet) supported.");
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Binary operator \"" + operator + "\" is not yet supported");
         }
     }
 
     /**
      * {@inheritDoc}
-     *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
      */
     @Override public CALExpressionNode visitLambdaExprExpression(CALParser.LambdaExprExpressionContext ctx) {
         return visitLambdaExpression(ctx.lambdaExpression());
@@ -260,14 +257,8 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitFloatingPointLiteralExpression(CALParser.FloatingPointLiteralExpressionContext ctx) {
-        // TODO Change to FloatLiteralNode
-
-        try {
-            long value = Long.parseLong(ctx.FloatingPointLiteral().getText());
-            return new LongLiteralNode(value);
-        } catch (NumberFormatException e) {
-            return new BigIntegerLiteralNode(new BigInteger(ctx.FloatingPointLiteral().getText()));
-        }
+        // TODO Create Float Literal node
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Float literal expression is not yet supported");
     }
 
     /**
@@ -281,9 +272,8 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public StringLiteralNode visitCharacterLiteralExpression(CALParser.CharacterLiteralExpressionContext ctx) {
-        // TODO Change to CharLiteralNode
-
-        return new StringLiteralNode(ctx.CharacterLiteral().getText());
+        // TODO Create Char Literal node
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Char literal expression is not yet supported");
     }
 
     /**
@@ -304,8 +294,10 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitVariableExpression(CALParser.VariableExpressionContext ctx) {
-        // TODO Add support for old variables
-
+        if (ctx.isOld != null) {
+            // TODO Add support for old variable
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Old variable expression is not yet supported");
+        }
         return ScopeEnvironment.getInstance().createReadNode(ctx.variable().getText());
     }
 
@@ -313,31 +305,42 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitSymbolReferenceExpression(CALParser.SymbolReferenceExpressionContext ctx) {
-        // TODO Create CALSymbolReferenceNode
-
-        return null;
+        // TODO Create Symbol Reference expression node
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Symbol Reference expression is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public ExprIfNode visitIfExpression(CALParser.IfExpressionContext ctx) {
-        return new ExprIfNode(
-            (CALExpressionNode) visit(ctx.condition),
-            (CALExpressionNode) visit(ctx.then),
-            ctx.elseIf != null ? visitElseIfExpression(ctx.elseIf) : (CALExpressionNode) visit(ctx.elze)
-        );
+        CALExpressionNode conditionNode = visit(ctx.condition);
+        CALExpressionNode thenNode = visit(ctx.then);
+
+        CALExpressionNode elseNode;
+        if (ctx.elseIf != null) {
+            elseNode = visitElseIfExpression(ctx.elseIf);
+        } else {
+            elseNode = visit(ctx.elze);
+        }
+
+        return new ExprIfNode(conditionNode, thenNode, elseNode);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public ExprIfNode visitElseIfExpression(CALParser.ElseIfExpressionContext ctx) {
-        return new ExprIfNode(
-                (CALExpressionNode) visit(ctx.condition),
-                (CALExpressionNode) visit(ctx.then),
-                ctx.elseIf != null ? visitElseIfExpression(ctx.elseIf) : (CALExpressionNode) visit(ctx.elze)
-        );
+        CALExpressionNode conditionNode = visit(ctx.condition);
+        CALExpressionNode thenNode = visit(ctx.then);
+
+        CALExpressionNode elseNode;
+        if (ctx.elseIf != null) {
+            elseNode = visitElseIfExpression(ctx.elseIf);
+        } else {
+            elseNode = visit(ctx.elze);
+        }
+
+        return new ExprIfNode(conditionNode, thenNode, elseNode);
     }
 
     /**
@@ -346,129 +349,167 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
     @Override public LetExprNode visitLetExpression(CALParser.LetExpressionContext ctx) {
         ScopeEnvironment.getInstance().pushScope(true, false);
 
-        StmtBlockNode head = new StmtBlockNode(CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables).toArray(new CALStatementNode[0]));
-        LetExprNode result = new LetExprNode(head, (CALExpressionNode) visit(ctx.body));
+        List<CALExpressionNode> localVariableNodes = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
+        StmtBlockNode headNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
+        CALExpressionNode bodyNode = visit(ctx.body);
+        LetExprNode letNode = new LetExprNode(headNode, bodyNode);
 
         ScopeEnvironment.getInstance().popScope();
 
-        return result;
+        return letNode;
     }
-
-    static int LAMBDA_ID = 1;
 
     /**
      * {@inheritDoc}
      */
     @Override public LambdaNode visitLambdaExpression(CALParser.LambdaExpressionContext ctx) {
-        // TODO Add support for constant lambdas
-        // TODO Add support for lambda return type
+        StmtBlockNode headNode;
+        CALExpressionNode bodyNode;
 
-        StmtBlockNode head;
-        CALExpressionNode body;
+        if (ctx.isConst != null) {
+            // TODO Add support for constant lambda
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Constant lambda expression is not yet supported");
+        }
+        if (ctx.type() != null) {
+            // TODO Add support for lambda return type
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Lambda expression's return type is not yet supported");
+        }
 
         ScopeEnvironment.getInstance().pushScope(true);
 
         if (ctx.formalParameters() != null) {
-            head = new StmtBlockNode(CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters()).toArray(new CALStatementNode[0]));
+            List<CALStatementNode> formalParameterNodes = (ArrayList<CALStatementNode>) CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
+            headNode = new StmtBlockNode(formalParameterNodes.toArray(new CALStatementNode[0]));
         } else {
-            head = null;
+            headNode = null;
         }
 
         if (ctx.localVariables != null) {
             ScopeEnvironment.getInstance().pushScope(true, false);
 
-            StmtBlockNode letHead = new StmtBlockNode(CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables).toArray(new CALStatementNode[0]));
-            body = new LetExprNode(letHead, (CALExpressionNode) visit(ctx.body));
+            List<CALExpressionNode> localVariableNodes = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
+            StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
+            CALExpressionNode letBodyNode = visit(ctx.body);
+
+            bodyNode = new LetExprNode(letHeadNode, letBodyNode);
 
             ScopeEnvironment.getInstance().popScope();
         } else {
-            body = (CALExpressionNode) visit(ctx.body);
+            bodyNode = visit(ctx.body);
         }
 
-        ReturnsLastBodyNode bodyNode = new ReturnsLastBodyNode(head, body);
-        CALRootNode bodyRootNode = new CALRootNode(ScopeEnvironment.getInstance().getLanguage(), ScopeEnvironment.getInstance().getCurrentScope().getFrame(), bodyNode, null, "lambda-" + LAMBDA_ID);
-        LambdaNode result = new LambdaNode(bodyRootNode);
+        ReturnsLastBodyNode lambdaBodyNode = new ReturnsLastBodyNode(headNode, bodyNode);
+        CALRootNode lambdaBodyRootNode = new CALRootNode(
+                ScopeEnvironment.getInstance().getLanguage(),
+                ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
+                lambdaBodyNode,
+                null,
+                ScopeEnvironment.generateLambdaName()
+        );
+        LambdaNode lambdaNode = new LambdaNode(lambdaBodyRootNode);
 
         ScopeEnvironment.getInstance().popScope();
-        LAMBDA_ID++;
 
-        return result;
+        return lambdaNode;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitProcExpression(CALParser.ProcExpressionContext ctx) {
-        // TODO Create CALProcExpressionNode
-
-        return null;
+        // TODO Create Proc expression node
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Proc expression is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitSetComprehension(CALParser.SetComprehensionContext ctx) {
-        // TODO Create SetInitNode + UnknownSizeSetInitNode => see {@link visitListComprehension}
-
-        return null;
+        // TODO Create Set Init node and Unknown Size Set Init node => see #visitListComprehension
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Set comprehension expression is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitListComprehension(CALParser.ListComprehensionContext ctx) {
-        // TODO Add support for multiple computation expressions
-        // TODO Add support for multiple variables in a generator
-        // TODO Add support for multiple generators
-        // TODO Add support for generator filters
-
         if (ctx.generators() == null) {
-            // Simple collection expression
-            if (ctx.computations == null) {
-                return new ListInitNode(new CALExpressionNode[0]);
+            // Simple list collection expression
+            CALExpressionNode[] valueNodes;
+            if (ctx.computations != null) {
+                valueNodes = CollectionVisitor.getInstance().visitExpressions(ctx.computations).toArray(new CALExpressionNode[0]);
+            } else {
+                valueNodes = new CALExpressionNode[0];
             }
 
-            return new ListInitNode(CollectionVisitor.getInstance().visitExpressions(ctx.computations).toArray(new CALExpressionNode[0]));
-        }
-
-        // Comprehensions w/ generators
-        ScopeEnvironment environment = ScopeEnvironment.getInstance();
-
-        CALExpressionNode variableNode = null;
-        CALExpressionNode collectionNode = null;
-        for (CALParser.GeneratorContext context: ctx.generators().generator()) {
-            for (Token variable : context.generatorBody().variables) {
-                variableNode = environment.createWriteNode(variable.getText(), null);
-                break;
-            }
-            collectionNode = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(context.generatorBody().expressions())).get(0);
-            break;
-        }
-        CALExpressionNode computationExpression = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.computations)).get(0);
-
-        CALStatementNode[] comprehensionBody = new CALStatementNode[3];
-        // Initialization
-        comprehensionBody[0] = environment.createWriteNode("$tempList", new UnknownSizeListInitNode());
-        comprehensionBody[1] = environment.createWriteNode("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
-        // Loop iteration body
-        CALStatementNode[] loopBody = new CALStatementNode[2];
-        loopBody[0] = ListWriteNodeGen.create(environment.createReadNode("$tempList"), environment.createReadNode("$comprehensionCounter"), computationExpression);
-        loopBody[1] = environment.createWriteNode(
-                "$comprehensionCounter",
-                CALBinaryAddNodeGen.create(
-                        environment.createReadNode("$comprehensionCounter"),
-                        new BigIntegerLiteralNode(new BigInteger("1"))
-                )
-        );
-        CALStatementNode loopBodyNode = new StmtBlockNode(loopBody);
-
-        if (variableNode instanceof CALWriteLocalVariableNode) {
-            comprehensionBody[2] = ForeacheNodeGen.create(loopBodyNode, (CALWriteLocalVariableNode) variableNode, collectionNode);
-            CALStatementNode comprehensionBodyNode = new StmtBlockNode(comprehensionBody);
-
-            return new ReturnsLastBodyNode(comprehensionBodyNode, environment.createReadNode("$tempList"));
+            return new ListInitNode(valueNodes);
         } else {
-            throw new Error("Comprehension Expression: Variable name re-use is unsupported.");
+            // Comprehensions w/ generators
+            CALExpressionNode variableNode = null;
+            CALExpressionNode collectionNode = null;
+
+            if (ctx.generators().generator().size() > 1) {
+                // TODO Add support for multiple generators
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.generators(), "Multiple comprehension generators are not yet supported");
+            }
+            for (CALParser.GeneratorContext generatorCtx: ctx.generators().generator()) {
+                if (generatorCtx.generatorBody().variables.size() > 1) {
+                    // TODO Add support for multiple variables in a generator
+                    throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a comprehension generator are not yet supported");
+                }
+                for (Token variable: generatorCtx.generatorBody().variables) {
+                    variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), null);
+
+                    if (!(variableNode instanceof CALWriteLocalVariableNode)) {
+                        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Variable name re-use in a comprehension generator is not yet supported");
+                    }
+                }
+                List<CALExpressionNode> expressionNodes = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(generatorCtx.generatorBody().expressions()));
+                collectionNode = expressionNodes.get(0);
+
+                if (expressionNodes.size() > 1) {
+                    // TODO Add support for generator filters
+                    throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Comprehension generator filters are not yet supported");
+                }
+            }
+
+            List<CALExpressionNode> computationExpressions = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.computations);
+            if (computationExpressions.size() > 1) {
+                // TODO Add support for multiple computation expressions
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.computations, "Multiple comprehension computation expressions are not yet supported");
+            }
+            CALExpressionNode computationExpression = computationExpressions.get(0);
+
+            /**
+             * Comprehension expression is translated into a block of statements:
+             *      $tempList = [];
+             *      $comprehensionCounter = 0;
+             *      foreach (<Variable> in <Collection>) {
+             *          $tempList[$comprehensionCounter] = <Computation Expression>; // Note: Computation Expression use Variable
+             *          $comprehensionCounter++;
+             *      }
+             *      return $tempList;
+             */
+            CALStatementNode[] comprehensionStatementNodes = new CALStatementNode[3];
+            comprehensionStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode("$tempList", new UnknownSizeListInitNode()); // $tempList = [];
+            comprehensionStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode("$comprehensionCounter", new LongLiteralNode(0)); // $comprehensionCounter = 0;
+
+            CALStatementNode[] loopStatementNodes = new CALStatementNode[2];
+            loopStatementNodes[0] = ListWriteNodeGen.create(
+                    ScopeEnvironment.getInstance().createReadNode("$tempList"),
+                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter"),
+                    computationExpression
+            ); // $tempList[$comprehensionCounter] = <Computation Expression>;
+            loopStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
+                    "$comprehensionCounter",
+                    CALBinaryAddNodeGen.create(ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter"), new LongLiteralNode(1))
+            ); // $comprehensionCounter++;
+            CALStatementNode loopBodyNode = new StmtBlockNode(loopStatementNodes);
+
+            comprehensionStatementNodes[2] = ForeacheNodeGen.create(loopBodyNode, (CALWriteLocalVariableNode) variableNode, collectionNode); // foreach (<Variable> in <Collection>) { ... }
+            CALStatementNode comprehensionBodyNode = new StmtBlockNode(comprehensionStatementNodes);
+
+            return new ReturnsLastBodyNode(comprehensionBodyNode, ScopeEnvironment.getInstance().createReadNode("$tempList")); // ... return $tempList;
         }
     }
 
@@ -476,63 +517,66 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitMapComprehension(CALParser.MapComprehensionContext ctx) {
-        // TODO Create MapInitNode + UnknownSizeMapInitNode => see {@link visitListComprehension}
-
-        return null;
+        // TODO Create Map Init node and Unknown Size Map Init node => see #visitListComprehension
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Map comprehension expression is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitMappings(CALParser.MappingsContext ctx) {
-        // TODO First resolve {@link visitMapComprehension} dependencies
-
-        return null;
+        // TODO First resolve #visitMapComprehension
+        // Note: Unreachable for now
+        return super.visitMappings(ctx);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitMapping(CALParser.MappingContext ctx) {
-        // TODO First resolve {@link visitMapComprehension} dependencies
-
-        return null;
+        // TODO First resolve #visitMappings
+        // Note: Unreachable for now
+        return super.visitMapping(ctx);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitTypeAssertionExpression(CALParser.TypeAssertionExpressionContext ctx) {
-        // TODO Create CALTypeAssertionExpressionNode
-
-        return null;
+        // TODO Create Type Assertion expression node
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Type Assertion expression is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitCaseExpression(CALParser.CaseExpressionContext ctx) {
-        // TODO Create CALCaseExpressionNode
-
-        return null;
+        // TODO Create Case expression node
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Case expression is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitAlternativeExpression(CALParser.AlternativeExpressionContext ctx) {
-        // TODO First resolve {@link visitCaseExpression} dependencies
-
-        return null;
+        // TODO First resolve #visitCaseExpression
+        // Note: Unreachable for now
+        return super.visitAlternativeExpression(ctx);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitCallExpression(CALParser.CallExpressionContext ctx) {
-        return new CALInvokeNode(
-                visitVariableExpression(ctx.function),
-                ctx.arguments != null ? CollectionVisitor.getInstance().visitExpressions(ctx.arguments).toArray(new CALExpressionNode[0]) : new CALExpressionNode[0]
-        );
+        CALExpressionNode functionNode = ExpressionVisitor.getInstance().visitVariableExpression(ctx.function);
+
+        CALExpressionNode[] argumentNodes;
+        if (ctx.arguments != null) {
+            argumentNodes = CollectionVisitor.getInstance().visitExpressions(ctx.arguments).toArray(new CALExpressionNode[0]);
+        } else {
+            argumentNodes = new CALExpressionNode[0];
+        }
+
+        return new CALInvokeNode(functionNode, argumentNodes);
     }
 }
