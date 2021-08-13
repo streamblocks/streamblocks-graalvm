@@ -96,7 +96,7 @@ public class ExprComprehensionTransformer extends ScopedTransformer<CALComprehen
         String name = varDecl.getName();
         Expression value = varDecl.getValue();
         CALExpressionNode valueNode = transformExpr(value);
-        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, getTypeInfo(varDecl.getType()), FrameSlotKind.Illegal);
         boolean newVariable = true;
         FrameSlotAndDepth slot;
         slot = new FrameSlotAndDepthRW(frameSlot, context.getDepth());

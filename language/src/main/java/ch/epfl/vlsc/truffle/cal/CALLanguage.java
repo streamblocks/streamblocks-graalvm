@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
@@ -84,6 +85,9 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
     @Option(help = "Includes all files of directory", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "directory-lookup")
     public static final OptionKey<Boolean> dirLookup = new OptionKey<>(false);
 
+    @Option(help = "Sets the default bit length used for int/uint variables without size parameter specified. Default: 32", category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, name = "bitlength")
+    public static final OptionKey<Integer> bitlength = new OptionKey<>(32);
+
     @Override
     protected CALContext createContext(Env env) {
         return new CALContext(this, env, new ArrayList<>(EXTERNAL_BUILTINS));
@@ -98,7 +102,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         // Assign
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         String actorInstanceName = "testActorInstance";
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, FrameSlotKind.Illegal);
+        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, new DefaultValueCastNodeCreator(),FrameSlotKind.Illegal);
         FrameSlotAndDepthRW existingSlot = new FrameSlotAndDepthRW(frameSlot, 0);
         boolean newVariable = true;
         CALExpressionNode valueNode = call;
@@ -122,7 +126,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
 
             // Assign
             String executionStatusVarName = "$" + actorInstanceName + "executed" + String.valueOf(source.hashCode());
-            FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, FrameSlotKind.Boolean);
+            FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, new DefaultValueCastNodeCreator(),FrameSlotKind.Boolean);
             FrameSlotAndDepthRW executionStatusExistingSlot = new FrameSlotAndDepthRW(executionStatusFrameSlot, 0);
             bodyNodes[1] = executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), true, 0);
 

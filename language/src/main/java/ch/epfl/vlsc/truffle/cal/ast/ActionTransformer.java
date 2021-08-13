@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
@@ -32,10 +31,10 @@ import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.InputPattern;
 import se.lth.cs.tycho.ir.entity.cal.OutputExpression;
-import se.lth.cs.tycho.ir.expr.Expression;
 import se.lth.cs.tycho.ir.expr.pattern.Pattern;
 import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 import se.lth.cs.tycho.ir.stmt.Statement;
+import se.lth.cs.tycho.ir.type.TypeExpr;
 
 public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
@@ -117,16 +116,20 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
                 for (int j = 0; j < input.getMatches().size(); ++j) {
                     Pattern pat = input.getMatches().get(j).getExpression().getAlternatives().get(0).getPattern();
                     String name;
-                    if (pat instanceof PatternBinding)
+                    TypeExpr type;
+                    if (pat instanceof PatternBinding){
                         name = ((PatternBinding) pat).getDeclaration().getName();
+                        type = ((PatternBinding) pat).getDeclaration().getType();
+                    }
                     else
                         throw new TransformException("Pattern not implemented", context.getSource(), pat);
-                    inputTokenBindings.add(createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
+                    inputTokenBindings.add(createAssignment(name, type, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
                 }
                 firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(input.getMatches().size()),
                         new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
             } else {
                 ArrayList<String> inputExprNames = new ArrayList<String>();
+                ArrayList<TypeExpr> types = new ArrayList<TypeExpr>();
                 inputExprNames.ensureCapacity(input.getMatches().size());
                 for (int j = 0; j < input.getMatches().size(); ++j) {
                     Pattern pat = input.getMatches().get(j).getExpression().getAlternatives().get(0).getPattern();
@@ -134,12 +137,13 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
                     if (pat instanceof PatternBinding) {
                         name = ((PatternBinding) pat).getDeclaration().getName();
                         inputExprNames.add(name);
+                        types.add(((PatternBinding) pat).getDeclaration().getType());
                     } else
                         throw new TransformException("Pattern not implemented", context.getSource(), pat);
                 }
-                List<CALExpressionNode> listReadNodes = createRepeatBatchInput(inputTokenBindings, inputExprNames, input.getPort().getName(), transformExpr(input.getRepeatExpr()));
+                List<CALExpressionNode> listReadNodes = createRepeatBatchInput(inputTokenBindings, inputExprNames, types, input.getPort().getName(), transformExpr(input.getRepeatExpr()));
                 for (int j = 0; j < listReadNodes.size(); ++j) {
-                    inputTokenBindings.add(createAssignment(inputExprNames.get(j), listReadNodes.get(j)));
+                    inputTokenBindings.add(createAssignment(inputExprNames.get(j), types.get(j), listReadNodes.get(j)));
                 }
                 firingConditions.add(CALBinaryLessOrEqualNodeGen.create(CALBinaryMulNodeGen.create(transformExpr(input.getRepeatExpr()), new LongLiteralNode(input.getMatches().size())),
                         new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
@@ -215,7 +219,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name, isQidTagged, transactionCommits.toArray(new CALStatementNode[transactionCommits.size()]), transactionRollbacks.toArray(new CALStatementNode[transactionRollbacks.size()]));
     }
 
-    private List<CALExpressionNode> createRepeatBatchInput(List<CALStatementNode> bodyArr, ArrayList<String> inputExprNames, String portName, CALExpressionNode repeatExpr) {
+    private List<CALExpressionNode> createRepeatBatchInput(List<CALStatementNode> bodyArr, ArrayList<String> inputExprNames, ArrayList<TypeExpr> types, String portName, CALExpressionNode repeatExpr) {
         LinkedList<CALStatementNode> init = new LinkedList<CALStatementNode>();
         List<String> tempListNames = inputExprNames.stream().map(exprName -> "$tempList" + exprName.hashCode()).collect(Collectors.toList());
         List<String> comprehensionCounterVarNames = inputExprNames.stream().map(exprName -> "$comprehensionCounter" + exprName.hashCode()).collect(Collectors.toList());
@@ -231,7 +235,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         ArrayList<CALStatementNode> bodyNodes = new ArrayList<CALStatementNode>();
         for(int i = 0; i < inputExprNames.size(); ++i){
             bodyNodes.add(ListWriteNodeGen.create(getReadNode(tempListNames.get(i)), getReadNode(comprehensionCounterVarNames.get(i)),
-                    new CALReadFIFONode(getReadNode(portName))));
+                    getTypeInfo(types.get(i)).create(new CALReadFIFONode(getReadNode(portName)))));
             bodyNodes.add(createAssignment(comprehensionCounterVarNames.get(i), CALBinaryAddNodeGen
                     .create(getReadNode(comprehensionCounterVarNames.get(i)), new BigIntegerLiteralNode(new BigInteger("1")))));
         }

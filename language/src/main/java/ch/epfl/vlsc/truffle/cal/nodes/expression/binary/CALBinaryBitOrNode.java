@@ -13,7 +13,7 @@ public abstract class CALBinaryBitOrNode extends CALBinaryNode {
 
     @Specialization(rewriteOn = ArithmeticException.class)
     protected long bitOr(long left, long right) {
-        return left & right;
+        return left | right;
     }
 
     @Specialization

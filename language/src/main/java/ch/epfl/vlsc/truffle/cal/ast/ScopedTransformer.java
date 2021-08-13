@@ -7,17 +7,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
-import ch.epfl.vlsc.truffle.cal.nodes.util.IRNodeTreePrinterConsumer;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.IntCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
@@ -30,6 +32,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import org.graalvm.polyglot.Value;
 import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
@@ -52,6 +55,55 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         this.context = context;
     }
 
+    protected ValueCastNodeCreator getTypeInfo(TypeExpr type) {
+        if(type instanceof NominalTypeExpr){
+            NominalTypeExpr nomType = (NominalTypeExpr) type;
+            List<Expression> s = nomType.getValueParameters().stream().filter(x -> x.getName().equals("size")).map(x -> x.getValue()).collect(Collectors.toList());
+            CALExpressionNode intsize = s.size() > 0 ? transformExpr(s.get(0)) : new LongLiteralNode(CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.bitlength));
+            switch (nomType.getName()){
+                case "int":
+                    return new IntCastNodeCreator(intsize, true);
+                case "uint":
+                    return new IntCastNodeCreator(intsize, false);
+                case "List":
+                    // TODO: handleList();
+                    break;
+                case "bool":
+                    // TODO: handleBool();
+                    break;
+                default:
+                    throw new TransformException("Unknown type: " + type, context.getSource(), type);
+            }
+            return new DefaultValueCastNodeCreator();
+        } else if (type == null)
+            return new DefaultValueCastNodeCreator();
+        else
+            throw new TransformException("Unknown type class: " + type, context.getSource(), type);
+    }
+
+    private FrameSlotKind getFrameSlotKind(TypeExpr type) {
+        if(type instanceof NominalTypeExpr){
+            NominalTypeExpr nomType = (NominalTypeExpr) type;
+            switch (nomType.getName()){
+                case "int":
+                    break;
+                case "uint":
+                    // handleUint();
+                    break;
+                case "List":
+                    // handleList();
+                    break;
+                case "bool":
+                    // handleBool();
+                    break;
+                default:
+                    throw new TransformException("Unknown type: " + type, context.getSource(), type);
+            }
+            return FrameSlotKind.Illegal;
+        } else
+            return FrameSlotKind.Illegal;
+    }
+
     // TODO move in a new EntityTransformer
     // TODO merge with transformVarDecl
     protected CALStatementNode transformPortDecl(PortDecl port, Integer position) {
@@ -59,7 +111,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // give the rw verion to the assigning node
         // and keep the ro view for the context.getLexicalScope() as arguments can't
         // be modified
-        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(port.getName(), FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(port.getName(), getTypeInfo(port.getType()), getFrameSlotKind(port.getType()));
         FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
         context.getLexicalScope().put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
         return new InitializeArgNode(frameSlot, position);
@@ -72,7 +124,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // give the rw verion to the assigning node
         // and keep the ro view for the context.getLexicalScope() as arguments can't
         // be modified
-        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(varDecl.getName(), FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(varDecl.getName(), getTypeInfo(varDecl.getType()), getFrameSlotKind(varDecl.getType()));
         FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
         context.getLexicalScope().put(varDecl.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
         return new InitializeArgNode(frameSlot, position);
@@ -85,9 +137,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         Expression value = varDecl.getValue();
         if(value == null && varDecl.getType() instanceof NominalTypeExpr){
             NominalTypeExpr varDeclType = (NominalTypeExpr) varDecl.getType();
-            return createAssignment(name, fetchDefaultValue(varDeclType));
+            return createAssignment(name, getTypeInfo(varDecl.getType()), fetchDefaultValue(varDeclType));
         } else
-            return createAssignment(name, value);
+            return createAssignment(name, varDecl.getType(), value);
     }
 
     private CALExpressionNode fetchDefaultValue(NominalTypeExpr varDeclType) {
@@ -110,15 +162,28 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             throw new TransformException("No default value for type " + varDeclType.getName(), context.getSource(), varDeclType);
     }
 
-    protected CALExpressionNode createAssignment(String name, Expression value) {
+    protected CALExpressionNode createAssignment(String name, TypeExpr type, Expression value) {
         CALExpressionNode valueNode = transformExpr(value);
-        return createAssignment(name, valueNode);
+        return createAssignment(name, getTypeInfo(type), valueNode);
     }
 
-    protected CALExpressionNode createAssignment(String name, CALExpressionNode valueNode) {
+    protected CALExpressionNode createAssignment(String name, ValueCastNodeCreator caster, Expression value) {
+        CALExpressionNode valueNode = transformExpr(value);
+        return createAssignment(name, caster, valueNode);
+    }
+
+    protected CALExpressionNode createAssignment(String name, CALExpressionNode value) {
+        return createAssignment(name, new DefaultValueCastNodeCreator(), value);
+    }
+
+    protected CALExpressionNode createAssignment(String name, TypeExpr slotInfo, CALExpressionNode valueNode) {
+        return createAssignment(name, getTypeInfo(slotInfo), valueNode);
+    }
+
+    protected CALExpressionNode createAssignment(String name, ValueCastNodeCreator slotInfo, CALExpressionNode valueNode) {
         // FIXME we have to handle the case where actor declare a state and an action
         // redaclare a variable with the same name
-        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, slotInfo, FrameSlotKind.Illegal);
         boolean newVariable = false;
         FrameSlotAndDepth slot;
         if (!context.getLexicalScope().containsKey(name)) {
@@ -226,11 +291,11 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         CALStatementNode[] init = new CALStatementNode[3];
         // tempList=[]
         String tempListName = "$tempList" + String.valueOf(comprehension.hashCode());
-        init[0] = createAssignment(tempListName, new UnknownSizeListInitNode());
+        init[0] = createAssignment(tempListName, new DefaultValueCastNodeCreator(), new UnknownSizeListInitNode());
 
         // i=0
         String listIndexVarName = "$comprehensionCounter" + String.valueOf(comprehension.hashCode());
-        init[1] = createAssignment(listIndexVarName, new BigIntegerLiteralNode(new BigInteger("0")));
+        init[1] = createAssignment(listIndexVarName, new DefaultValueCastNodeCreator(), new BigIntegerLiteralNode(new BigInteger("0")));
 
         // The Comprehension nodes will generate the content into the above list
         init[2] = (new ExprComprehensionTransformer(comprehension, tempListName, listIndexVarName, context)).transform();
@@ -496,7 +561,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             LValueVariable lvalue = (LValueVariable) stmtAssignment.getLValue();
             String name = lvalue.getVariable().getName();
 
-            return createAssignment(name, stmtAssignment.getExpression());
+            return createAssignment(name, new DefaultValueCastNodeCreator(), stmtAssignment.getExpression());
         } else if (stmtAssignment.getLValue() instanceof LValueIndexer) {
             LValueIndexer lvalue = (LValueIndexer) stmtAssignment.getLValue();
             return ListWriteNodeGen.create(getReadNode(lvalue.getStructure()), transformExpr(lvalue.getIndex()),

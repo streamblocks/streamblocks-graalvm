@@ -8,7 +8,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import ch.epfl.vlsc.truffle.cal.CALException;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
-@NodeInfo(shortName = "<=")
+@NodeInfo(shortName = ">=")
 public abstract class CALBinaryBiggerOrEqualNode extends CALBinaryNode {
 
     @Specialization
