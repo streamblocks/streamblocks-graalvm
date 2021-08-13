@@ -80,7 +80,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitUnaryOperationExpression(CALParser.UnaryOperationExpressionContext ctx) {
-        CALExpressionNode operand = (CALExpressionNode) visit(ctx.operand);
+        CALExpressionNode operand = visit(ctx.operand);
         String operator = ctx.operator.getText();
 
         switch (operator) {
@@ -349,7 +349,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
     @Override public LetExprNode visitLetExpression(CALParser.LetExpressionContext ctx) {
         ScopeEnvironment.getInstance().pushScope(true, false);
 
-        List<CALExpressionNode> localVariableNodes = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
+        Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
         StmtBlockNode headNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
         CALExpressionNode bodyNode = visit(ctx.body);
         LetExprNode letNode = new LetExprNode(headNode, bodyNode);
@@ -372,13 +372,13 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
         }
         if (ctx.type() != null) {
             // TODO Add support for lambda return type
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Lambda expression's return type is not yet supported");
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Lambda expression return type is not yet supported");
         }
 
         ScopeEnvironment.getInstance().pushScope(true);
 
         if (ctx.formalParameters() != null) {
-            List<CALStatementNode> formalParameterNodes = (ArrayList<CALStatementNode>) CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
+            Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
             headNode = new StmtBlockNode(formalParameterNodes.toArray(new CALStatementNode[0]));
         } else {
             headNode = null;
@@ -387,7 +387,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
         if (ctx.localVariables != null) {
             ScopeEnvironment.getInstance().pushScope(true, false);
 
-            List<CALExpressionNode> localVariableNodes = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
+            Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
             StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
             CALExpressionNode letBodyNode = visit(ctx.body);
 

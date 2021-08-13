@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.parser.visitors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 import org.antlr.v4.runtime.Token;
@@ -12,7 +13,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
- * Singleton class that provides an implementation for a collection rules.
+ * Singleton class that provides an implementation for collection rules.
  */
 public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
 
@@ -49,12 +50,51 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
     /**
      * {@inheritDoc}
      */
-    @Override public Collection<CALWriteFIFONode> visitOutputExpressions(CALParser.OutputExpressionsContext ctx) {
-        Collection<CALWriteFIFONode> expressions = new ArrayList<>();
+    @Override public Collection<InitializeArgNode> visitPortDeclarations(CALParser.PortDeclarationsContext ctx) {
+        Collection<InitializeArgNode> ports = new ArrayList<>();
+        for (CALParser.PortDeclarationContext portCtx: ctx.portDeclaration()) {
+            ports.add(ActorVisitor.getInstance().visitPortDeclaration(portCtx));
+        }
 
-        //expressions.add(ActionVisitor.getInstance().visitOutputExpression(ctx.outputExpression));
-        for (CALParser.OutputExpressionContext context: ctx.outputExpression()) {
-            expressions.add(ActionVisitor.getInstance().visitOutputExpression(context));
+        return ports;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<CALExpressionNode> visitInputPatterns(CALParser.InputPatternsContext ctx) {
+        Collection<CALExpressionNode> patterns = new ArrayList<>();
+        for (CALParser.InputPatternContext patternCtx: ctx.inputPattern()) {
+            patterns.add(ActionVisitor.getInstance().visitInputPattern(patternCtx));
+        }
+
+        return patterns;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitPatterns(CALParser.PatternsContext ctx) {
+        // Note: Unreachable for now, only children directly accessed in ActionVisitor#visitInputPattern
+        return super.visitPatterns(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitSubPatterns(CALParser.SubPatternsContext ctx) {
+        // TODO First resolve ActionVisitor#visitInputPattern
+        // Note: Unreachable for now
+        return super.visitSubPatterns(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<CALStatementNode> visitOutputExpressions(CALParser.OutputExpressionsContext ctx) {
+        Collection<CALStatementNode> expressions = new ArrayList<>();
+        for (CALParser.OutputExpressionContext expressionCtx: ctx.outputExpression()) {
+            expressions.add(ActionVisitor.getInstance().visitOutputExpression(expressionCtx));
         }
 
         return expressions;
@@ -65,10 +105,8 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
      */
     @Override public Collection<Collection<Token>> visitActionTags(CALParser.ActionTagsContext ctx) {
         Collection<Collection<Token>> tags = new ArrayList<>();
-
-        //tags.add(ActionVisitor.getInstance().visitActionTag(ctx.actionTag));
-        for (CALParser.ActionTagContext context: ctx.actionTag()) {
-            tags.add(ActionVisitor.getInstance().visitActionTag(context));
+        for (CALParser.ActionTagContext tagCtx: ctx.actionTag()) {
+            tags.add(ActionVisitor.getInstance().visitActionTag(tagCtx));
         }
 
         return tags;
@@ -79,10 +117,8 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
      */
     @Override public Collection<CALExpressionNode> visitBlockVariableDeclarations(CALParser.BlockVariableDeclarationsContext ctx) {
         Collection<CALExpressionNode> variableNodes = new ArrayList<>();
-
-        //variableNodes.add(VariableVisitor.getInstance().visitBlockVariableDeclaration(ctx.blockVariableDeclaration));
-        for (CALParser.BlockVariableDeclarationContext context: ctx.blockVariableDeclaration()) {
-            variableNodes.add(VariableVisitor.getInstance().visitBlockVariableDeclaration(context));
+        for (CALParser.BlockVariableDeclarationContext variableCtx: ctx.blockVariableDeclaration()) {
+            variableNodes.add(VariableVisitor.getInstance().visitBlockVariableDeclaration(variableCtx));
         }
 
         return variableNodes;
@@ -93,10 +129,8 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
      */
     @Override public Collection<CALStatementNode> visitFormalParameters(CALParser.FormalParametersContext ctx) {
         Collection<CALStatementNode> formalParameterNodes = new ArrayList<>();
-
-        //formalParameterNodes.add(VariableVisitor.getInstance().visitFormalParameter(ctx.formalParameter));
-        for (CALParser.FormalParameterContext context: ctx.formalParameter()) {
-            formalParameterNodes.add(VariableVisitor.getInstance().visitFormalParameter(context));
+        for (CALParser.FormalParameterContext formalParameterCtx: ctx.formalParameter()) {
+            formalParameterNodes.add(VariableVisitor.getInstance().visitFormalParameter(formalParameterCtx));
         }
 
         return formalParameterNodes;
@@ -105,15 +139,72 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
     /**
      * {@inheritDoc}
      */
+    @Override public Collection<?> visitTypes(CALParser.TypesContext ctx) {
+        // TODO First resolve TypeVisitor#visitType
+        // Note: Unreachable for now
+        return super.visitTypes(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitTypeParameters(CALParser.TypeParametersContext ctx) {
+        // TODO First resolve TypeVisitor#visitType
+        // Note: Unreachable for now
+        return super.visitTypeParameters(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitTypeAttributes(CALParser.TypeAttributesContext ctx) {
+        // TODO First resolve TypeVisitor#visitType
+        // Note: Unreachable for now
+        return super.visitTypeAttributes(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitGenerators(CALParser.GeneratorsContext ctx) {
+        // Note: Unreachable for now, only children directly accessed in ExpressionVisitor#visitListComprehension
+        return super.visitGenerators(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitForeachGenerators(CALParser.ForeachGeneratorsContext ctx) {
+        // Note: Unreachable for now, only children directly accessed in StatementVisitor#visitForeachStatement
+        return super.visitForeachGenerators(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitChooseGenerators(CALParser.ChooseGeneratorsContext ctx) {
+        // Note: Unreachable for now, StatementVisitor#visitChooseStatement is not yet implemented
+        return super.visitChooseGenerators(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override public Collection<CALExpressionNode> visitExpressions(CALParser.ExpressionsContext ctx) {
         Collection<CALExpressionNode> expressionNodes = new ArrayList<>();
-
-        for (CALParser.ExpressionContext context: ctx.expression()) {
-            expressionNodes.add((CALExpressionNode) ExpressionVisitor.getInstance().visit(context));
+        for (CALParser.ExpressionContext expressionCtx: ctx.expression()) {
+            expressionNodes.add(ExpressionVisitor.getInstance().visit(expressionCtx));
         }
 
         return expressionNodes;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitLvalues(CALParser.LvaluesContext ctx) {
+        // Note: Unreachable for now
+        return super.visitLvalues(ctx);
+    }
 
 }
