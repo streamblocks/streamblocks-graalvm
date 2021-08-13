@@ -1,7 +1,7 @@
 namespace test:
 	actor test() ==> :
-        int a := 1;
-        timesa = lambda(x) : a * x end;
+        /*int*/ a := 1;
+        timesa := lambda(x) : a * x end;
 		action ==>
 		do
 			println(timesa(2));

@@ -3,7 +3,7 @@ namespace test:
 	actor test() ==> :
 		action ==>
 		var
-			int a := 0
+			/*int*/ a := 0
 		do
 			a := a + 1;
 			println(a);

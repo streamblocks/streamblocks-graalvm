@@ -3,8 +3,8 @@ namespace test:
 	actor test() ==> :
 		action ==>
 		var
-			f := lambda (int x) --> int var int y := 2: y - x end,
-			int a := 1
+			f := lambda (/*int*/ x) var /*int*/ y := 2: y - x end,
+			/*int*/ a := 1
 		do
             a := a ^ a;
 			a := a + 2 - 1;

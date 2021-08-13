@@ -3,8 +3,8 @@ namespace test:
 	actor test() ==> :
 		action ==>
 		var
-			bool a := true,
-			bool b := false
+			/*bool*/ a := true,
+			/*bool*/ b := false
 		do
             if a then
                 println("TRUE");

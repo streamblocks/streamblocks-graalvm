@@ -21,7 +21,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("precedence").build());
     }
 
-    @Ignore
     @Test
     public void actorStateTest() throws IOException {
         runTest(TestCase.newBuilder("add-stored-var").setIterations(10).build());

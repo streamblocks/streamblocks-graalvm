@@ -1,10 +1,10 @@
 namespace test:
 
 	actor test() ==> :
-        List(type: int, size=2) a := [1,2];
+        /*List(type: int, size=2)*/ a := [1,2];
 		action ==>
 		var
-			List(type: int, size=2) b := [a[i] * a[i]: for int i in [0,1]]
+			/*List(type: int, size=2)*/ b := [a[i] * a[i]: for int i in [0,1]]
 		do
             foreach int c in b do
 			    println(c);

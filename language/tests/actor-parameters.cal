@@ -3,16 +3,16 @@ namespace simple.dwf:
      * Source actor
      * Produces 16 token from 0 to 15, and send them to output OUT.
      */
-    actor Source(int MIN, int MAX)
-        ==> int OUT:
+    actor Source(/*int*/ MIN, /*int*/ MAX)
+        ==> /*int*/ OUT:
 
-        int Counter := MIN;
+        /*int*/ Counter := MIN;
 
         action ==> OUT:[token]
         guard
             Counter < MAX
         var
-            int token = Counter
+            /*int*/ token = Counter
         do
             Counter := Counter + 1;
         end
@@ -25,7 +25,7 @@ namespace simple.dwf:
      * and prints the tokens to the standart output.
      */
     actor Sink()
-        int IN ==> :
+        /*int*/ IN ==> :
 
         action IN:[token] ==>
         do
