@@ -317,11 +317,19 @@ public interface CALParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPatterns(CALParser.PatternsContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CALParser#pattern}.
+	 * Visit a parse tree produced by the {@code SimplePattern}
+	 * labeled alternative in {@link CALParser#pattern}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitPattern(CALParser.PatternContext ctx);
+	T visitSimplePattern(CALParser.SimplePatternContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ComplexPattern}
+	 * labeled alternative in {@link CALParser#pattern}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitComplexPattern(CALParser.ComplexPatternContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CALParser#subPatterns}.
 	 * @param ctx the parse tree

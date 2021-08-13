@@ -316,7 +316,7 @@ portDeclarations:
 
 portDeclaration:
     annotation*
-    isMulti='multi'? isType=type? name=ID
+    isMulti='multi'? type? name=ID
 ;
 
 processDescription:
@@ -348,7 +348,7 @@ inputPatterns:
 ;
 
 inputPattern:
-    (ID ':')? '[' patterns? ']' ('repeat' expression)? channelSelector?
+    (port=ID ':')? '[' patterns? ']' ('repeat' repeat=expression)? channelSelector?
 ;
 
 channelSelector:
@@ -366,9 +366,9 @@ patterns:
 ;
 
 pattern:
-    variable
+    variable # SimplePattern
     |
-    variable '(' subPatterns? ')'
+    variable '(' subPatterns? ')' # ComplexPattern
 ;
 
 subPatterns:
@@ -512,7 +512,7 @@ blockVariableDeclaration:
 
 // Explicit variable declaration (CLR §5.1.1)
 explicitVariableDeclaration:
-    isMutable='mutable'? type? name=ID ('[' expression ']')* ((isAssignable='=' | ':=') value=expression)?
+    isMutable='mutable'? type? name=ID ('[' expression ']')* (('=' | isAssignable=':=') value=expression)?
 ;
 
 // Function & procedure declarations (CLR §6.9.3)
@@ -539,11 +539,11 @@ procedureVariableDeclaration:
 // -- Formal Parameters (CLR §6.9.1, but extended)
 // ----------------------------------------------------------------------------
 
-formalParameters locals [int position = 0]:
-    formalParameter[$position] { $position++; } (',' formalParameter[$position] { $position++; })*
+formalParameters:
+    formalParameter (',' formalParameter)*
 ;
 
-formalParameter [int position] :
+formalParameter:
     explicitVariableDeclaration
 ;
 
