@@ -232,7 +232,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void typeChecksTest() throws IOException {
         runTest(TestCase.newBuilder("typechecks").build());
     }
@@ -268,7 +267,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void jpegSingleImageTest() throws IOException {
         runTest(TestCase.newBuilder("jpeg/SingleImageTest").setIterations(-1).setActorName("jpeg.SingleImagePrinter").setDirLookup(true).build());
     }

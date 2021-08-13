@@ -3912,9 +3912,8 @@ namespace jpeg:
 		decoder = JpegDecoder();
 		display = ElementPrinter();
 	structure
-		source.Out --> decoder.BYTE; 
+		source.Out --> decoder.BYTE;
 		decoder.YCbCr --> display.In;
 		decoder.SOI --> display.SOI;
-	end	
-
+	end
 end

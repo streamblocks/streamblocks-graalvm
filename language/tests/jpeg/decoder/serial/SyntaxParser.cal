@@ -20,7 +20,6 @@ actor SyntaxParser()
 		to_read := -1;
 		sent := 0;
 		cur_marker := 0;
-	
 		offset := 2;
 	end
 	
