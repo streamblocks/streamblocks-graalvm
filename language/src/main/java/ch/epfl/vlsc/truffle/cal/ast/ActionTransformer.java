@@ -1,6 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,10 +106,18 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         // Firing conditions
         List<CALExpressionNode> firingConditions = new LinkedList<>();
         List<CALStatementNode> inputTokenBindings = new LinkedList<>();
+
+        // The fifos provide a mechanism similar to databases transaction-rollback-commit API
+        // The guards first ensure the number of required tokens are available in the FIFO
+        // And after that initiate a transaction and pop the tokens from the FIFO
+        // The guard condition is then evaluated. If it fails, the transaction is
+        // rolled-back(tokens popped are put back to the fifo) otherwise they are committed.
         List<CALFifoTransactionCommit> transactionCommits = new LinkedList<>();
         List<CALFifoTransactionRollback> transactionRollbacks = new LinkedList<>();
 
+        // Each Input pattern refers to one input port.
         for(InputPattern input: action.getInputPatterns()) {
+            // Initiate a transaction before popping values from the fifos
             inputTokenBindings.add(new CALFifoTransactionInit(getReadNode(input.getPort().getName())));
             if (input.getRepeatExpr() == null) {
                 for (int j = 0; j < input.getMatches().size(); ++j) {
@@ -181,7 +188,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             bodyArr.add(transformVarDecl(varDecl));
         }
         for (Statement statement : action.getBody()) {
-            bodyArr.add(transformSatement(statement));
+            bodyArr.add(transformStatement(statement));
         }
 
         // get the variables name linked to the output and add a write to the FIFO
@@ -223,16 +230,21 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         LinkedList<CALStatementNode> init = new LinkedList<CALStatementNode>();
         List<String> tempListNames = inputExprNames.stream().map(exprName -> "$tempList" + exprName.hashCode()).collect(Collectors.toList());
         List<String> comprehensionCounterVarNames = inputExprNames.stream().map(exprName -> "$comprehensionCounter" + exprName.hashCode()).collect(Collectors.toList());
+
+        // Create assignments for new lists to hold the read inputs and their sizes
         for(int i = 0; i < inputExprNames.size(); ++i){
             init.add(createAssignment(tempListNames.get(i), new UnknownSizeListInitNode()));
             init.add(createAssignment(comprehensionCounterVarNames.get(i), new BigIntegerLiteralNode(new BigInteger("0"))));
         }
 
-        // Create assignment to variable
+        // List of range 0..(numRepetitions - 1)
         CALExpressionNode list = ListRangeInitNodeGen.create(new BigIntegerLiteralNode(new BigInteger("0")),
                 CALBinarySubNodeGen.create(repeatExpr, new LongLiteralNode(1)));
-        //
         ArrayList<CALStatementNode> bodyNodes = new ArrayList<CALStatementNode>();
+
+        // We create a for loop iterating over the list 0..(numRepetitions - 1)
+        // In each iteration, number of tokens equal to number of expressions are
+        // popped and added to the list corresponding to the expression name
         for(int i = 0; i < inputExprNames.size(); ++i){
             bodyNodes.add(ListWriteNodeGen.create(getReadNode(tempListNames.get(i)), getReadNode(comprehensionCounterVarNames.get(i)),
                     getTypeInfo(types.get(i)).create(new CALReadFIFONode(getReadNode(portName)))));
@@ -243,6 +255,6 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         init.add(ForeacheNodeGen.create(body, null, list));
         bodyArr.addAll(init);
-        return tempListNames.stream().map(listName -> getReadNode(listName)).collect(Collectors.toList()); //new ReturnsLastBodyNode(new StmtBlockNode(init.toArray(new CALStatementNode[])), getReadNode("$tempList"));
+        return tempListNames.stream().map(listName -> getReadNode(listName)).collect(Collectors.toList());
     }
 }

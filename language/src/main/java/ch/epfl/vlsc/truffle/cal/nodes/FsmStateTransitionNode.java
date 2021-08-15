@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+// This node makes the transition from current state to next state depending on the executed action
 public class FsmStateTransitionNode extends CALExpressionNode{
     FrameSlot stateSlot;
     FrameSlot actorIndexSlot;

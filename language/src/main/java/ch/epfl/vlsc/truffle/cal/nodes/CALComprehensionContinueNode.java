@@ -32,6 +32,7 @@ public abstract class CALComprehensionContinueNode extends CALComprehensionNode 
 
     @Specialization(guards = "lists.isList(list)", limit = "2")
     public void execute(VirtualFrame frame, Object list, @CachedLibrary("list") ListLibrary lists) {
+        // This method can be optimized by the use of loopnode with profiling information
         // loopNode.execute(frame);
 
         int size = lists.size(list);

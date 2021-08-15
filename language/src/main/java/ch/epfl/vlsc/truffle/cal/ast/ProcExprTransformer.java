@@ -3,12 +3,8 @@ package ch.epfl.vlsc.truffle.cal.ast;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ProcNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 import com.oracle.truffle.api.source.SourceSection;
 import se.lth.cs.tycho.ir.decl.VarDecl;
-import se.lth.cs.tycho.ir.expr.ExprLambda;
 import se.lth.cs.tycho.ir.expr.ExprProc;
 import se.lth.cs.tycho.ir.stmt.Statement;
 
@@ -31,7 +27,7 @@ public class ProcExprTransformer extends ScopedTransformer<ProcNode> {
             i++;
         }
         for(Statement stmt: proc.getBody()){
-            body[i] = transformSatement(stmt);
+            body[i] = transformStatement(stmt);
             i++;
         }
         StmtBlockNode bodyStmt = new StmtBlockNode(body);

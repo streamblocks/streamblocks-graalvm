@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal;
 
 import java.io.File;
 import java.io.FileReader;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,6 +16,11 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import org.graalvm.options.OptionCategory;
@@ -79,7 +85,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
     @Option(help = "Actor to run", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "actor")
     public static final OptionKey<String> ActorToRun = new OptionKey<>("main");
 
-    @Option(help = "Number of iterations", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "iterations")
+    @Option(help = "Number of iterations, set to -1 for running till completion", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "iterations")
     public static final OptionKey<Integer> Iterations = new OptionKey<>(-1);
 
     @Option(help = "Includes all files of directory", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "directory-lookup")
@@ -102,7 +108,11 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         // Assign
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         String actorInstanceName = "testActorInstance";
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, new DefaultValueCastNodeCreator(),FrameSlotKind.Illegal);
+
+        // The second argument, slotInfo is used here to store a factory of type cast/coerce nodes.
+        // This is used, for example, to trim a 16-bit number to fit in 8-bit slot, in order to simulate
+        // overflow/underflow of types.
+        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, new DefaultValueCastNodeCreator(), FrameSlotKind.Illegal);
         FrameSlotAndDepthRW existingSlot = new FrameSlotAndDepthRW(frameSlot, 0);
         boolean newVariable = true;
         CALExpressionNode valueNode = call;
@@ -114,22 +124,34 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         final CALExpressionNode instance = existingSlot.createReadNode(0);
         int iterations = getCurrentContext().getEnv().getOptions().get(CALLanguage.Iterations);
         CALStatementNode[] bodyNodes;
-        if(iterations >= 0){
-            bodyNodes = new CALStatementNode[1 + iterations];
+        if(iterations >= 0) {
+            bodyNodes = new CALStatementNode[3];
             bodyNodes[0] = result;
-            for (int i = 0; i < iterations; i++) {
-                bodyNodes[i + 1] = new CALInvokeNode(instance, new CALExpressionNode[0]);
-            }
+            String iterationNumVarName = "$" + actorInstanceName + "iterationNum" + String.valueOf(source.hashCode());
+            FrameSlot iterationNumFrameSlot = frameDescriptor.findOrAddFrameSlot(iterationNumVarName, new DefaultValueCastNodeCreator(), FrameSlotKind.Object);
+            FrameSlotAndDepthRW iterationNumExistingSlot = new FrameSlotAndDepthRW(iterationNumFrameSlot, 0);
+            // Create variable to store number of iterations done
+            bodyNodes[1] = iterationNumExistingSlot.createWriteNode(new BigIntegerLiteralNode(new BigInteger("0")), new StringLiteralNode(iterationNumVarName), true, 0);
+            // Loop until the number of iterations done is less than number of targetted iterations
+            bodyNodes[2] = new StmtWhileNode(
+                    CALBinaryLessThanNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(new BigInteger(String.valueOf(iterations)))),
+                    new StmtBlockNode(new CALStatementNode[]{
+                        new CALInvokeNode(instance, new CALExpressionNode[0]),
+                        iterationNumExistingSlot.createWriteNode(CALBinaryAddNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(BigInteger.ONE)), new StringLiteralNode(iterationNumVarName), false, 0)
+                    }));
         } else {
             bodyNodes = new CALStatementNode[3];
             bodyNodes[0] = result;
 
-            // Assign
+            // The network/actor returns a boolean indicating whether it executed or not.
+            // Through the following, we loop till the network/actor executes at least 1 action.
+            // If during an iteration, there is no progress, then we stop.
             String executionStatusVarName = "$" + actorInstanceName + "executed" + String.valueOf(source.hashCode());
             FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, new DefaultValueCastNodeCreator(),FrameSlotKind.Boolean);
             FrameSlotAndDepthRW executionStatusExistingSlot = new FrameSlotAndDepthRW(executionStatusFrameSlot, 0);
+            // Execute once and store execution result to a variable
             bodyNodes[1] = executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), true, 0);
-
+            // Loop until the execution status variable is true
             bodyNodes[2] = new StmtWhileNode(executionStatusExistingSlot.createReadNode(0), executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), false, 0));
         }
         CALStatementNode body = new StmtBlockNode(bodyNodes);
@@ -159,7 +181,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         Source source = request.getSource();
         File entry = Paths.get(source.getURI()).toFile();
         List<File> allFiles;
-        if ( getCurrentContext().getEnv().getOptions().get(CALLanguage.dirLookup))
+        if (getCurrentContext().getEnv().getOptions().get(CALLanguage.dirLookup))
             allFiles = getFilesRecursively(entry.getParentFile());
         else
             allFiles = Arrays.asList(entry);
@@ -168,7 +190,11 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         iSourceList.ensureCapacity(allFiles.size());
         ArrayList<NamespaceDecl> declList = new ArrayList<NamespaceDecl>();
         declList.ensureCapacity(allFiles.size());
+
+        // Map to store the named entities present in each namespace
+        // This is used for resolving ```import all``` constructs
         HashMap<List<String>, LinkedList<String>> namespaceEntities = new HashMap<List<String>, LinkedList<String>>();
+
         for (File file : allFiles) {
             CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
             NamespaceDecl decl = parser.CompilationUnit();

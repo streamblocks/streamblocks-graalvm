@@ -39,8 +39,12 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
                 + actor.getValueParameters().size() + actor.getOutputPorts().size() + actor.getInputPorts().size());
         int i = 0;
 
-        // TODO we are making assumptions about the number of arguments
-        // and that EVERY argument and port is effectively passed
+        // We make the following assumptions regarding the way arguments are passed to the actors:
+        // 1. The arguments contain the list of actor parameters, input ports, output ports and variable declarations sequentially
+        // 2. The list of input ports passed in the arguments is arranged lexicographically with respect to port name
+        // 3. Each input port(even if redundant) specified in the actor definition is passed in the argument
+
+        // TODO: Come up with a better method for passing of arguments, and handling cases where redundant actor ports are not passed
 
         // WARNING keep as the first declaration as it needs to match the arguments
         // position
@@ -50,6 +54,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             i++;
         }
 
+        // This is used for sorting of input ports to mathc arguments with the lexographically ordered port declarations
         Comparator<PortDecl> portComparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
         for (PortDecl in : actor.getInputPorts().stream().sorted(portComparator).collect(Collectors.toList())) {

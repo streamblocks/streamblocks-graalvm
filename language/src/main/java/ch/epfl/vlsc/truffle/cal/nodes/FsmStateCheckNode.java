@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+// This node returns boolean indicating whether the queried action can follow from the current FSM state
 public class FsmStateCheckNode extends CALExpressionNode{
     ArrayList<HashMap<Integer, Integer>> transitions;
     FrameSlot stateSlot;
