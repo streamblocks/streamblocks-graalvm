@@ -4,6 +4,8 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import com.oracle.truffle.api.CompilerDirectives;
+
 import ch.epfl.vlsc.truffle.cal.runtime.CALActorInstance;
 
 /* Instantiate an actor
@@ -20,6 +22,8 @@ class ActorInstantiateNode extends CALExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreter();
+
         // create a new frame with the actor's frame descriptor
         MaterializedFrame actorFrame = Truffle.getRuntime().createMaterializedFrame(frame.getArguments(), actor.getFrameDescriptor());
         head.executeVoid(actorFrame);

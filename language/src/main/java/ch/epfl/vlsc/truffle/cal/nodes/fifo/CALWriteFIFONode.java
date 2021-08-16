@@ -1,10 +1,13 @@
 package ch.epfl.vlsc.truffle.cal.nodes.fifo;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALFifo;
+
+import com.oracle.truffle.api.CompilerDirectives;
 
 public class CALWriteFIFONode extends CALStatementNode {
 
@@ -18,6 +21,7 @@ public class CALWriteFIFONode extends CALStatementNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreter();
         Object fifoObject = fifo.executeGeneric(frame);
         if (fifoObject instanceof CALFifo)
             ((CALFifo) fifoObject).add(value.executeGeneric(frame));

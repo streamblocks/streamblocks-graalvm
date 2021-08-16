@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.fifo;
 
+import ch.epfl.vlsc.truffle.cal.CALException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
@@ -18,7 +19,7 @@ public class CALFIFOSizeNode extends CALExpressionNode {
         if (fifoObject instanceof CALFifo)
             return ((CALFifo) fifoObject).size();
         else
-            throw new Error("not good type");
+            throw CALException.typeError(fifo, fifoObject);
     }
 
     @Override

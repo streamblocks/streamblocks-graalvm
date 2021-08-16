@@ -69,7 +69,9 @@ public abstract class CALBinaryNotEqualNode extends CALBinaryNode {
                  * We return false in good dynamic language manner. Stricter languages might throw
                  * an error here.
                  */
-                return false;
+                // TODO: What should we return here?
+                CompilerDirectives.transferToInterpreter();
+                return !(left.equals(right));
             }
         } catch (UnsupportedMessageException e) {
             throw shouldNotReachHere(e);

@@ -4,9 +4,10 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
@@ -222,6 +223,7 @@ public class CALActorInstance extends CALValue {
             // TODO
             // Sort actions by priority and filter fireable actions
             for (ActionNode action : function.actorDecl.getActions()) {
+                CompilerDirectives.transferToInterpreter();
                 CallTarget target = Truffle.getRuntime().createCallTarget(action);
                 Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
                 if (executed)
