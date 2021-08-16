@@ -15,7 +15,7 @@ public final class ActionNode extends CALRootNode {
     @Child private CALExpressionNode firingCondition;
     private final QID name;
     private boolean isCloningAllowed;
-    private boolean isQIDTagged; // TODO Tag as compile time constant
+    private final boolean isQIDTagged; // TODO Tag as compile time constant
     private final SourceSection sourceSection;
 
     public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body,
@@ -44,13 +44,13 @@ public final class ActionNode extends CALRootNode {
             boolean fireable = (Boolean) firingCondition.executeBoolean(frame);
             if (fireable) {
                 body.executeGeneric(frame);
-                for(CALStatementNode commitStmt: transactionCommits){
-                    commitStmt.executeVoid(frame);
+                for(int i = 0; i < transactionCommits.length; ++i){
+                    transactionCommits[i].executeVoid(frame);
                 }
                 return true;
             } else {
-                for(CALStatementNode rollbackStmt: transactionRollbacks){
-                    rollbackStmt.executeVoid(frame);
+                for(int i = 0; i < transactionRollbacks.length; ++i){
+                    transactionRollbacks[i].executeVoid(frame);
                 }
                 return false;
             }

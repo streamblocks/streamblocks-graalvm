@@ -4,6 +4,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.runtime.GenericBufferList;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives;
 
 public class ListInitNodeSizeExpression extends CALExpressionNode {
     @Child CALExpressionNode sizeExpression;
@@ -16,6 +17,7 @@ public class ListInitNodeSizeExpression extends CALExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreter();
         int size = (int) ((CALBigNumber) sizeExpression.executeGeneric(frame)).getValue().intValue();
         Object[] values = new Object[size];
         for(int i = 0; i < size; i++)

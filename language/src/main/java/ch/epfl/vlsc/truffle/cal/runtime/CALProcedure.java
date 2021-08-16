@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -40,6 +41,7 @@ public class CALProcedure extends CALValue {
     // TODO how to get called?
     // TODO add child annotation
     public RootCallTarget getCallTarget() {
+        CompilerDirectives.transferToInterpreter();
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(body);
         return callTarget;
     }

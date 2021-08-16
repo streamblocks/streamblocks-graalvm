@@ -4,6 +4,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileRepeatingNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALArguments;
 import ch.epfl.vlsc.truffle.cal.runtime.ListLibrary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -41,6 +42,7 @@ public abstract class CALComprehensionContinueNode extends CALComprehensionNode 
             genVarWriter.executeWrite(frame, next);
             Boolean toExecute = (Boolean) filter.executeGeneric(frame);
             if(toExecute) {
+                CompilerDirectives.transferToInterpreter();
                 Truffle.getRuntime().createIndirectCallNode().call(
                         Truffle.getRuntime().createCallTarget(body),
                         CALArguments.pack(frame.materialize(), new Object[0])

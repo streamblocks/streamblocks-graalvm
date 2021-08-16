@@ -78,6 +78,7 @@ public abstract class CALBinaryNotEqualNode extends CALBinaryNode {
                  * an error here.
                  */
                 // TODO: What should we return here?
+                CompilerDirectives.transferToInterpreter();
                 return !(left.equals(right));
             }
         } catch (UnsupportedMessageException e) {

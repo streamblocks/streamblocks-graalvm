@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.nodes;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ public class FsmStateCheckNode extends CALExpressionNode{
     public Object executeGeneric(VirtualFrame frame) {
         int actorIndex = (int) FrameUtil.getLongSafe(frame, actorIndexSlot);
         int currState = (int) FrameUtil.getLongSafe(frame, stateSlot);
+        CompilerDirectives.transferToInterpreter();
         return transitions.get(currState).containsKey(actorIndex);
     }
 }

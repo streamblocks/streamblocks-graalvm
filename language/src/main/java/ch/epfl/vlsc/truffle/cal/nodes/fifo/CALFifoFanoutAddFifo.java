@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.fifo;
 
+import ch.epfl.vlsc.truffle.cal.CALException;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALFifo;
@@ -8,8 +9,8 @@ import ch.epfl.vlsc.truffle.cal.runtime.FifoConsumer;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 public class CALFifoFanoutAddFifo extends CALStatementNode {
-    private final CALExpressionNode fanOutNode;
-    private final CALExpressionNode fifoNode;
+    @Child private CALExpressionNode fanOutNode;
+    @Child private CALExpressionNode fifoNode;
 
     public CALFifoFanoutAddFifo(CALExpressionNode fanOutNodeArg, CALExpressionNode fifoNodeArg) {
         super();
@@ -31,6 +32,6 @@ public class CALFifoFanoutAddFifo extends CALStatementNode {
             fanout.addFifo(fifo);
             fifo.setFanout(fanout);
         } else
-            throw new RuntimeException("Unexpected type for receiver: " + receiver.getClass().getName() + ". Expected CALFifoFanout or CALFifo");
+            throw CALException.typeError(fanOutNode,receiver);
     }
 }

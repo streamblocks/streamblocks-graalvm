@@ -1,13 +1,10 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
 import ch.epfl.vlsc.truffle.cal.nodes.FsmStateCheckNode;
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
@@ -241,6 +238,8 @@ public class CALActorInstance extends CALValue {
 
                 // Action is fireable if there is no action with higher priority that is fireable and if the current action tag follows from the current FSM state
                 if (!actionFsmFireable) continue;
+
+                CompilerDirectives.transferToInterpreter();
                 CallTarget target = Truffle.getRuntime().createCallTarget(action);
                 // Attempt to execute the action: Guard expressions and token bindings are checked by the action and returns true if it fires, otherwise false
                 Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
