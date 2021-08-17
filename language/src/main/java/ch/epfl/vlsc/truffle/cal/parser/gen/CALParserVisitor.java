@@ -128,26 +128,11 @@ public interface CALParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitGroupImport(CALParser.GroupImportContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code VariableImportKind}
-	 * labeled alternative in {@link CALParser#importKind}.
+	 * Visit a parse tree produced by {@link CALParser#importKind}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVariableImportKind(CALParser.VariableImportKindContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code TypeImportKind}
-	 * labeled alternative in {@link CALParser#importKind}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeImportKind(CALParser.TypeImportKindContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code EntityImportKind}
-	 * labeled alternative in {@link CALParser#importKind}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitEntityImportKind(CALParser.EntityImportKindContext ctx);
+	T visitImportKind(CALParser.ImportKindContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CALParser#networkDeclaration}.
 	 * @param ctx the parse tree

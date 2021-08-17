@@ -344,11 +344,12 @@ public class CALParser extends Parser {
 		}
 	}
 	public static class PackageNamespaceDeclarationContext extends NamespaceDeclarationContext {
-		public QualifiedIDContext qualifiedID() {
-			return getRuleContext(QualifiedIDContext.class,0);
-		}
+		public QualifiedIDContext name;
 		public NamespaceBodyContext namespaceBody() {
 			return getRuleContext(NamespaceBodyContext.class,0);
+		}
+		public QualifiedIDContext qualifiedID() {
+			return getRuleContext(QualifiedIDContext.class,0);
 		}
 		public List<TerminalNode> DOC_COMMENT() { return getTokens(CALParser.DOC_COMMENT); }
 		public TerminalNode DOC_COMMENT(int i) {
@@ -469,7 +470,7 @@ public class CALParser extends Parser {
 				setState(265);
 				match(PACKAGE);
 				setState(266);
-				qualifiedID();
+				((PackageNamespaceDeclarationContext)_localctx).name = qualifiedID();
 				setState(267);
 				match(SEMICOLON);
 				setState(268);
@@ -1088,37 +1089,14 @@ public class CALParser extends Parser {
 	}
 
 	public static class ImportKindContext extends ParserRuleContext {
+		public Token kind;
 		public ImportKindContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_importKind; }
-	 
-		public ImportKindContext() { }
-		public void copyFrom(ImportKindContext ctx) {
-			super.copyFrom(ctx);
-		}
-	}
-	public static class TypeImportKindContext extends ImportKindContext {
-		public TypeImportKindContext(ImportKindContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitTypeImportKind(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class EntityImportKindContext extends ImportKindContext {
-		public EntityImportKindContext(ImportKindContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitEntityImportKind(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class VariableImportKindContext extends ImportKindContext {
-		public VariableImportKindContext(ImportKindContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitVariableImportKind(this);
+			if ( visitor instanceof CALParserVisitor ) return ((CALParserVisitor<? extends T>)visitor).visitImportKind(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1131,27 +1109,24 @@ public class CALParser extends Parser {
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case VAR:
-				_localctx = new VariableImportKindContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(351);
-				match(VAR);
+				((ImportKindContext)_localctx).kind = match(VAR);
 				}
 				break;
 			case TYPE:
-				_localctx = new TypeImportKindContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(352);
-				match(TYPE);
+				((ImportKindContext)_localctx).kind = match(TYPE);
 				}
 				break;
 			case ENTITY:
-				_localctx = new EntityImportKindContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(353);
-				match(ENTITY);
+				((ImportKindContext)_localctx).kind = match(ENTITY);
 				}
 				break;
 			default:
@@ -1171,6 +1146,8 @@ public class CALParser extends Parser {
 
 	public static class NetworkDeclarationContext extends ParserRuleContext {
 		public QualifiedIDContext name;
+		public PortDeclarationsContext inputPorts;
+		public PortDeclarationsContext outputPorts;
 		public QualifiedIDContext qualifiedID() {
 			return getRuleContext(QualifiedIDContext.class,0);
 		}
@@ -1281,7 +1258,7 @@ public class CALParser extends Parser {
 			if (_la==MULTI || ((((_la - 66)) & ~0x3f) == 0 && ((1L << (_la - 66)) & ((1L << (TYPE - 66)) | (1L << (LSQUARE - 66)) | (1L << (AT_SIGN - 66)) | (1L << (ID - 66)))) != 0)) {
 				{
 				setState(375);
-				portDeclarations();
+				((NetworkDeclarationContext)_localctx).inputPorts = portDeclarations();
 				}
 			}
 
@@ -1293,7 +1270,7 @@ public class CALParser extends Parser {
 			if (_la==MULTI || ((((_la - 66)) & ~0x3f) == 0 && ((1L << (_la - 66)) & ((1L << (TYPE - 66)) | (1L << (LSQUARE - 66)) | (1L << (AT_SIGN - 66)) | (1L << (ID - 66)))) != 0)) {
 				{
 				setState(379);
-				portDeclarations();
+				((NetworkDeclarationContext)_localctx).outputPorts = portDeclarations();
 				}
 			}
 
@@ -1395,10 +1372,11 @@ public class CALParser extends Parser {
 	}
 
 	public static class EntityDeclarationContext extends ParserRuleContext {
-		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
+		public Token name;
 		public EntityExpressionContext entityExpression() {
 			return getRuleContext(EntityExpressionContext.class,0);
 		}
+		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public EntityDeclarationContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -1417,7 +1395,7 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(412);
-			match(ID);
+			((EntityDeclarationContext)_localctx).name = match(ID);
 			setState(413);
 			match(EQ);
 			setState(414);
@@ -1558,6 +1536,7 @@ public class CALParser extends Parser {
 	}
 
 	public static class EntityInstanceExpressionContext extends ParserRuleContext {
+		public Token actor;
 		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public EntityParametersContext entityParameters() {
 			return getRuleContext(EntityParametersContext.class,0);
@@ -1584,7 +1563,7 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(430);
-			match(ID);
+			((EntityInstanceExpressionContext)_localctx).actor = match(ID);
 			setState(431);
 			match(LPAREN);
 			setState(433);
@@ -1798,6 +1777,8 @@ public class CALParser extends Parser {
 	}
 
 	public static class EntityParameterContext extends ParserRuleContext {
+		public Token name;
+		public ExpressionContext value;
 		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
@@ -1820,11 +1801,11 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(463);
-			match(ID);
+			((EntityParameterContext)_localctx).name = match(ID);
 			setState(464);
 			match(EQ);
 			setState(465);
-			expression(0);
+			((EntityParameterContext)_localctx).value = expression(0);
 			}
 		}
 		catch (RecognitionException re) {
@@ -2404,6 +2385,7 @@ public class CALParser extends Parser {
 	}
 
 	public static class EntityReferenceContext extends ParserRuleContext {
+		public Token name;
 		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
@@ -2430,7 +2412,7 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(554);
-			match(ID);
+			((EntityReferenceContext)_localctx).name = match(ID);
 			setState(561);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -2463,6 +2445,7 @@ public class CALParser extends Parser {
 	}
 
 	public static class PortReferenceContext extends ParserRuleContext {
+		public Token name;
 		public TerminalNode ID() { return getToken(CALParser.ID, 0); }
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
@@ -2489,7 +2472,7 @@ public class CALParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(564);
-			match(ID);
+			((PortReferenceContext)_localctx).name = match(ID);
 			setState(571);
 			_errHandler.sync(this);
 			_la = _input.LA(1);

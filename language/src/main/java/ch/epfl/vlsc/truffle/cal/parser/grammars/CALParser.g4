@@ -116,7 +116,7 @@ namespaceDeclaration:
     ('end' | 'endnamespace') # NamedNamespaceDeclaration
     |
     DOC_COMMENT*
-    'package' qualifiedID ';'
+    'package' name=qualifiedID ';'
     namespaceBody # PackageNamespaceDeclaration
 ;
 
@@ -174,11 +174,11 @@ groupImport:
 ;
 
 importKind:
-    'var' # VariableImportKind
+    kind='var'
     |
-    'type' # TypeImportKind
+    kind='type'
     |
-    'entity' # EntityImportKind
+    kind='entity'
 ;
 
 // ----------------------------------------------------------------------------
@@ -188,7 +188,7 @@ importKind:
 networkDeclaration:
     DOC_COMMENT*
     annotation*
-    'network' name=qualifiedID '(' formalParameters? ')' portDeclarations? '==>' portDeclarations? ':'
+    'network' name=qualifiedID '(' formalParameters? ')' inputPorts=portDeclarations? '==>' outputPorts=portDeclarations? ':'
     ('var' localVariableDeclaration*)?
     ('entities' entityDeclaration*)?
     ('structure' structureStatement*)?
@@ -200,7 +200,7 @@ networkDeclaration:
 // ----------------------------------------------------------------------------
 
 entityDeclaration:
-    ID '=' entityExpression ';'
+    name=ID '=' entityExpression ';'
 ;
 
 entityExpressions:
@@ -216,7 +216,7 @@ entityExpression:
 ;
 
 entityInstanceExpression:
-    ID '(' entityParameters? ')' attributeSection?
+    actor=ID '(' entityParameters? ')' attributeSection?
 ;
 
 entityIfExpression:
@@ -236,7 +236,7 @@ entityParameters:
 ;
 
 entityParameter:
-    ID '=' expression
+    name=ID '=' value=expression
 ;
 
 attributeSection:
@@ -286,11 +286,11 @@ connector:
 ;
 
 entityReference:
-    ID ('[' expression ']')*
+    name=ID ('[' expression ']')*
 ;
 
 portReference:
-    ID ('[' expression ']')*
+    name=ID ('[' expression ']')*
 ;
 
 // ----------------------------------------------------------------------------
