@@ -57,7 +57,7 @@ public class DepthFrameSlot implements Cloneable {
         }
     }
 
-    public CALExpressionNode createWriteNode(CALExpressionNode value, CALExpressionNode nameNode, boolean newVariable, int currentDepth) throws Error {
+    public CALExpressionNode createWriteNode(CALExpressionNode value, CALExpressionNode nameNode, boolean isNewVariable, int currentDepth) throws Error {
         if (kind == SlotKind.RO) {
             // Only outer scope variables that are read-only
             throw new Error("Trying to write to a non-writable value.");
@@ -67,10 +67,10 @@ public class DepthFrameSlot implements Cloneable {
         assert outerScopeDepth >= 0;
         if (outerScopeDepth == 0) {
             // Write to a local variable
-            return CALWriteLocalVariableNodeGen.create(slot, nameNode, newVariable, value);
+            return CALWriteLocalVariableNodeGen.create(slot, nameNode, isNewVariable, value);
         } else {
             // Write to a variable from <outerScopeDepth>th outer scope
-            return CALWriteCapturedVariableNodeGen.create(slot, nameNode, newVariable, value, outerScopeDepth);
+            return CALWriteCapturedVariableNodeGen.create(slot, nameNode, isNewVariable, value, outerScopeDepth);
         }
     }
 

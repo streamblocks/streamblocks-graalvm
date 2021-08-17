@@ -458,7 +458,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
                     throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a comprehension generator are not yet supported");
                 }
                 for (Token variable: generatorCtx.generatorBody().variables) {
-                    variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), null);
+                    variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), new NullLiteralNode());
 
                     if (!(variableNode instanceof CALWriteLocalVariableNode)) {
                         throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Variable name re-use in a comprehension generator is not yet supported");

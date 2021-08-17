@@ -45,7 +45,7 @@ import System.bitops.rshift;
         var
             /*List(type: int, size=64)*/ y := 0..63
         do
-            y := [ rshift(x[i], 13) : for int i in 0 .. 63 ]; 
+            y := [ rshift(x[i], 13) : for /*int*/ i in 0 .. 63 ];
 		end
 	
 	end

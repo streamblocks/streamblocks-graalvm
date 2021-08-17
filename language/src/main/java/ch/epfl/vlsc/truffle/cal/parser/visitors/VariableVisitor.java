@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.parser.visitors;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.error.CALParseError;
@@ -56,18 +57,13 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         }
 
         String portName = ctx.name.getText();
-        ScopeEnvironment.getInstance().createWriteNode(portName, null);
-
-        DepthFrameSlot existingSlot = ScopeEnvironment.getInstance().getCurrentScope().get(portName);
-        DepthFrameSlot readOnlySlot = new DepthFrameSlot(existingSlot);
-
-        ScopeEnvironment.getInstance().getCurrentScope().put(portName, readOnlySlot);
+        ScopeEnvironment.getInstance().createReadOnlyFrameSlot(portName);
 
         ParserRuleContext parentCtx = ctx.getParent();
         if (parentCtx instanceof CALParser.PortDeclarationsContext) {
             // Note: Start index is currently used to account the total offset of a port declaration in an actor/network entity
             int portDeclarationIndex = portDeclarationStartIndex + ((CALParser.PortDeclarationsContext) parentCtx).portDeclaration().indexOf(ctx);
-            return new InitializeArgNode(readOnlySlot.getSlot(), portDeclarationIndex);
+            return new InitializeArgNode(ScopeEnvironment.getInstance().getCurrentScope().get(portName).getSlot(), portDeclarationIndex);
         } else {
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Port position cannot be determined"); // Note: Unreachable case
         }
@@ -151,7 +147,7 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         if (ctx.value != null) {
             valueNode = ExpressionVisitor.getInstance().visit(ctx.value);
         } else {
-            valueNode = null;
+            valueNode = new NullLiteralNode();
         }
 
         return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode);
@@ -220,18 +216,11 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
      */
     @Override public CALStatementNode visitFormalParameter(CALParser.FormalParameterContext ctx) {
         String variableName = ctx.explicitVariableDeclaration().name.getText();
-        // Note: Manually add parameter to the frame w/o creating write node
-        DepthFrameSlot slot = new DepthFrameSlot(
-                ScopeEnvironment.getInstance().getCurrentScope().getFrame().findOrAddFrameSlot(variableName, FrameSlotKind.Illegal),
-                ScopeEnvironment.getInstance().getCurrentScope().getDepth()
-        );
-        DepthFrameSlot readOnlySlot = new DepthFrameSlot(slot);
-
-        ScopeEnvironment.getInstance().getCurrentScope().put(variableName, readOnlySlot);
+        ScopeEnvironment.getInstance().createFrameSlot(variableName);
 
         ParserRuleContext parentCtx = ctx.getParent();
         if (parentCtx instanceof CALParser.FormalParametersContext) {
-            return new InitializeArgNode(readOnlySlot.getSlot(), ((CALParser.FormalParametersContext) parentCtx).formalParameter().indexOf(ctx));
+            return new InitializeArgNode(ScopeEnvironment.getInstance().getCurrentScope().get(variableName).getSlot(), ((CALParser.FormalParametersContext) parentCtx).formalParameter().indexOf(ctx));
         } else {
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Formal parameter position cannot be determined"); // Note: Unreachable case
         }

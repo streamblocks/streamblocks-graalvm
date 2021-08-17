@@ -116,17 +116,11 @@ public class ScopeEnvironment {
 	}
 
 	public void pushScope(boolean isReadOnly, boolean isDeeper) {
-    	FrameDescriptor frame;
-    	if (currentScope == globalScope) {
-    		// Only create new frame for top-level entities (Actors & Networks)
-    		frame = new FrameDescriptor();
-		} else {
-    		frame = currentScope.getFrame();
-		}
-
+    	FrameDescriptor frame = currentScope.getFrame();
     	int depth = currentScope.getDepth();
     	if (isDeeper) {
-    		// Always increase scope depth (except for Let closure!)
+    		// Always create new frame and increase scope depth (except for Let closure!)
+			frame = new FrameDescriptor();
 			depth++;
 		}
 
@@ -157,21 +151,28 @@ public class ScopeEnvironment {
 		return variableExpression;
 	}
 
-	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode) {
-		CALExpressionNode nameNode = new StringLiteralNode(name);
-		FrameSlot frameSlot = currentScope.getFrame().findOrAddFrameSlot(name, FrameSlotKind.Illegal);
-
-		DepthFrameSlot slot;
+	public void createFrameSlot(String name) {
 		if (!currentScope.containsKey(name)) {
-			slot = new DepthFrameSlot(frameSlot, currentScope.getDepth());
+			FrameSlot frameSlot = currentScope.getFrame().addFrameSlot(name, FrameSlotKind.Illegal);
+			DepthFrameSlot slot = new DepthFrameSlot(frameSlot, currentScope.getDepth());
 			currentScope.put(name, slot);
-
-			return slot.createWriteNode(valueNode, nameNode, true, currentScope.getDepth());
-		} else {
-			slot = currentScope.get(name);
-
-			return slot.createWriteNode(valueNode, nameNode, false, currentScope.getDepth());
 		}
+	}
+
+	public void createReadOnlyFrameSlot(String name) {
+		createFrameSlot(name);
+		DepthFrameSlot readOnlySlot = new DepthFrameSlot(currentScope.get(name));
+		currentScope.put(name, readOnlySlot);
+	}
+
+	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode) {
+		createFrameSlot(name);
+
+		CALExpressionNode nameNode = new StringLiteralNode(name);
+		DepthFrameSlot slot = currentScope.get(name);
+		boolean isNewVariable = !currentScope.containsKey(name);
+
+		return slot.createWriteNode(valueNode, nameNode, isNewVariable, currentScope.getDepth());
 	}
 
 	public static String generateLambdaName() {

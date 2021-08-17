@@ -5,6 +5,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
@@ -207,7 +208,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a foreach generator are not yet supported");
             }
             for (Token variable: generatorCtx.generatorBody().variables) {
-                variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), null);
+                variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), new NullLiteralNode());
 
                 if (!(variableNode instanceof CALWriteLocalVariableNode)) {
                     throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Variable name re-use in a foreach generator is not yet supported");

@@ -36,11 +36,11 @@
 
 namespace RVC:
 
-import entity RVC.Scale;
-import entity RVC.scaled_1d_idct;
-import entity RVC.Transpose;
-import entity RVC.rightshift;
-import entity RVC.Clip;
+import /*entity*/ RVC.Scale;
+import /*entity*/ RVC.scaled_1d_idct;
+import /*entity*/ RVC.Transpose;
+import /*entity*/ RVC.rightshift;
+import /*entity*/ RVC.Clip;
 
  network idct2d_23002(/*int*/ OUT_SZ,
 		             /*int*/ PIX_SZ,

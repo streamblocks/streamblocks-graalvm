@@ -1,7 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class CALSimpleTestSuite extends CALTestSuite {
@@ -111,7 +110,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("import/Network").setActorName("test.SourceSink").setDirLookup(true).build());
     }
 
-    @Ignore
     @Test
     public void idctTest() throws IOException {
         runTest(TestCase.newBuilder("dct/src/TopIDCT").setActorName("RVC.TopIDCT").setDirLookup(true).build());
