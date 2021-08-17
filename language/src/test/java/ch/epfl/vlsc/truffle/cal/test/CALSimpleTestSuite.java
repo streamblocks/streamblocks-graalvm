@@ -26,7 +26,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("add-stored-var").setIterations(10).build());
     }
 
-    @Ignore
     @Test
     public void actorParameterTest() throws IOException {
         runTest(TestCase.newBuilder("actor-parameters").setActorName("simple.dwf.SourceSink").build());
@@ -52,13 +51,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("println-var").build());
     }
 
-    @Ignore
     @Test
     public void simpleNetworkTest() throws IOException {
         runTest(TestCase.newBuilder("simple-network").setActorName("simple.dwf.SourceSink").build());
     }
 
-    @Ignore
     @Test
     public void simpleNestedNetworkTest() throws IOException {
         runTest(TestCase.newBuilder("network-input").setActorName("simple.dwf.SourceSink").build());
@@ -69,13 +66,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("init-list").build());
     }
 
-    @Ignore
     @Test
     public void repeatInputTest() throws IOException {
         runTest(TestCase.newBuilder("repeat-input").setActorName("simple.dwf.SourceSink").build());
     }
 
-    @Ignore
     @Test
     public void repeatOutputTest() throws IOException {
         runTest(TestCase.newBuilder("repeat-output").setActorName("simple.dwf.SourceSink").build());
@@ -111,7 +106,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
         runTest(TestCase.newBuilder("if-else-statement").build());
     }
 
-    @Ignore
     @Test
     public void importsTest() throws IOException {
         runTest(TestCase.newBuilder("import/Network").setActorName("test.SourceSink").setDirLookup(true).build());
