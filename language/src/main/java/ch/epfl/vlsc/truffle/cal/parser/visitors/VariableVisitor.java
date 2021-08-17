@@ -10,6 +10,8 @@ import ch.epfl.vlsc.truffle.cal.parser.scope.DepthFrameSlot;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
     private static VariableVisitor instance;
 
+    private static int portDeclarationStartIndex;
+
     private VariableVisitor() {}
 
     public static VariableVisitor getInstance() {
@@ -31,6 +35,42 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         }
 
         return instance;
+    }
+
+    public static void setPortDeclarationStartIndex(int startIndex) {
+        // Note: Must be set before visiting each group of port declarations
+        portDeclarationStartIndex = startIndex;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public InitializeArgNode visitPortDeclaration(CALParser.PortDeclarationContext ctx) {
+        if (ctx.isMulti != null) {
+            // TODO Add support for multi-ports ('multi')
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Multi-port is not yet supported");
+        }
+        if (ctx.type() != null) {
+            // TODO Add support for port type
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Port type is not yet supported");
+        }
+
+        String portName = ctx.name.getText();
+        ScopeEnvironment.getInstance().createWriteNode(portName, null);
+
+        DepthFrameSlot existingSlot = ScopeEnvironment.getInstance().getCurrentScope().get(portName);
+        DepthFrameSlot readOnlySlot = new DepthFrameSlot(existingSlot);
+
+        ScopeEnvironment.getInstance().getCurrentScope().put(portName, readOnlySlot);
+
+        ParserRuleContext parentCtx = ctx.getParent();
+        if (parentCtx instanceof CALParser.PortDeclarationsContext) {
+            // Note: Start index is currently used to account the total offset of a port declaration in an actor/network entity
+            int portDeclarationIndex = portDeclarationStartIndex + ((CALParser.PortDeclarationsContext) parentCtx).portDeclaration().indexOf(ctx);
+            return new InitializeArgNode(readOnlySlot.getSlot(), portDeclarationIndex);
+        } else {
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Port position cannot be determined"); // Note: Unreachable case
+        }
     }
 
     /**
@@ -46,8 +86,9 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALStatementNode visitGlobalVariableDeclaration(CALParser.GlobalVariableDeclarationContext ctx) {
-        // TODO Add support for global variables
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Global variable is not yet supported");
+        // TODO First resolve CompilationUnitVisitor#visitNamespaceBody
+        // Note: Unreachable for now
+        return super.visitGlobalVariableDeclaration(ctx);
     }
 
     /**
@@ -178,15 +219,13 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALStatementNode visitFormalParameter(CALParser.FormalParameterContext ctx) {
-        CALExpressionNode explicitVariable = visitExplicitVariableDeclaration(ctx.explicitVariableDeclaration());
-        if (!(explicitVariable instanceof CALWriteLocalVariableNodeGen)) {
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Variable name re-use as a formal parameter name is not yet supported");
-        }
-
         String variableName = ctx.explicitVariableDeclaration().name.getText();
-
-        DepthFrameSlot existingSlot = ScopeEnvironment.getInstance().getCurrentScope().get(variableName);
-        DepthFrameSlot readOnlySlot = new DepthFrameSlot(existingSlot);
+        // Note: Manually add parameter to the frame w/o creating write node
+        DepthFrameSlot slot = new DepthFrameSlot(
+                ScopeEnvironment.getInstance().getCurrentScope().getFrame().findOrAddFrameSlot(variableName, FrameSlotKind.Illegal),
+                ScopeEnvironment.getInstance().getCurrentScope().getDepth()
+        );
+        DepthFrameSlot readOnlySlot = new DepthFrameSlot(slot);
 
         ScopeEnvironment.getInstance().getCurrentScope().put(variableName, readOnlySlot);
 

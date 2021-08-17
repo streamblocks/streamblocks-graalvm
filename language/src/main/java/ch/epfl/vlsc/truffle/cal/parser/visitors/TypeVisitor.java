@@ -26,8 +26,9 @@ public class TypeVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Object visitTypeDefinition(CALParser.TypeDefinitionContext ctx) {
-        // TODO Create Type definition node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Type definition is not yet supported");
+        // TODO First resolve CompilationUnitVisitor#visitNamespaceBody
+        // Note: Unreachable for now
+        return super.visitTypeDefinition(ctx);
     }
 
     /**
@@ -52,8 +53,12 @@ public class TypeVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Object visitType(CALParser.TypeContext ctx) {
-        // TODO Create Type node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Type declaration is not yet supported");
+        // TODO First resolve VariableVisitor#visitPortDeclaration
+        // TODO First resolve VariableVisitor#visitExplicitVariableDeclaration
+        // TODO First resolve VariableVisitor#visitFunctionVariableDeclaration
+        // TODO First resolve ExpressionVisitor#visitLambdaExpression
+        // Note: Unreachable for now
+        return super.visitType(ctx);
     }
 
     /**

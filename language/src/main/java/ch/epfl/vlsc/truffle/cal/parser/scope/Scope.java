@@ -20,7 +20,7 @@ public class Scope {
 
     private final FrameDescriptor frame;
 
-    private final int depth;
+    private int depth;
 
     private final ScopeKind kind;
 
@@ -48,6 +48,14 @@ public class Scope {
 
     public int getDepth() {
         return depth;
+    }
+
+    public void increaseDepth() {
+        this.depth++;
+    }
+
+    public void decreaseDepth() {
+        this.depth--;
     }
 
     public ScopeKind getKind() {

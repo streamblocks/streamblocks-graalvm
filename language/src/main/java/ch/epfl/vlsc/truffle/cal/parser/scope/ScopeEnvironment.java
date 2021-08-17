@@ -21,6 +21,8 @@ public class ScopeEnvironment {
 
 	private Source source;
 
+	private String name;
+
 	private Map<String, String> imports;
 
 	private Scope globalScope;
@@ -28,6 +30,8 @@ public class ScopeEnvironment {
     private Scope currentScope;
 
     private static int LAMBDA_ID;
+
+	private static int FIFO_ID;
 
     private ScopeEnvironment(CALLanguage language, Source source) {
 		this.language = language;
@@ -40,6 +44,7 @@ public class ScopeEnvironment {
 	public static void createInstance(CALLanguage language, Source source) {
 		instance = new ScopeEnvironment(language, source);
 		LAMBDA_ID = 1;
+		FIFO_ID = 1;
 	}
 
     public static ScopeEnvironment getInstance() {
@@ -58,8 +63,22 @@ public class ScopeEnvironment {
 		return source;
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public void addImport(Pair<String, String> importEntity) {
 		imports.put(importEntity.getLeft(), importEntity.getRight());
+	}
+
+	public String getEntityFullName(String name) {
+		if (imports.containsKey(name)) {
+			return imports.get(name);
+		} else if (this.name != null) {
+			return this.name + "." + name;
+		} else {
+			return name;
+		}
 	}
 
     public Scope getCurrentScope() {
@@ -77,6 +96,7 @@ public class ScopeEnvironment {
 	public void pushScope(boolean isReadOnly) {
 		pushScope(isReadOnly, true);
 	}
+
 	public void pushScope(boolean isReadOnly, boolean isDeeper) {
     	FrameDescriptor frame;
     	if (currentScope == globalScope) {
@@ -141,5 +161,12 @@ public class ScopeEnvironment {
 		LAMBDA_ID++;
 
 		return lambdaName;
+	}
+
+	public static String generateFIFOName() {
+		String fifoName = "fifo" + FIFO_ID;
+		FIFO_ID++;
+
+		return fifoName;
 	}
 }

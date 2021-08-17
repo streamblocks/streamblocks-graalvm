@@ -39,34 +39,42 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
     @Override public ActorNode visitActorDeclaration(CALParser.ActorDeclarationContext ctx) {
         ScopeEnvironment.getInstance().pushScope();
 
+        String actorName = ctx.name.getText();
+
         List<CALStatementNode> headStatementNodes = new ArrayList<>();
+        int startIndex = 0;
         if (ctx.formalParameters() != null) {
             Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
             headStatementNodes.addAll(formalParameterNodes);
+            startIndex += ctx.formalParameters().formalParameter().size();
         }
         if (ctx.inputPorts != null) {
+            VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<InitializeArgNode> inputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.inputPorts);
             headStatementNodes.addAll(inputPortNodes);
+            startIndex += ctx.inputPorts.portDeclaration().size();
         }
         if (ctx.outputPorts != null) {
+            VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<InitializeArgNode> outputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.outputPorts);
             headStatementNodes.addAll(outputPortNodes);
+            //startIndex += ctx.outputPorts.portDeclaration().size();
         }
         if (ctx.time != null) {
             // TODO Add support for actor time
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Actor time is not yet supported");
         }
         if (ctx.localVariableDeclaration() != null) {
-            for (CALParser.LocalVariableDeclarationContext context: ctx.localVariableDeclaration()) {
-                headStatementNodes.add(VariableVisitor.getInstance().visitLocalVariableDeclaration(context));
+            for (CALParser.LocalVariableDeclarationContext localVariableCtx: ctx.localVariableDeclaration()) {
+                headStatementNodes.add(VariableVisitor.getInstance().visitLocalVariableDeclaration(localVariableCtx));
             }
         }
         StmtBlockNode headNode = new StmtBlockNode(headStatementNodes.toArray(new CALStatementNode[0]));
 
         List<ActionNode> actionNodes = new ArrayList<>();
         if (ctx.actionDefinition() != null) {
-            for (CALParser.ActionDefinitionContext context: ctx.actionDefinition()) {
-                actionNodes.add(ActionVisitor.getInstance().visitActionDefinition(context));
+            for (CALParser.ActionDefinitionContext actionCtx: ctx.actionDefinition()) {
+                actionNodes.add(ActionVisitor.getInstance().visitActionDefinition(actionCtx));
             }
         }
 
@@ -96,40 +104,12 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 actionNodes.toArray(new ActionNode[0]),
                 headNode,
                 null,
-                ctx.name.getText()
+                actorName
         );
 
         ScopeEnvironment.getInstance().popScope();
 
         return actorNode;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override public InitializeArgNode visitPortDeclaration(CALParser.PortDeclarationContext ctx) {
-        if (ctx.isMulti != null) {
-            // TODO Add support for multi-ports ('multi')
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Multi-port is not yet supported");
-        }
-        if (ctx.type() != null) {
-            // TODO Add support for port type
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Port type is not yet supported");
-        }
-
-        String portName = ctx.name.getText();
-
-        DepthFrameSlot existingSlot = ScopeEnvironment.getInstance().getCurrentScope().get(portName);
-        DepthFrameSlot readOnlySlot = new DepthFrameSlot(existingSlot);
-
-        ScopeEnvironment.getInstance().getCurrentScope().put(portName, readOnlySlot);
-
-        ParserRuleContext parentCtx = ctx.getParent();
-        if (parentCtx instanceof CALParser.PortDeclarationsContext) {
-            return new InitializeArgNode(readOnlySlot.getSlot(), ((CALParser.PortDeclarationsContext) parentCtx).portDeclaration().indexOf(ctx));
-        } else {
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Port position cannot be determined"); // Note: Unreachable case
-        }
     }
 
     /**

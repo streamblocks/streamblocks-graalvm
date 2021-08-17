@@ -1,7 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -50,10 +49,36 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
     /**
      * {@inheritDoc}
      */
+    @Override public Collection<?> visitEntityExpressions(CALParser.EntityExpressionsContext ctx) {
+        // TODO First resolve EntityVisitor#visitEntityIfExpression and EntityVisitor#visitEntityListExpression
+        // Note: Unreachable for now
+        return super.visitEntityExpressions(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitEntityParameters(CALParser.EntityParametersContext ctx) {
+        // Note: Unreachable for now, only children directly accessed in EntityVisitor#visitEntityInstanceExpression
+        return super.visitEntityParameters(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Collection<?> visitAttributeSection(CALParser.AttributeSectionContext ctx) {
+        // TODO First resolve EntityVisitor#visitEntityInstanceExpression
+        // Note: Unreachable for now
+        return super.visitAttributeSection(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override public Collection<InitializeArgNode> visitPortDeclarations(CALParser.PortDeclarationsContext ctx) {
         Collection<InitializeArgNode> ports = new ArrayList<>();
         for (CALParser.PortDeclarationContext portCtx: ctx.portDeclaration()) {
-            ports.add(ActorVisitor.getInstance().visitPortDeclaration(portCtx));
+            ports.add(VariableVisitor.getInstance().visitPortDeclaration(portCtx));
         }
 
         return ports;

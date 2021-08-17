@@ -1,6 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+import ch.epfl.vlsc.truffle.cal.parser.error.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -43,7 +44,7 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Object visitUnitCompilationUnit(CALParser.UnitCompilationUnitContext ctx) {
-        return null;
+        return visitUnitDeclaration(ctx.unitDeclaration());
     }
 
     /**
@@ -58,6 +59,8 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
      */
     @Override public Map<String, RootCallTarget> visitNamedNamespaceDeclaration(CALParser.NamedNamespaceDeclarationContext ctx) {
         String name = CollectionVisitor.qualifiedIdToString(CollectionVisitor.getInstance().visitQualifiedID(ctx.name));
+        ScopeEnvironment.getInstance().setName(name);
+
         Map<String, RootCallTarget> entities = visitNamespaceBody(ctx.body);
 
         return entities.entrySet().stream().collect(Collectors.toMap(e -> name + "." + e.getKey(), Map.Entry::getValue));
@@ -66,28 +69,38 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitPackageNamespaceDeclaration(CALParser.PackageNamespaceDeclarationContext ctx) {
-        return null;
+    @Override public Map<String, RootCallTarget> visitPackageNamespaceDeclaration(CALParser.PackageNamespaceDeclarationContext ctx) {
+        // TODO Add support for packages
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Package declaration is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public Map<String, RootCallTarget> visitNamespaceBody(CALParser.NamespaceBodyContext ctx) {
-        // TODO Add support for type definitions
-        // TODO Add support for global variables
-
-        for (CALParser.ImportDeclarationContext context: ctx.importDeclaration()) {
-            ScopeEnvironment.getInstance().addImport((Pair<String, String>) visit(context));
+        for (CALParser.ImportDeclarationContext importCtx: ctx.importDeclaration()) {
+            if (importCtx instanceof CALParser.SingleImportDeclarationContext) {
+                ScopeEnvironment.getInstance().addImport(visitSingleImportDeclaration((CALParser.SingleImportDeclarationContext) importCtx));
+            }
         }
 
         Map<String, RootCallTarget> entities = new HashMap<>();
-        for (CALParser.ActorDeclarationContext context: ctx.actorDeclaration()) {
-            CALRootNode entityNode = ActorVisitor.getInstance().visitActorDeclaration(context);
+        if (ctx.typeDefinition().size() > 0) {
+            // TODO Add support for type definitions
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Type definition is not yet supported");
+        }
+        if (ctx.globalVariableDeclaration().size() > 0) {
+            // TODO Add support for global variables
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Global variable is not yet supported");
+        }
+        for (CALParser.ActorDeclarationContext actorCtx: ctx.actorDeclaration()) {
+            CALRootNode entityNode = ActorVisitor.getInstance().visitActorDeclaration(actorCtx);
             entities.put(entityNode.getName(), Truffle.getRuntime().createCallTarget(entityNode));
         }
-
-        // FIXME Add network entities
+        for (CALParser.NetworkDeclarationContext networkCtx: ctx.networkDeclaration()) {
+            CALRootNode entityNode = NetworkVisitor.getInstance().visitNetworkDeclaration(networkCtx);
+            entities.put(entityNode.getName(), Truffle.getRuntime().createCallTarget(entityNode));
+        }
 
         return entities;
     }
@@ -95,8 +108,36 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
+    @Override public Object visitAnnotation(CALParser.AnnotationContext ctx) {
+        // TODO Add support for annotations
+        // Note: Unreachable for now
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Annotation is not yet supported");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Object visitNamedAnnotationParameter(CALParser.NamedAnnotationParameterContext ctx) {
+        // TODO First resolve #visitAnnotation
+        // Note: Unreachable for now
+        return super.visitNamedAnnotationParameter(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override public Object visitUnnamedAnnotationParameter(CALParser.UnnamedAnnotationParameterContext ctx) {
+        // TODO First resolve #visitAnnotation
+        // Note: Unreachable for now
+        return super.visitUnnamedAnnotationParameter(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override public Object visitUnitDeclaration(CALParser.UnitDeclarationContext ctx) {
-        return null;
+        // TODO Add support for units
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unit is not yet supported");
     }
 
     /**
@@ -110,13 +151,18 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Object visitGroupImportDeclaration(CALParser.GroupImportDeclarationContext ctx) {
-        return null;
+        return visitGroupImport(ctx.groupImport());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override public Pair<String, String> visitSingleImport(CALParser.SingleImportContext ctx) {
+        if (ctx.kind != null) {
+            // TODO Add support for explicit import kind
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Explicit import kind is not yet supported");
+        }
+
         List<Token> globalName = (ArrayList<Token>) CollectionVisitor.getInstance().visitQualifiedID(ctx.globalName);
 
         String localName;
@@ -133,28 +179,16 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Object visitGroupImport(CALParser.GroupImportContext ctx) {
-        return null;
+        // TODO Add support for group imports
+        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Group import is not yet supported");
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitVariableImportKind(CALParser.VariableImportKindContext ctx) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override public Object visitTypeImportKind(CALParser.TypeImportKindContext ctx) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override public Object visitEntityImportKind(CALParser.EntityImportKindContext ctx) {
-        return null;
+    @Override public Object visitImportKind(CALParser.ImportKindContext ctx) {
+        // Note: Unreachable for now, only token is directly accessed
+        return super.visitImportKind(ctx);
     }
 
 }
