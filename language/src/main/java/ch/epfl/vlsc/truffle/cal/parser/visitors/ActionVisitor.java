@@ -114,7 +114,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 actionBodyNode,
                 firingCondition,
-                null,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
                 actionName
         );
 

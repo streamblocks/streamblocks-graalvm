@@ -8,6 +8,8 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.graalvm.collections.Pair;
 
 import java.util.HashMap;
@@ -61,6 +63,22 @@ public class ScopeEnvironment {
 
 	public Source getSource() {
 		return source;
+	}
+
+	public SourceSection createSourceSection(ParserRuleContext context) {
+		SourceSection section;
+		try {
+			section = source.createSection(
+					context.getStart().getLine(),
+					context.getStart().getCharPositionInLine() + 1,
+					context.getStop().getLine(),
+					context.getStart().getCharPositionInLine() + 1
+			);
+		} catch (Exception e) {
+			section = source.createUnavailableSection();
+		}
+
+		return section;
 	}
 
 	public void setName(String name) {

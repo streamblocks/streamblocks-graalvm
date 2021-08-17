@@ -403,7 +403,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 lambdaBodyNode,
-                null,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
                 ScopeEnvironment.generateLambdaName()
         );
         LambdaNode lambdaNode = new LambdaNode(lambdaBodyRootNode);

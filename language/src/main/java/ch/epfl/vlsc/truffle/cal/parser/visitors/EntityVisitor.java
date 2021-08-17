@@ -114,7 +114,7 @@ public class EntityVisitor extends CALParserBaseVisitor<Object> {
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Entity attributes are not yet supported");
         }
 
-        return new EntityInstance(actor, parameters, null);
+        return new EntityInstance(actor, parameters, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**

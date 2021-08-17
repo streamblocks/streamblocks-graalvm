@@ -62,7 +62,7 @@ public class CALParseError extends AbstractTruffleException {
     private final int length;
 
     public CALParseError(Source source, int line, int column, int length, String message) {
-        super(String.format("Error: " + message + "%n\tat " + source.getName() + ":" + line + ":" + column));
+        super(String.format(source.getURI().toString() + ":" + line + ":" + column + "%nError: " + message));
         this.source = source;
         this.line = line;
         this.column = column;

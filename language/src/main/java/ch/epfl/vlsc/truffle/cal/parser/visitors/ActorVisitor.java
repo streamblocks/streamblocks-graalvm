@@ -103,7 +103,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 actionNodes.toArray(new ActionNode[0]),
                 headNode,
-                null,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
                 actorName
         );
 

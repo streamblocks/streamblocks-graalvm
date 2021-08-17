@@ -155,7 +155,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 headNode,
                 bodyRootNode,
-                null,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
                 networkName
         );
 
