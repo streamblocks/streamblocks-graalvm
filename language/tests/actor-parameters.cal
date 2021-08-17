@@ -12,7 +12,7 @@ namespace simple.dwf:
         guard
             Counter < MAX
         var
-            /*int*/ token = Counter
+            /*int*/ token := Counter
         do
             Counter := Counter + 1;
         end
@@ -41,7 +41,7 @@ namespace simple.dwf:
         ==> :
 
         entities
-            source = Source(MIX=10, MAX=20);
+            source = Source(MIN=10, MAX=20);
             sink = Sink();
         structure
             source.OUT --> sink.IN;

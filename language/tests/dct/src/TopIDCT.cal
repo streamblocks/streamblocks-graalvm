@@ -1,10 +1,10 @@
 namespace RVC:
 
-    actor Generator(uint IMG_NUMBERS) ==> int(size=16) OUT, bool SIGNED:
+    actor Generator(/*uint*/ IMG_NUMBERS) ==> /*int(size=16)*/ OUT, /*bool*/ SIGNED:
 
-    	uint blocks = 38016/64;
+    	/*uint*/ blocks := 38016/64;
 
-        List(type:int(size=16), size= 64) values = [
+        /*List(type:int(size=16), size= 64)*/ values := [
             1458, -289, -249, -149, -169, -89, -49, 0,
             49, 69, 0, 0, -29, -29, -49, 0,
             89, -69, -29, -29, 49, 0, 0, 0,
@@ -14,7 +14,7 @@ namespace RVC:
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0];
 
-		uint Counter :=0;
+		/*uint*/ Counter :=0;
 
         action ==> OUT:[values] repeat 64, SIGNED:[false]
             guard
@@ -24,9 +24,9 @@ namespace RVC:
             end
     end
 
-    actor Sink(int PIX_SZ) int(size=PIX_SZ) IN ==> :
+    actor Sink(/*int*/ PIX_SZ) /*int(size=PIX_SZ)*/ IN ==> :
 
-        int Counter := 0;
+        /*int*/ Counter := 0;
 
         action IN:[token] repeat 64 ==>
         do
@@ -41,7 +41,7 @@ namespace RVC:
     network TopIDCT() ==> :
         entities
             source = Generator(IMG_NUMBERS=30000);
-            idct2d = idct2d_23002(OUT_SZ = 32, PIX_SZ = 9, SIN_SZ = 13) {partition = "hw";};
+            idct2d = idct2d_23002(OUT_SZ = 32, PIX_SZ = 9, SIN_SZ = 13) /*{partition = "hw";}*/;
             sink  = Sink(PIX_SZ = 9);
         structure
             source.OUT --> idct2d.IN;

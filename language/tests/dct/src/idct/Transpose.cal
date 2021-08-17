@@ -37,17 +37,17 @@
 namespace RVC:
 
 @pipeline(flushing=true)
-actor Transpose () int In ==> int Out :
+actor Transpose () /*int*/ In ==> /*int*/ Out :
 
 //  action In:[ x ] repeat 64 ==> Out: [ [ x[ 8 * c + r ] : for int r in Integers(0,7), for int c in Integers(0,7) ] ] repeat 64
 //  end 
   @sequential(port="In")
   transpose: action In:[ x ] repeat 64 ==> Out: [y] repeat 64
   var 
-  	List(type: int, size=64) y := 0..63
+  	/*List(type: int, size=64)*/ y := 0..63
   do		
-    foreach int r in 0 .. 7 do
-      foreach int c in 0 .. 7 do
+    foreach /*int*/ r in 0 .. 7 do
+      foreach /*int*/ c in 0 .. 7 do
     	y[r + c*8] := x[8*r + c];
       end    
     end

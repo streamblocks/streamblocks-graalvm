@@ -5,7 +5,7 @@ namespace test.a:
      * and prints the tokens to the standart output.
      */
     actor Sink()
-        int IN ==> :
+        /*int*/ IN ==> :
     
         action IN:[token] ==>
         do 
