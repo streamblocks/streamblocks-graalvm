@@ -39,13 +39,13 @@ namespace RVC:
 import System.bitops.rshift;
 
 	@pipeline(flushing=true)
-	actor rightshift () /*int*/ In ==> /*int*/ Out :
+	actor rightshift () int In ==> int Out :
 	
 		shift: action In:[ x ] repeat 64 ==> Out: [y] repeat 64
         var
-            /*List(type: int, size=64)*/ y := 0..63
+            List(type: int, size=64) y := 0..63
         do
-            y := [ rshift(x[i], 13) : for /*int*/ i in 0 .. 63 ];
+            y := [ rshift(x[i], 13) : for int i in 0 .. 63 ]; 
 		end
 	
 	end

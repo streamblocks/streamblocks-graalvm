@@ -4,16 +4,16 @@ namespace simple.dwf:
      * Produces 16 token from 0 to 15, and send them to output OUT.
      */
     actor Source()
-        ==> /*int*/ OUT:
+        ==> int OUT:
 
-        /*int*/ Counter := 0;
-        /*List*/ l := [0, 1, 2, 3];
+        int Counter := 0;
+        List l := [0, 1, 2, 3];
 
         action ==> OUT:[token] repeat 4
         guard
             Counter < 4
         var
-            /*int*/ token := l
+            int token = l
         do
             Counter := Counter + 1;
             l := [ 4 + i: for int i in token ];
@@ -27,7 +27,7 @@ namespace simple.dwf:
      * and prints the tokens 4 by 4
      */
     actor Sink()
-        /*int*/ IN ==> :
+        int IN ==> :
     
         action IN:[token] repeat 4 ==>
         do 

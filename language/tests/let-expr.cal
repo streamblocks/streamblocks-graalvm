@@ -1,13 +1,14 @@
 namespace test:
+
 	actor test() ==> :
-        function add_mul (/*int*/ a, /*int*/ b) //--> int
-            var temp := a + b: temp * 2
+        function add_mul (int a, int b) --> int
+            var temp = a + b: temp * 2
         end
 
 		action ==>
 		var
-			/*int*/ a := 1,
-			/*int*/ b := 2
+			int a := 1,
+			int b := 2
 		do
 			println(add_mul(a,b));
 		end

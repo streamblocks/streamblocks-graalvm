@@ -18,12 +18,12 @@
 namespace RVC:
 
  @pipeline(flushing=true)
- actor Clip ( /*int*/ isz, /*int*/ osz ) /*bool*/ SIGNED, /*int(size=isz)*/ I ==> /*int(size=osz)*/ O :
+ actor Clip ( int isz, int osz ) bool SIGNED, int(size=isz) I ==> int(size=osz) O :
 
   
   clip:  action SIGNED:[sflag], I:[ x ] repeat 64 ==> O: [y] repeat 64
   var
-    /*List(type: int, size=64)*/ y := 0..63
+    List(type: int, size=64) y := 0..63
   do
       y := [ if x[i] > 255 then
           255
@@ -37,7 +37,7 @@ namespace RVC:
               x[i]
             end
           end
-        end : for /*int*/ i in 0 .. 63 ];
+        end : for int i in 0 .. 63 ];
   end     
 
  

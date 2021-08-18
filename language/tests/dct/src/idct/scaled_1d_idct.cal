@@ -31,48 +31,48 @@ namespace RVC:
 import System.bitops.rshift;
  
  @pipeline(flushing=true)
- actor scaled_1d_idct (/*int*/ IN_SZ, /*int*/ OUT_SZ) /*int (size=IN_SZ)*/ In ==> /*int (size=OUT_SZ)*/ Out :
+ actor scaled_1d_idct (int IN_SZ, int OUT_SZ) int (size=IN_SZ) In ==> int (size=OUT_SZ) Out : 
 	  
-	  function pmul_1_0 (/*int*/ X) /*--> int*/
-	    var /*int (size=32)*/ Temp1 := rshift(X, 3) - rshift(X, 7):
+	  function pmul_1_0 (int X) --> int
+	    var int (size=32) Temp1 = rshift(X, 3) - rshift(X, 7):
 	        X - Temp1
 	  end
 
-	  function pmul_1_1 (/*int*/ X) /*--> int*/
-	    var /*int (size=32)*/ Temp1 := rshift(X, 3) - rshift(X, 7),
-	        /*int (size=32)*/ Temp2 := Temp1 - rshift(X, 11):
+	  function pmul_1_1 (int X) --> int
+	    var int (size=32) Temp1 = rshift(X, 3) - rshift(X, 7),
+	        int (size=32) Temp2 = Temp1 - rshift(X, 11):
 	        Temp1 + rshift(Temp2, 1)
 	  end
 	
-	  function pmul_2_0 (/*int*/ X)/* --> int*/
-	    var /*int (size=32)*/ Temp1 := rshift(X, 9) - X:
+	  function pmul_2_0 (int X) --> int
+	    var int (size=32) Temp1 = rshift(X, 9) - X:
 	        rshift(Temp1, 2) - Temp1
 	  end
 	
-	  function pmul_2_1 (/*int*/ X) /*--> int*/:
+	  function pmul_2_1 (int X) --> int:
 	        rshift(X, 1)
 	  end
 	
-	  function pmul_3_0 (/*int*/ X) /*--> int*/
-	    var /*int (size=32)*/ Temp1 := X + rshift(X, 5),
-	        /*int (size=32)*/ Temp2 := rshift(Temp1, 2):
+	  function pmul_3_0 (int X) --> int
+	    var int (size=32) Temp1 = X + rshift(X, 5),
+	        int (size=32) Temp2 = rshift(Temp1, 2):
 			Temp2 + rshift(X, 4)
 	  end       
 	
-	  function pmul_3_1 (/*int*/ X) /*--> int*/
-	    var /*int (size=32)*/ Temp1 := X + rshift(X, 5),
-	        /*int (size=32)*/ Temp2 := rshift(Temp1, 2):
+	  function pmul_3_1 (int X) --> int
+	    var int (size=32) Temp1 = X + rshift(X, 5),
+	        int (size=32) Temp2 = rshift(Temp1, 2):
 	        Temp1 - Temp2
 	  end       
 
         
 	idct1d: action In: [xi] repeat 8 ==> Out: [y] repeat 8
 	  var 
-	      /*int*/ xa,
-	      /*int*/ xb,
-	      /*List (type: int , size=8)*/ x := xi,
-	      /*List (type: int , size=8)*/ y,
-	      /*int*/ temp1, /*int*/ temp2, /*int*/ temp3, /*int*/ temp4
+	      int xa,
+	      int xb,
+	      List (type: int , size=8) x := xi,
+	      List (type: int , size=8) y,
+	      int temp1, int temp2, int temp3, int temp4
 	  do
 	    xa := x[1] + x[7];
 	    xb := x[1] - x[7];

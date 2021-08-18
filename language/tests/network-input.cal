@@ -4,15 +4,15 @@ namespace simple.dwf:
      * Produces 16 token from 0 to 15, and send them to output OUT.
      */
     actor Source()
-        ==> /*int*/ OUT:
+        ==> int OUT:
 
-        /*int*/ Counter := 0;
+        int Counter := 0;
 
         action ==> OUT:[token]
         guard
             Counter < 16
         var
-            /*int*/ token := Counter
+            int token = Counter
         do
             Counter := Counter + 1;
         end
@@ -20,10 +20,10 @@ namespace simple.dwf:
     end
 
     actor Split4()
-        /*int*/ IN ==> /*Seq[int]*/ OUT:
+        int IN ==> Seq[int] OUT:
         action IN: [input] repeat 4 ==> OUT:[output]
         var
-            output := input
+            output = input
         do
             println("split");
         end
@@ -46,7 +46,7 @@ namespace simple.dwf:
      * and prints the tokens to the standart output.
      */
     network Sink()
-        /*int*/ IN ==> :
+        int IN ==> :
     
         entities
             source = Split4();
