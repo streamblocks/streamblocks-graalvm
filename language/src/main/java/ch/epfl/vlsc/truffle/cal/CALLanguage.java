@@ -75,6 +75,9 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
     @Option(help = "Includes all files of directory", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "directory-lookup")
     public static final OptionKey<Boolean> dirLookup = new OptionKey<>(false);
 
+    @Option(help = "Show compilation warnings", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "show-warnings")
+    public static final OptionKey<Boolean> showWarnings = new OptionKey<>(false);
+
     @Override
     protected CALContext createContext(Env env) {
         return new CALContext(this, env, new ArrayList<>(EXTERNAL_BUILTINS));

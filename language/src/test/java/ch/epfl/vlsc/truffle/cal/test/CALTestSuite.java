@@ -69,6 +69,7 @@ abstract class CALTestSuite {
 			String actorName;
 			Integer iterations;
             Boolean dirLookup;
+            Boolean showWarnings;
 
 			private Builder(String name) {
 				this.name = name;
@@ -76,6 +77,7 @@ abstract class CALTestSuite {
 				this.actorName = "test.test";
 				this.iterations = 1;
                 this.dirLookup = false;
+				this.showWarnings = false;
 			}
 
 			public Builder setInput(String input) {
@@ -108,11 +110,17 @@ abstract class CALTestSuite {
 				return this;
 			}
 
+			public Builder setShowWarnings(Boolean showWarnings) {
+				this.showWarnings = showWarnings;
+				return this;
+			}
+
 			public TestCase build() throws FileNotFoundException, IOException {
 				Map<String, String> options = new HashMap<>();
 				options.put("cal.actor", actorName);
 				options.put("cal.iterations", iterations.toString());
 				options.put("cal.directory-lookup", dirLookup.toString());
+				options.put("cal.show-warnings", showWarnings.toString());
 				return new TestCase(this.getClass(), name, name, getTestPath(name + SOURCE_SUFFIX), input,
 						readAllLines(getTestPath(name + OUTPUT_SUFFIX)), options);
 			}

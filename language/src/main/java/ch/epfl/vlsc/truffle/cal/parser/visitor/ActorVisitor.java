@@ -1,11 +1,13 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -60,7 +62,9 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         }
         if (ctx.time != null) {
             // TODO Add support for actor time
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Actor time is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Actor time is not yet supported");
+            }
         }
         if (ctx.localVariableDeclaration() != null) {
             for (CALParser.LocalVariableDeclarationContext localVariableCtx: ctx.localVariableDeclaration()) {
@@ -78,22 +82,30 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.initializationActionDefinition().size() > 0) {
             // TODO Add support for initialization actions
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Initialization action is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Initialization action is not yet supported");
+            }
         }
 
         if (ctx.priorityOrder().size() > 0) {
             // TODO Add support for action priorities
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Action priorities are not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Action priorities are not yet supported");
+            }
         }
 
         if (ctx.actionSchedule().size() > 0) {
             // TODO Add support for action schedules
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Action schedule is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Action schedule is not yet supported");
+            }
         }
 
         if (ctx.processDescription().size() > 0) {
             // TODO Add support for process descriptions
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Process description is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Process description is not yet supported");
+            }
         }
 
         ActorNode actorNode = new ActorNode(

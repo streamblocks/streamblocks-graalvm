@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
@@ -18,6 +19,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -51,7 +53,9 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
     @Override public ActionNode visitActionDefinition(CALParser.ActionDefinitionContext ctx) {
         if (ctx.delay != null) {
             // TODO Add support for action delay
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Action delay is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Action delay is not yet supported");
+            }
         }
 
         ScopeEnvironment.getInstance().pushScope();
@@ -137,16 +141,22 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             return null;
         } else if (ctx.patterns().pattern().size() > 1) {
             // TODO Add support for multiple patterns in an input pattern
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with multiple patterns is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with multiple patterns is not yet supported");
+            }
         } else if (!(ctx.patterns().pattern().get(0) instanceof CALParser.SimplePatternContext)) {
             // TODO Add support for complex patterns in an input pattern
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with multiple patterns is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with multiple patterns is not yet supported");
+            }
         }
         String patternVariableName = ((CALParser.SimplePatternContext) ctx.patterns().pattern().get(0)).variable().name.getText();
 
         if (ctx.channelSelector() != null) {
             // TODO Add support for channel selector
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an input pattern is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an input pattern is not yet supported");
+            }
         }
 
         CALExpressionNode valueNode;
@@ -248,14 +258,18 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.expressions().expression().size() > 1) {
             // TODO Add support for multiple token expressions in an output expression
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Output expression with multiple tokens is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Output expression with multiple tokens is not yet supported");
+            }
         }
         List<CALExpressionNode> tokenExpressions = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.expressions());
         CALExpressionNode tokenExpression = tokenExpressions.get(0);
 
         if (ctx.channelSelector() != null) {
             // TODO Add support for channel selector
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an output expression is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an output expression is not yet supported");
+            }
         }
 
         if (ctx.repeat == null) {

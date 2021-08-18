@@ -1,6 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -81,7 +83,9 @@ public class StructureVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.attributeSection() != null) {
             // TODO Add support for attribute section
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Structure attributes are not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Structure attributes are not yet supported");
+            }
         }
 
         return new StructureConnection(source, destination);

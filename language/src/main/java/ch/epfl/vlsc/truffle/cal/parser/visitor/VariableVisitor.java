@@ -1,11 +1,13 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -43,11 +45,15 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
     @Override public InitializeArgNode visitPortDeclaration(CALParser.PortDeclarationContext ctx) {
         if (ctx.isMulti != null) {
             // TODO Add support for multi-ports ('multi')
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Multi-port is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Multi-port is not yet supported");
+            }
         }
         if (ctx.type() != null) {
             // TODO Add support for port type
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Port type is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Port type is not yet supported");
+            }
         }
 
         String portName = ctx.name.getText();
@@ -87,7 +93,9 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
     @Override public CALStatementNode visitLocalVariableDeclaration(CALParser.LocalVariableDeclarationContext ctx) {
         if (ctx.isExternal != null) {
             // TODO Add support for external variables ('external')
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "External local variable is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "External local variable is not yet supported");
+            }
         }
 
         if (ctx.explicitVariableDeclaration() != null) {
@@ -122,19 +130,27 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
     @Override public CALExpressionNode visitExplicitVariableDeclaration(CALParser.ExplicitVariableDeclarationContext ctx) {
         if (ctx.isMutable != null) {
             // TODO Add support for mutable variables ('mutable')
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Mutable variable is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Mutable variable is not yet supported");
+            }
         }
         if (ctx.type() != null) {
             // TODO Add support for variable type
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Variable type is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Variable type is not yet supported");
+            }
         }
         if (ctx.isAssignable == null && ctx.value != null) {
             // TODO Add support for non-assignable variables ('=')
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Non-assignable variable is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Non-assignable variable is not yet supported");
+            }
         }
         if (ctx.expression().size() > 1) {
             // TODO Add support for indexing ('[]')
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Variable indexing is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Variable indexing is not yet supported");
+            }
         }
 
         CALExpressionNode valueNode;
@@ -156,7 +172,9 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         if (ctx.type() != null) {
             // TODO Add support for function return type
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Function return type is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Function return type is not yet supported");
+            }
         }
 
         ScopeEnvironment.getInstance().pushScope(true);

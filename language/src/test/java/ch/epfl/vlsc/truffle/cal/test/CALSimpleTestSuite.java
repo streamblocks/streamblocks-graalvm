@@ -6,11 +6,6 @@ import org.junit.Test;
 public class CALSimpleTestSuite extends CALTestSuite {
 
     @Test
-    public void expressionsTest() throws IOException {
-        runTest(TestCase.newBuilder("expressions").build());
-    }
-
-    @Test
     public void addTest() throws IOException {
         runTest(TestCase.newBuilder("add").build());
     }

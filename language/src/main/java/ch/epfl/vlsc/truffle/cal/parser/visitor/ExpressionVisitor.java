@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
@@ -13,6 +14,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -296,7 +298,9 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
     @Override public CALExpressionNode visitVariableExpression(CALParser.VariableExpressionContext ctx) {
         if (ctx.isOld != null) {
             // TODO Add support for old variable
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Old variable expression is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Old variable expression is not yet supported");
+            }
         }
         return ScopeEnvironment.getInstance().createReadNode(ctx.variable().getText());
     }
@@ -368,11 +372,15 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
         if (ctx.isConst != null) {
             // TODO Add support for constant lambda
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Constant lambda expression is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Constant lambda expression is not yet supported");
+            }
         }
         if (ctx.type() != null) {
             // TODO Add support for lambda return type
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Lambda expression return type is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Lambda expression return type is not yet supported");
+            }
         }
 
         ScopeEnvironment.getInstance().pushScope(true);
@@ -450,12 +458,16 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
             if (ctx.generators().generator().size() > 1) {
                 // TODO Add support for multiple generators
-                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.generators(), "Multiple comprehension generators are not yet supported");
+                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                    throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx.generators(), "Multiple comprehension generators are not yet supported");
+                }
             }
             for (CALParser.GeneratorContext generatorCtx: ctx.generators().generator()) {
                 if (generatorCtx.generatorBody().variables.size() > 1) {
                     // TODO Add support for multiple variables in a generator
-                    throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a comprehension generator are not yet supported");
+                    if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                        throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a comprehension generator are not yet supported");
+                    }
                 }
                 for (Token variable: generatorCtx.generatorBody().variables) {
                     variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), new NullLiteralNode());
@@ -469,14 +481,18 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
                 if (expressionNodes.size() > 1) {
                     // TODO Add support for generator filters
-                    throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Comprehension generator filters are not yet supported");
+                    if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                        throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Comprehension generator filters are not yet supported");
+                    }
                 }
             }
 
             List<CALExpressionNode> computationExpressions = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.computations);
             if (computationExpressions.size() > 1) {
                 // TODO Add support for multiple computation expressions
-                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.computations, "Multiple comprehension computation expressions are not yet supported");
+                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                    throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx.computations, "Multiple comprehension computation expressions are not yet supported");
+                }
             }
             CALExpressionNode computationExpression = computationExpressions.get(0);
 

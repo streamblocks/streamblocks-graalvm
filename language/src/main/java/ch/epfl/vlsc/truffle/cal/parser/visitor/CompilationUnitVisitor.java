@@ -1,7 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
@@ -87,11 +89,15 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
         Map<String, RootCallTarget> entities = new HashMap<>();
         if (ctx.typeDefinition().size() > 0) {
             // TODO Add support for type definitions
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Type definition is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Type definition is not yet supported");
+            }
         }
         if (ctx.globalVariableDeclaration().size() > 0) {
             // TODO Add support for global variables
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Global variable is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Global variable is not yet supported");
+            }
         }
         for (CALParser.ActorDeclarationContext actorCtx: ctx.actorDeclaration()) {
             CALRootNode entityNode = ActorVisitor.getInstance().visitActorDeclaration(actorCtx);
@@ -109,7 +115,7 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Object visitAnnotation(CALParser.AnnotationContext ctx) {
-        // TODO Add support for annotations
+        // TODO Add support for annotations in parent rules
         // Note: Unreachable for now
         throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Annotation is not yet supported");
     }
@@ -160,7 +166,9 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     @Override public Pair<String, String> visitSingleImport(CALParser.SingleImportContext ctx) {
         if (ctx.kind != null) {
             // TODO Add support for explicit import kind
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Explicit import kind is not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Explicit import kind is not yet supported");
+            }
         }
 
         List<Token> globalName = (ArrayList<Token>) CollectionVisitor.getInstance().visitQualifiedID(ctx.globalName);

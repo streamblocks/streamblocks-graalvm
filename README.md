@@ -2,7 +2,7 @@
 
 ## Usage
 ```
-./cal <path> --cal.actor=<actor to run> --cal.iterations=<number of iterations> --cal.directory-lookup=<true to recursively load and parse all the files in the directory>
+./cal <path> --cal.actor=<actor to run> --cal.iterations=<number of iterations> --cal.directory-lookup=<true to recursively load and parse all the files in the directory> --cal.show-warnings=<true to show compilation warnings>
 ```
 
 ## Project Status

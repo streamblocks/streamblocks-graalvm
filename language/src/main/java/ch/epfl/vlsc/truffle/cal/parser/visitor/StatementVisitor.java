@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
@@ -10,6 +11,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -200,12 +202,16 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         if (ctx.foreachGenerators().foreachGenerator().size() > 1) {
             // TODO Add support for multiple generators
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.foreachGenerators(), "Multiple foreach generators are not yet supported");
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx.foreachGenerators(), "Multiple foreach generators are not yet supported");
+            }
         }
         for (CALParser.ForeachGeneratorContext generatorCtx: ctx.foreachGenerators().foreachGenerator()) {
             if (generatorCtx.generatorBody().variables.size() > 1) {
                 // TODO Add support for multiple variables in a generator
-                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a foreach generator are not yet supported");
+                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                    throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a foreach generator are not yet supported");
+                }
             }
             for (Token variable: generatorCtx.generatorBody().variables) {
                 variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), new NullLiteralNode());
@@ -219,7 +225,9 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
             if (expressionNodes.size() > 1) {
                 // TODO Add support for generator filters
-                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Foreach generator filters are not yet supported");
+                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                    throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Foreach generator filters are not yet supported");
+                }
             }
         }
 
