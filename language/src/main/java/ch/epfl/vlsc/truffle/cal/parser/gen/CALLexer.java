@@ -1,4 +1,4 @@
-// Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/grammars/CALLexer.g4 by ANTLR 4.7.1
+// Generated from language/src/main/java/ch/epfl/vlsc/truffle/cal/parser/grammar/CALLexer.g4 by ANTLR 4.7.1
 package ch.epfl.vlsc.truffle.cal.parser.gen;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;

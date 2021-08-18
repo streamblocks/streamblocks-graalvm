@@ -63,8 +63,8 @@ import com.oracle.truffle.api.RootCallTarget;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
-import ch.epfl.vlsc.truffle.cal.parser.error.ErrorListener;
-import ch.epfl.vlsc.truffle.cal.parser.visitors.*;
+import ch.epfl.vlsc.truffle.cal.parser.exception.ErrorListener;
+import ch.epfl.vlsc.truffle.cal.parser.visitor.*;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;

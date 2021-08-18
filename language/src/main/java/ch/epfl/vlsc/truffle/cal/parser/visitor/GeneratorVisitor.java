@@ -1,4 +1,4 @@
-package ch.epfl.vlsc.truffle.cal.parser.visitors;
+package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;

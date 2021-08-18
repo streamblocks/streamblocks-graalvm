@@ -1,16 +1,14 @@
-package ch.epfl.vlsc.truffle.cal.parser.visitors;
+package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
-import ch.epfl.vlsc.truffle.cal.parser.error.CALParseError;
-import ch.epfl.vlsc.truffle.cal.parser.scope.DepthFrameSlot;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
-import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,7 +1,7 @@
-package ch.epfl.vlsc.truffle.cal.parser.visitors;
+package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
-import ch.epfl.vlsc.truffle.cal.parser.error.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;

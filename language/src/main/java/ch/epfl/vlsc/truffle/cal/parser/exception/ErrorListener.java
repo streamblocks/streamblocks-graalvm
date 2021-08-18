@@ -1,4 +1,4 @@
-package ch.epfl.vlsc.truffle.cal.parser.error;
+package ch.epfl.vlsc.truffle.cal.parser.exception;
 
 import com.oracle.truffle.api.source.Source;
 import org.antlr.v4.runtime.BaseErrorListener;

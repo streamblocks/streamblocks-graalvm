@@ -39,7 +39,7 @@
  * SOFTWARE.
  */
 
-package ch.epfl.vlsc.truffle.cal.parser.error;
+package ch.epfl.vlsc.truffle.cal.parser.exception;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
