@@ -1,11 +1,10 @@
 package ch.epfl.vlsc.truffle.cal.parser.scope;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadCapturedVariableNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadLocalVariableNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteCapturedVariableNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.*;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.source.SourceSection;
 
 public class DepthFrameSlot implements Cloneable {
 
@@ -45,32 +44,52 @@ public class DepthFrameSlot implements Cloneable {
         return kind;
     }
 
-    public CALExpressionNode createReadNode(int currentScopeDepth) {
+    public CALExpressionNode createReadNode(int currentScopeDepth, SourceSection sourceSection) {
         int outerScopeDepth = currentScopeDepth - depth;
         assert outerScopeDepth >= 0;
         if (outerScopeDepth == 0) {
             // Read a local variable
-            return new CALReadLocalVariableNode(slot);
+            CALReadLocalVariableNode variableNode = new CALReadLocalVariableNode(slot);
+            variableNode.setSourceSection(sourceSection);
+            // TODO Change to ReadVariableTag
+            variableNode.addExpressionTag();
+
+            return variableNode;
         } else {
             // Read a variable from <outerScopeDepth>th outer scope
-            return CALReadCapturedVariableNodeGen.create(slot, outerScopeDepth);
+            CALReadCapturedVariableNode variableNode = CALReadCapturedVariableNodeGen.create(slot, outerScopeDepth);
+            variableNode.setSourceSection(sourceSection);
+            // TODO Change to ReadVariableTag
+            variableNode.addExpressionTag();
+
+            return variableNode;
         }
     }
 
-    public CALExpressionNode createWriteNode(CALExpressionNode value, CALExpressionNode nameNode, boolean isNewVariable, int currentDepth) throws Error {
+    public CALExpressionNode createWriteNode(CALExpressionNode nameNode, CALExpressionNode valueNode, boolean isNewVariable, int currentDepth, SourceSection sourceSection) {
         if (kind == SlotKind.RO) {
             // Only outer scope variables that are read-only
-            throw new Error("Trying to write to a non-writable value.");
+            throw new Error("Writing to a read-only variable is not allowed");
         }
 
         int outerScopeDepth = currentDepth - depth;
         assert outerScopeDepth >= 0;
         if (outerScopeDepth == 0) {
             // Write to a local variable
-            return CALWriteLocalVariableNodeGen.create(slot, nameNode, isNewVariable, value);
+            CALWriteLocalVariableNode variableNode = CALWriteLocalVariableNodeGen.create(slot, nameNode, isNewVariable, valueNode);
+            variableNode.setSourceSection(sourceSection);
+            // TODO Change to WriteVariableTag
+            variableNode.addStatementTag();
+
+            return variableNode;
         } else {
             // Write to a variable from <outerScopeDepth>th outer scope
-            return CALWriteCapturedVariableNodeGen.create(slot, nameNode, isNewVariable, value, outerScopeDepth);
+            CALWriteCapturedVariableNode variableNode = CALWriteCapturedVariableNodeGen.create(slot, nameNode, isNewVariable, valueNode, outerScopeDepth);
+            variableNode.setSourceSection(sourceSection);
+            // TODO Change to WriteVariableTag
+            variableNode.addStatementTag();
+
+            return variableNode;
         }
     }
 

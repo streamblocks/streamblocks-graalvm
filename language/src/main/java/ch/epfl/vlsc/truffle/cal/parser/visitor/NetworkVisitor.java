@@ -80,15 +80,20 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                 if (connection.source.entity != null && connection.destination.entity != null) {
                     // Connect entities = create new FIFO between them
                     String newFIFOName = ScopeEnvironment.generateFIFOName();
-                    CALExpressionNode newFIFONode = ScopeEnvironment.getInstance().createWriteNode(newFIFOName, new CALCreateFIFONode());
+                    CALCreateFIFONode newFIFOValueNode = new CALCreateFIFONode();
+                    newFIFOValueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(structureCtx));
+                    newFIFOValueNode.addExpressionTag();
+
+                    CALExpressionNode newFIFONode = ScopeEnvironment.getInstance().createWriteNode(newFIFOName, newFIFOValueNode, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     headStatementNodes.add(newFIFONode);
-                    FIFONode = ScopeEnvironment.getInstance().createReadNode(newFIFOName);
+
+                    FIFONode = ScopeEnvironment.getInstance().createReadNode(newFIFOName, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                 } else {
                     // Connect entity with network port = use network's existing FIFO to communicate with the entity
                     if (connection.source.entity == null) {
-                        FIFONode = ScopeEnvironment.getInstance().createReadNode(connection.source.port);
+                        FIFONode = ScopeEnvironment.getInstance().createReadNode(connection.source.port, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     } else {
-                        FIFONode = ScopeEnvironment.getInstance().createReadNode(connection.destination.port);
+                        FIFONode = ScopeEnvironment.getInstance().createReadNode(connection.destination.port, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     }
                 }
 
@@ -106,6 +111,8 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
             EntityVisitor.EntityInstance instance = entry.getValue();
 
             CALExpressionNode actorLiteralNode = new ActorLiteralNode(ScopeEnvironment.getInstance().getEntityFullName(instance.actor));
+            actorLiteralNode.setSourceSection(instance.sourceSection);
+            actorLiteralNode.addExpressionTag();
 
             List<CALExpressionNode> argumentNodes = new ArrayList<>();
             // TODO Add support for named parameters
@@ -115,9 +122,9 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
 
             CALExpressionNode valueNode = new CALInvokeNode(actorLiteralNode, argumentNodes.toArray(new CALExpressionNode[0]));
             valueNode.setSourceSection(instance.sourceSection);
+            valueNode.addExpressionTag();
 
-            CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createWriteNode(instance.name, valueNode);
-            instanceNode.setSourceSection(instance.sourceSection);
+            CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createWriteNode(instance.name, valueNode, instance.sourceSection);
             headStatementNodes.add(instanceNode);
         }
 
@@ -126,12 +133,24 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
         // Run actors
         List<CALExpressionNode> bodyStatementNodes = new LinkedList<>();
         for (String instanceName : entities.keySet()) {
-            CALExpressionNode entityNode = ScopeEnvironment.getInstance().createReadNode(instanceName);
-            bodyStatementNodes.add(new CALInvokeNode(entityNode, new CALExpressionNode[0]));
+            CALExpressionNode entityNode = ScopeEnvironment.getInstance().createReadNode(instanceName, entities.get(instanceName).sourceSection);
+
+            CALInvokeNode entityInvokeNode = new CALInvokeNode(entityNode, new CALExpressionNode[0]);
+            entityInvokeNode.setSourceSection(entities.get(instanceName).sourceSection);
+            entityInvokeNode.addStatementTag();
+
+            bodyStatementNodes.add(entityInvokeNode);
         }
 
         StmtBlockNode headNode = new StmtBlockNode(headStatementNodes.toArray(new CALStatementNode[0]));
+        headNode.setUnavailableSourceSection();
+        headNode.addStatementTag();
+
         CALExpressionNode bodyNode = new NetworkBodyNode(bodyStatementNodes.toArray(new CALExpressionNode[0]));
+        headNode.setUnavailableSourceSection();
+        headNode.addStatementTag();
+
+
         CALRootNode bodyRootNode = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
@@ -139,6 +158,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                 ScopeEnvironment.getInstance().getSource().createUnavailableSection(),
                 networkName
         );
+        // TODO Add RootTag / CallTag for bodyRootNode
 
         ScopeEnvironment.getInstance().getCurrentScope().decreaseDepth();
 
@@ -150,6 +170,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 networkName
         );
+        // TODO Add RootTag / CallTag for networkNode
 
         ScopeEnvironment.getInstance().popScope();
 

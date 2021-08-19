@@ -5,6 +5,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
@@ -72,6 +73,8 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
             }
         }
         StmtBlockNode headNode = new StmtBlockNode(headStatementNodes.toArray(new CALStatementNode[0]));
+        headNode.setUnavailableSourceSection();
+        headNode.addStatementTag();
 
         List<ActionNode> actionNodes = new ArrayList<>();
         if (ctx.actionDefinition() != null) {
@@ -116,6 +119,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 actorName
         );
+        // TODO Add RootTag / CallTag for actorNode
 
         ScopeEnvironment.getInstance().popScope();
 

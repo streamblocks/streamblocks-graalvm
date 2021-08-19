@@ -63,7 +63,12 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         if (parentCtx instanceof CALParser.PortDeclarationsContext) {
             // Note: Start index is currently used to account the total offset of a port declaration in an actor/network entity
             int portDeclarationIndex = portDeclarationStartIndex + ((CALParser.PortDeclarationsContext) parentCtx).portDeclaration().indexOf(ctx);
-            return new InitializeArgNode(ScopeEnvironment.getInstance().getCurrentScope().get(portName).getSlot(), portDeclarationIndex);
+
+            InitializeArgNode portNode = new InitializeArgNode(ScopeEnvironment.getInstance().getCurrentScope().get(portName).getSlot(), portDeclarationIndex);
+            portNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            portNode.addStatementTag();
+
+            return portNode;
         } else {
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Port position cannot be determined"); // Note: Unreachable case
         }
@@ -158,9 +163,11 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             valueNode = ExpressionVisitor.getInstance().visit(ctx.value);
         } else {
             valueNode = new NullLiteralNode();
+            valueNode.setSourceSection(ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+            valueNode.addExpressionTag();
         }
 
-        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode);
+        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -182,6 +189,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         if (ctx.formalParameters() != null) {
             Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
             headNode = new StmtBlockNode(formalParameterNodes.toArray(new CALStatementNode[0]));
+            headNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.formalParameters()));
+            headNode.addStatementTag();
         } else {
             headNode = null;
         }
@@ -191,9 +200,14 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
             Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
             StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
+            letHeadNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.localVariables));
+            letHeadNode.addStatementTag();
+
             CALExpressionNode letBodyNode = ExpressionVisitor.getInstance().visit(ctx.body);
 
             bodyNode = new LetExprNode(letHeadNode, letBodyNode);
+            bodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            bodyNode.addExpressionTag();
 
             ScopeEnvironment.getInstance().popScope();
         } else {
@@ -201,18 +215,25 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         }
 
         ReturnsLastBodyNode lambdaBodyNode = new ReturnsLastBodyNode(headNode, bodyNode);
+        lambdaBodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        lambdaBodyNode.addExpressionTag();
+
         CALRootNode lambdaBodyRootNode = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 lambdaBodyNode,
-                null,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
                 ScopeEnvironment.generateLambdaName()
         );
+        // TODO Add RootTag / CallTag for lambdaBodyRootNode
+
         LambdaNode valueNode = new LambdaNode(lambdaBodyRootNode);
+        valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        valueNode.addExpressionTag();
 
         ScopeEnvironment.getInstance().popScope();
 
-        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode);
+        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -232,7 +253,13 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         ParserRuleContext parentCtx = ctx.getParent();
         if (parentCtx instanceof CALParser.FormalParametersContext) {
-            return new InitializeArgNode(ScopeEnvironment.getInstance().getCurrentScope().get(variableName).getSlot(), ((CALParser.FormalParametersContext) parentCtx).formalParameter().indexOf(ctx));
+            int formalParameterIndex = ((CALParser.FormalParametersContext) parentCtx).formalParameter().indexOf(ctx);
+
+            InitializeArgNode formalParameterNode = new InitializeArgNode(ScopeEnvironment.getInstance().getCurrentScope().get(variableName).getSlot(), formalParameterIndex);
+            formalParameterNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            formalParameterNode.addStatementTag();
+
+            return formalParameterNode;
         } else {
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Formal parameter position cannot be determined"); // Note: Unreachable case
         }

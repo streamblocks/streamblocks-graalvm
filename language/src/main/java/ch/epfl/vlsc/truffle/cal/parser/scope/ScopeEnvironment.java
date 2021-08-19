@@ -138,11 +138,11 @@ public class ScopeEnvironment {
 		currentScope = currentScope.getOuterScope();
 	}
 
-	public CALExpressionNode createReadNode(String name) {
+	public CALExpressionNode createReadNode(String name, SourceSection sourceSection) {
 		CALExpressionNode variableExpression;
 		DepthFrameSlot slot = currentScope.get(name);
 		if (slot != null) {
-			variableExpression = slot.createReadNode(currentScope.getDepth());
+			variableExpression = slot.createReadNode(currentScope.getDepth(), sourceSection);
 		} else {
 			variableExpression = new FunctionLiteralNode(name);
 		}
@@ -165,14 +165,14 @@ public class ScopeEnvironment {
 		currentScope.put(name, readOnlySlot);
 	}
 
-	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode) {
+	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
 		createFrameSlot(name);
 
 		CALExpressionNode nameNode = new StringLiteralNode(name);
 		DepthFrameSlot slot = currentScope.get(name);
 		boolean isNewVariable = !currentScope.containsKey(name);
 
-		return slot.createWriteNode(valueNode, nameNode, isNewVariable, currentScope.getDepth());
+		return slot.createWriteNode(nameNode, valueNode, isNewVariable, currentScope.getDepth(), sourceSection);
 	}
 
 	public static String generateLambdaName() {

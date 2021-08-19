@@ -5,10 +5,12 @@ import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
@@ -49,7 +51,11 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
             statementNodes.add(statementNode);
         }
 
-        return new StmtBlockNode(statementNodes.toArray(new CALStatementNode[0]));
+        StmtBlockNode statementsNode = new StmtBlockNode(statementNodes.toArray(new CALStatementNode[0]));
+        statementsNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        statementsNode.addStatementTag();
+
+        return statementsNode;
     }
 
     /**
@@ -95,14 +101,23 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
         accessors.remove(ctx.lvalue().variable());
         accessors.removeIf(accessor -> accessor instanceof TerminalNode);
         if (accessors.size() > 0) {
-            CALExpressionNode resultNode = ScopeEnvironment.getInstance().createReadNode(variableName);
+            CALExpressionNode lvalueNode = ScopeEnvironment.getInstance().createReadNode(variableName, ScopeEnvironment.getInstance().createSourceSection(ctx.lvalue().variable()));
             for (ParseTree accessor : accessors.subList(0, accessors.size() - 1)) {
                 if (accessor instanceof CALParser.FieldContext) {
                     // TODO Add support for accessing fields
                     throw new CALParseError(ScopeEnvironment.getInstance().getSource(), (CALParser.FieldContext) accessor, "Lvalue field access is not yet supported");
                 } else if (accessor instanceof CALParser.ExpressionContext) {
                     CALExpressionNode indexNode = ExpressionVisitor.getInstance().visit(accessor);
-                    resultNode = ListReadNodeGen.create(resultNode, indexNode);
+
+                    lvalueNode = ListReadNodeGen.create(lvalueNode, indexNode);
+                    // Note: Custom source section to precisely specify a part of lvalue
+                    lvalueNode.setSourceSection(ScopeEnvironment.getInstance().getSource().createSection(
+                            ctx.lvalue().variable().getStart().getLine(),
+                            ctx.lvalue().variable().getStart().getCharPositionInLine() + 1,
+                            ((CALParser.ExpressionContext) accessor).getStop().getLine(),
+                            ((CALParser.ExpressionContext) accessor).getStop().getCharPositionInLine() + 1
+                    ));
+                    lvalueNode.addExpressionTag();
                 } else {
                     throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unrecognized lvalue accessor type - Lvalue"); // Note: Unreachable case
                 }
@@ -114,12 +129,17 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), (CALParser.FieldContext) lastAccessor, "Lvalue field access is not yet supported");
             } else if (lastAccessor instanceof CALParser.ExpressionContext) {
                 CALExpressionNode lastIndexNode = ExpressionVisitor.getInstance().visit(lastAccessor);
-                return ListWriteNodeGen.create(resultNode, lastIndexNode, valueNode);
+
+                ListWriteNode assignmentNode = ListWriteNodeGen.create(lvalueNode, lastIndexNode, valueNode);
+                assignmentNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+                assignmentNode.addStatementTag();
+
+                return assignmentNode;
             } else {
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unrecognized lvalue accessor type"); // Note: Unreachable case
             }
         } else {
-            return ScopeEnvironment.getInstance().createWriteNode(variableName, valueNode);
+            return ScopeEnvironment.getInstance().createWriteNode(variableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
         }
     }
 
@@ -136,7 +156,11 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
             argumentNodes = new CALExpressionNode[0];
         }
 
-        return new CALInvokeNode(functionNode, argumentNodes);
+        CALInvokeNode callNode = new CALInvokeNode(functionNode, argumentNodes);
+        callNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        callNode.addStatementTag();
+
+        return callNode;
     }
 
     /**
@@ -163,7 +187,11 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
             elseNode = null;
         }
 
-        return new StmtIfNode(conditionNode, thenNode, elseNode);
+        StmtIfNode ifNode = new StmtIfNode(conditionNode, thenNode, elseNode);
+        ifNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        ifNode.addStatementTag();
+
+        return ifNode;
     }
 
     /**
@@ -182,7 +210,11 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
             elseNode = null;
         }
 
-        return new StmtIfNode(conditionNode, thenNode, elseNode);
+        StmtIfNode elseIfNode = new StmtIfNode(conditionNode, thenNode, elseNode);
+        elseIfNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        elseIfNode.addStatementTag();
+
+        return elseIfNode;
     }
 
     /**
@@ -214,7 +246,16 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 }
             }
             for (Token variable: generatorCtx.generatorBody().variables) {
-                variableNode = ScopeEnvironment.getInstance().createWriteNode(variable.getText(), new NullLiteralNode());
+                NullLiteralNode nullLiteralNode = new NullLiteralNode();
+                nullLiteralNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+                nullLiteralNode.addExpressionTag();
+
+                // Note: Custom source section to precisely specify a variable token
+                variableNode = ScopeEnvironment.getInstance().createWriteNode(
+                        variable.getText(),
+                        nullLiteralNode,
+                        ScopeEnvironment.getInstance().getSource().createSection(variable.getLine(), variable.getCharPositionInLine() + 1, variable.getText().length())
+                );
 
                 if (!(variableNode instanceof CALWriteLocalVariableNode)) {
                     throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Variable name re-use in a foreach generator is not yet supported");
@@ -231,7 +272,12 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
             }
         }
 
-        return ForeacheNodeGen.create(StatementVisitor.getInstance().visit(ctx.body), (CALWriteLocalVariableNode) variableNode, collectionNode);
+
+        ForeacheNode foreachNode = ForeacheNodeGen.create(visitStatements(ctx.body), (CALWriteLocalVariableNode) variableNode, collectionNode);
+        foreachNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        foreachNode.addStatementTag();
+
+        return foreachNode;
     }
 
     /**

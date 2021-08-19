@@ -14,15 +14,13 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
+import com.oracle.truffle.api.source.SourceSection;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
@@ -82,22 +80,38 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         }
 
         StmtBlockNode bodyNode = new StmtBlockNode(actionStatements.toArray(new CALStatementNode[0]));
+        bodyNode.setUnavailableSourceSection();
+        bodyNode.addStatementTag();
+
         ActionBodyNode actionBodyNode = new ActionBodyNode(bodyNode);
+        actionBodyNode.setUnavailableSourceSection();
+        actionBodyNode.addStatementTag();
 
         // Firing condition = Sufficient number of input tokens + Guards
         List<CALExpressionNode> firingConditions = new LinkedList<>();
         if (ctx.inputPatterns() != null) {
             for (CALParser.InputPatternContext patternCtx: ctx.inputPatterns().inputPattern()) {
                 // Note: All necessary checks are performed during input patterns visit (previously called)
-                CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(patternCtx.port.getText());
+                CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(patternCtx.port.getText(), ScopeEnvironment.getInstance().createSourceSection(patternCtx));
                 CALExpressionNode minimumQueueSizeNode;
                 if (patternCtx.repeat == null) {
                     minimumQueueSizeNode = new LongLiteralNode(1);
+                    minimumQueueSizeNode.setUnavailableSourceSection();
+                    minimumQueueSizeNode.addExpressionTag();
+
                 } else {
                     minimumQueueSizeNode = ExpressionVisitor.getInstance().visit(patternCtx.repeat);
                 }
 
-                firingConditions.add(CALBinaryGreaterOrEqualNodeGen.create(new CALFIFOSizeNode(portQueue), minimumQueueSizeNode));
+                CALFIFOSizeNode portQueueSizeNode = new CALFIFOSizeNode(portQueue);
+                portQueueSizeNode.setUnavailableSourceSection();
+                portQueueSizeNode.addExpressionTag();
+
+                CALBinaryGreaterOrEqualNode firingCondition = CALBinaryGreaterOrEqualNodeGen.create(portQueueSizeNode, minimumQueueSizeNode);
+                firingCondition.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(patternCtx));
+                firingCondition.addExpressionTag();
+
+                firingConditions.add(firingCondition);
             }
         }
         if (ctx.guards != null) {
@@ -107,10 +121,21 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         CALExpressionNode firingCondition;
         if (firingConditions.size() > 0) {
             firingCondition = firingConditions.remove(0);
-            for (CALExpressionNode condition : firingConditions)
+            for (CALExpressionNode condition : firingConditions) {
+                SourceSection newSourceSection = ScopeEnvironment.getInstance().getSource().createSection(
+                        firingCondition.getSourceSection().getStartLine(),
+                        firingCondition.getSourceSection().getStartColumn(),
+                        condition.getSourceSection().getEndLine(),
+                        condition.getSourceSection().getEndColumn()
+                );
                 firingCondition = new CALBinaryLogicalAndNode(firingCondition, condition);
+                firingCondition.setSourceSection(newSourceSection);
+                firingCondition.addExpressionTag();
+            }
         } else {
             firingCondition = new BooleanLiteralNode(true);
+            firingCondition.setUnavailableSourceSection();
+            firingCondition.addExpressionTag();
         }
 
         ActionNode actionNode = new ActionNode(
@@ -121,6 +146,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 actionName
         );
+        // TODO Add RootTag / CallTag for actionNode
 
         ScopeEnvironment.getInstance().popScope();
 
@@ -135,7 +161,11 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             // TODO Add support for implicit input pattern
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit input pattern is not yet supported");
         }
-        CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(ctx.port.getText());
+        // Note: Custom source section to precisely specify a port token
+        CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(
+                ctx.port.getText(),
+                ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
+        );
 
         if (ctx.patterns() == null) {
             return null;
@@ -163,6 +193,8 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         if (ctx.repeat == null) {
             // Simple input pattern
             valueNode = new CALReadFIFONode(portQueue);
+            valueNode.setUnavailableSourceSection();
+            valueNode.addExpressionTag();
         } else {
             CALExpressionNode repeatValueNode = ExpressionVisitor.getInstance().visit(ctx.repeat);
 
@@ -177,28 +209,72 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
              *      <Pattern Variable> = $tempList;
              */
             CALStatementNode[] inputPatternStatementNodes = new CALStatementNode[3];
-            inputPatternStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode("$tempList", new UnknownSizeListInitNode()); // $tempList = [];
-            inputPatternStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode("$comprehensionCounter", new LongLiteralNode(0)); // $comprehensionCounter = 0;
+            inputPatternStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode(
+                    "$tempList",
+                    new UnknownSizeListInitNode(),
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+            ); // $tempList = [];
+            inputPatternStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
+                    "$comprehensionCounter",
+                    new LongLiteralNode(0),
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+            ); // $comprehensionCounter = 0;
+
             CALExpressionNode rangeListNode = ListRangeInitNodeGen.create(new LongLiteralNode(0), CALBinarySubNodeGen.create(repeatValueNode, new LongLiteralNode(1))); // <0..Repeat Expression - 1>
+            rangeListNode.setUnavailableSourceSection();
+            rangeListNode.addExpressionTag();
 
             CALStatementNode[] loopStatementNodes = new CALStatementNode[2];
+
+            CALReadFIFONode portQueueNode = new CALReadFIFONode(portQueue);
+            portQueueNode.setSourceSection(portQueue.getSourceSection());
+            portQueueNode.addExpressionTag();
+
             loopStatementNodes[0] = ListWriteNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode("$tempList"),
-                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter"),
-                    new CALReadFIFONode(portQueue)
+                    ScopeEnvironment.getInstance().createReadNode("$tempList", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    portQueueNode
             ); // <Port Queue>.add(<Token Expression>[$comprehensionCounter]);
+            loopStatementNodes[0].setUnavailableSourceSection();
+            loopStatementNodes[0].addStatementTag();
+
+            LongLiteralNode oneLiteralNode = new LongLiteralNode(1);
+            oneLiteralNode.setUnavailableSourceSection();
+            oneLiteralNode.addExpressionTag();
+
+            CALBinaryAddNode incrementCounterNode = CALBinaryAddNodeGen.create(
+                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    oneLiteralNode
+            );
+            incrementCounterNode.setUnavailableSourceSection();
+            incrementCounterNode.addExpressionTag();
+
             loopStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
                     "$comprehensionCounter",
-                    CALBinaryAddNodeGen.create(ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter"), new LongLiteralNode(1))
+                    incrementCounterNode,
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
             ); // $comprehensionCounter++;
+
             CALStatementNode loopBodyNode = new StmtBlockNode(loopStatementNodes);
+            loopBodyNode.setUnavailableSourceSection();
+            loopBodyNode.addStatementTag();
 
             inputPatternStatementNodes[2] = ForeacheNodeGen.create(loopBodyNode, null, rangeListNode); // for (<0..Repeat Expression - 1>) { ... }
+            inputPatternStatementNodes[2].setUnavailableSourceSection();
+            inputPatternStatementNodes[2].addStatementTag();
 
-            valueNode = new ReturnsLastBodyNode(new StmtBlockNode(inputPatternStatementNodes), ScopeEnvironment.getInstance().createReadNode("$tempList")); // ... return $tempList;
+            CALStatementNode inputPatternBodyNode = new StmtBlockNode(inputPatternStatementNodes);
+            inputPatternBodyNode.setUnavailableSourceSection();
+            inputPatternBodyNode.addStatementTag();
+
+            CALExpressionNode inputPatternReturnNode = ScopeEnvironment.getInstance().createReadNode("$tempList", ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+
+            valueNode = new ReturnsLastBodyNode(inputPatternBodyNode, inputPatternReturnNode); // ... return $tempList;
+            valueNode.setUnavailableSourceSection();
+            valueNode.addExpressionTag();
         }
 
-        return ScopeEnvironment.getInstance().createWriteNode(patternVariableName, valueNode);
+        return ScopeEnvironment.getInstance().createWriteNode(patternVariableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -253,8 +329,11 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             // TODO Add support for implicit output expressions
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit output expression is not yet supported");
         }
-        CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(ctx.port.getText());
-
+        // Note: Custom source section to precisely specify a port token
+        CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(
+                ctx.port.getText(),
+                ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
+        );
 
         if (ctx.expressions().expression().size() > 1) {
             // TODO Add support for multiple token expressions in an output expression
@@ -274,7 +353,11 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.repeat == null) {
             // Simple output expression
-            return new CALWriteFIFONode(portQueue, tokenExpression);
+            CALWriteFIFONode simpleOutputExpressionNode = new CALWriteFIFONode(portQueue, tokenExpression);
+            simpleOutputExpressionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            simpleOutputExpressionNode.addStatementTag();
+
+            return simpleOutputExpressionNode;
         } else {
             CALExpressionNode repeatValueNode = ExpressionVisitor.getInstance().visit(ctx.repeat);
 
@@ -287,23 +370,56 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
              *      }
              */
             CALStatementNode[] outputExpressionStatementNodes = new CALStatementNode[2];
-            outputExpressionStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode("$comprehensionCounter", new LongLiteralNode(0)); // $comprehensionCounter = 0;
+            outputExpressionStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode(
+                    "$comprehensionCounter",
+                    new LongLiteralNode(0),
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+            ); // $comprehensionCounter = 0;
+
             CALExpressionNode rangeListNode = ListRangeInitNodeGen.create(new LongLiteralNode(0), CALBinarySubNodeGen.create(repeatValueNode, new LongLiteralNode(1))); // <0..Repeat Expression - 1>
+            rangeListNode.setUnavailableSourceSection();
+            rangeListNode.addExpressionTag();
 
             CALStatementNode[] loopStatementNodes = new CALStatementNode[2];
-            loopStatementNodes[0] = new CALWriteFIFONode(
-                    portQueue,
-                    ListReadNodeGen.create(tokenExpression, ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter"))
-            ); // <Port Queue>.add(<Token Expression>[$comprehensionCounter]);
+
+            ListReadNode tokenExpressionElementNode = ListReadNodeGen.create(
+                    tokenExpression,
+                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection())
+            );
+            tokenExpressionElementNode.setSourceSection(portQueue.getSourceSection());
+            tokenExpressionElementNode.addExpressionTag();
+
+            loopStatementNodes[0] = new CALWriteFIFONode(portQueue, tokenExpressionElementNode); // <Port Queue>.add(<Token Expression>[$comprehensionCounter]);
+            loopStatementNodes[0].setUnavailableSourceSection();
+            loopStatementNodes[0].addStatementTag();
+
+            LongLiteralNode oneLiteralNode = new LongLiteralNode(1);
+            oneLiteralNode.setUnavailableSourceSection();
+            oneLiteralNode.addExpressionTag();
+
+            CALBinaryAddNode incrementCounterNode = CALBinaryAddNodeGen.create(
+                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    oneLiteralNode
+            );
+            incrementCounterNode.setUnavailableSourceSection();
+            incrementCounterNode.addExpressionTag();
+
             loopStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
                     "$comprehensionCounter",
-                    CALBinaryAddNodeGen.create(ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter"), new LongLiteralNode(1))
+                    incrementCounterNode,
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
             ); // $comprehensionCounter++;
             CALStatementNode loopBodyNode = new StmtBlockNode(loopStatementNodes);
 
             outputExpressionStatementNodes[1] = ForeacheNodeGen.create(loopBodyNode, null, rangeListNode); // for (<0..Repeat Expression - 1>) { ... }
+            outputExpressionStatementNodes[1].setUnavailableSourceSection();
+            outputExpressionStatementNodes[1].addStatementTag();
 
-            return new StmtBlockNode(outputExpressionStatementNodes);
+            StmtBlockNode repeatedOutputExpressionNode = new StmtBlockNode(outputExpressionStatementNodes);
+            repeatedOutputExpressionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            repeatedOutputExpressionNode.addStatementTag();
+
+            return repeatedOutputExpressionNode;
         }
     }
 
