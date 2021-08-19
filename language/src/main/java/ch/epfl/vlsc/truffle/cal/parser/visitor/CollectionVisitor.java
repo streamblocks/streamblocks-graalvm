@@ -2,8 +2,8 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
-import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
-import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 

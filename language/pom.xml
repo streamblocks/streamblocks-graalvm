@@ -154,6 +154,26 @@
           <target>9</target>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-maven-plugin</artifactId>
+        <version>4.9.2</version>
+        <configuration>
+          <visitor>true</visitor>
+          <listener>false</listener>
+          <arguments>
+            <argument>-package</argument>
+            <argument>ch.epfl.vlsc.truffle.cal.parser</argument>
+          </arguments>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>antlr4</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>

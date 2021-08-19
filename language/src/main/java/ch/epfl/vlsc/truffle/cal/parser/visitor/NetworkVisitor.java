@@ -6,8 +6,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
-import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
-import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 
 import java.util.*;

@@ -4,8 +4,8 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
-import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
-import ch.epfl.vlsc.truffle.cal.parser.gen.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import com.oracle.truffle.api.source.SourceSection;
 

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ch.epfl.vlsc.truffle.cal.parser.gen.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
