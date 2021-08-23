@@ -9,7 +9,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-@NodeInfo(language = "SL", description = "The abstract base node for all SL statements")
+@NodeInfo(language = "CAL", description = "The abstract base node for all CAL statements")
 @GenerateWrapper
 public abstract class StmtNode extends Node implements InstrumentableNode {
     private static final int NO_SOURCE = -1;

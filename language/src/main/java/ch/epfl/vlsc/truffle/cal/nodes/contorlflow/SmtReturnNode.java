@@ -25,7 +25,7 @@ public final class SmtReturnNode extends CALStatementNode {
             result = valueNode.executeGeneric(frame);
         } else {
             /*
-             * Return statement that was not followed by an expression, so return the SL null value.
+             * Return statement that was not followed by an expression, so return the CAL null value.
              */
             result = CALNull.SINGLETON;
         }

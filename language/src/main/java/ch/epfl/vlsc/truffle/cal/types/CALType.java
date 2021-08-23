@@ -19,7 +19,7 @@ public class CALType implements TruffleObject {
     /*
      * These are the sets of builtin types in simple languages. In case of simple language the types
      * nicely match those of the types in InteropLibrary. This might not be the case and more
-     * additional checks need to be performed (similar to number checking for SLBigNumber).
+     * additional checks need to be performed (similar to number checking for CALBigNumber).
      */
     public static final CALType NUMBER = new CALType("Number", (l, v) -> l.fitsInLong(v) || v instanceof CALBigNumber);
     public static final CALType NULL = new CALType("NULL", (l, v) -> l.isNull(v));
@@ -77,7 +77,8 @@ public class CALType implements TruffleObject {
     }
 
     /*
-     * SL does not have the notion of a qualified or simple name, so we return the same type name
+     * FIXME: Doc
+     * CAL does not have the notion of a qualified or simple name, so we return the same type name
      * for both.
      */
     @ExportMessage(name = "getMetaQualifiedName")
@@ -97,6 +98,7 @@ public class CALType implements TruffleObject {
     }
 
     /*
+     * FIXME : Doc
      * The interop message isMetaInstance might be used from other languages or by the {@link
      * SLIsInstanceBuiltin isInstance} builtin. It checks whether a given value, which might be a
      * primitive, foreign or SL value is of a given SL type. This allows other languages to make

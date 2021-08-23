@@ -28,7 +28,7 @@ public abstract class ExprFieldReadNode extends CALExpressionNode {
         try {
             return arrays.readArrayElement(receiver, numbers.asLong(index));
         } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-            // read was not successful. In SL we only have basic support for errors.
+            // read was not successful. In CAL we only have basic support for errors.
             throw CALUndefinedNameException.undefinedProperty(this, index);
         }
     }

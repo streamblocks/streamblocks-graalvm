@@ -61,7 +61,7 @@ public class StmtIfNode extends CALStatementNode {
             return conditionNode.executeBoolean(frame);
         } catch (UnexpectedResultException ex) {
             /*
-             * The condition evaluated to a non-boolean result. This is a type error in the SL
+             * The condition evaluated to a non-boolean result. This is a type error in the CAL
              * program.
              */
             throw CALException.typeError(this, ex.getResult());

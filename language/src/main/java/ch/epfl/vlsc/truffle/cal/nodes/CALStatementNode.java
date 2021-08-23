@@ -15,7 +15,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALScopedNode;
 
-@NodeInfo(language = "SL", description = "The abstract base node for all SL statements")
+@NodeInfo(language = "CAL", description = "The abstract base node for all SL statements")
 @GenerateWrapper
 public abstract class CALStatementNode extends CALScopedNode implements InstrumentableNode {
     private static final int NO_SOURCE = -1;

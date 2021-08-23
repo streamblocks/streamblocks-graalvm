@@ -34,7 +34,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
 
 public class CALContext {
 
-    private static final Source BUILTIN_SOURCE = Source.newBuilder(CALLanguage.ID, "", "SL builtin").build();
+    private static final Source BUILTIN_SOURCE = Source.newBuilder(CALLanguage.ID, "", "CAL builtin").build();
 
 
     private final TruffleLanguage.Env env;

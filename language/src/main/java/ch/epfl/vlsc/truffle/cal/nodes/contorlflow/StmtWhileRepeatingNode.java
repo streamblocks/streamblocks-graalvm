@@ -69,7 +69,7 @@ public final class StmtWhileRepeatingNode extends Node implements RepeatingNode 
             return conditionNode.executeBoolean(frame);
         } catch (UnexpectedResultException ex) {
             /*
-             * The condition evaluated to a non-boolean result. This is a type error in the SL
+             * The condition evaluated to a non-boolean result. This is a type error in the CAL
              * program. We report it with the same exception that Truffle DSL generated nodes use to
              * report type errors.
              */
