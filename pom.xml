@@ -55,6 +55,6 @@
     <module>language</module>
     <module>launcher</module>
     <module>native</module>
-    <module>component</module>
+    <!--<module>component</module>-->
   </modules>
 </project>
