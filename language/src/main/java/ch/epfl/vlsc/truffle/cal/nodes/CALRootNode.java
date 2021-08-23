@@ -45,6 +45,7 @@ public class CALRootNode extends RootNode {
         return sourceSection;
     }
 
+
     @Override
     public Object execute(VirtualFrame frame) {
         assert lookupContextReference(CALLanguage.class).get() != null;

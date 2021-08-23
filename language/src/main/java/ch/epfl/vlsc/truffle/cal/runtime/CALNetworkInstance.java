@@ -116,7 +116,7 @@ public class CALNetworkInstance extends CALValue {
     @SuppressWarnings("unused")
     static final class IsIdenticalOrUndefined {
         @Specialization
-        static TriState doSLFunction(CALNetworkInstance receiver, CALNetworkInstance other) {
+        static TriState doCALFunction(CALNetworkInstance receiver, CALNetworkInstance other) {
             /*
              * SLFunctions are potentially identical to other SLFunctions.
              */

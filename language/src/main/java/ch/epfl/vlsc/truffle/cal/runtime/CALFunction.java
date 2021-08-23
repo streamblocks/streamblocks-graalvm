@@ -131,7 +131,7 @@ public class CALFunction implements TruffleObject {
     @SuppressWarnings("unused")
     static final class IsIdenticalOrUndefined {
         @Specialization
-        static TriState doSLFunction(CALFunction receiver, CALFunction other) {
+        static TriState doCALFunction(CALFunction receiver, CALFunction other) {
             /*
              * SLFunctions are potentially identical to other SLFunctions.
              */

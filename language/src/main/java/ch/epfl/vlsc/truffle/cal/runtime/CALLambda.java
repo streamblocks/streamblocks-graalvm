@@ -110,7 +110,7 @@ public class CALLambda extends CALValue {
     @SuppressWarnings("unused")
     static final class IsIdenticalOrUndefined {
         @Specialization
-        static TriState doSLFunction(CALLambda receiver, CALLambda other) {
+        static TriState doCALFunction(CALLambda receiver, CALLambda other) {
             /*
              * SLFunctions are potentially identical to other SLFunctions.
              */

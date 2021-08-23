@@ -115,7 +115,7 @@ public class CALActorInstance extends CALValue {
     @SuppressWarnings("unused")
     static final class IsIdenticalOrUndefined {
         @Specialization
-        static TriState doSLFunction(CALActorInstance receiver, CALActorInstance other) {
+        static TriState doCALFunction(CALActorInstance receiver, CALActorInstance other) {
             /*
              * SLFunctions are potentially identical to other SLFunctions.
              */
