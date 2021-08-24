@@ -5,6 +5,7 @@ namespace test:
 		var
 			int a := 0
 		do
+		    b := 0;
 			a := a + 1;
 			println(a);
 		end

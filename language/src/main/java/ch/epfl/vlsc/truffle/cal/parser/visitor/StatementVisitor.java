@@ -139,6 +139,10 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unrecognized lvalue accessor type"); // Note: Unreachable case
             }
         } else {
+            if (!ScopeEnvironment.getInstance().getCurrentScope().containsKey(variableName)) {
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Cannot write to undefined variable " + variableName);
+            }
+
             return ScopeEnvironment.getInstance().createWriteNode(variableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
         }
     }
