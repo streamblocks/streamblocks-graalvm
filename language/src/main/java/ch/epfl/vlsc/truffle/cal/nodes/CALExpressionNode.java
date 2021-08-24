@@ -108,4 +108,8 @@ public abstract class CALExpressionNode extends CALStatementNode {
     public boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException {
         return CALTypesGen.expectBoolean(executeGeneric(frame));
     }
+
+    public int executeInt(VirtualFrame frame) throws UnexpectedResultException {
+        return CALTypesGen.expectInteger(executeGeneric(frame));
+    }
 }

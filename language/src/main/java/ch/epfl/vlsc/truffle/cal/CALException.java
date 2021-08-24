@@ -5,6 +5,7 @@ import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -13,27 +14,13 @@ import com.oracle.truffle.api.source.SourceSection;
 import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
 import ch.epfl.vlsc.truffle.cal.runtime.CALLanguageView;
 
-public class CALException extends RuntimeException implements TruffleException {
+public class CALException extends AbstractTruffleException {
     private static final long serialVersionUID = -6799734410727348507L;
     private static final InteropLibrary UNCACHED_LIB = InteropLibrary.getFactory().getUncached();
 
-    private final Node location;
-
     @CompilerDirectives.TruffleBoundary
     public CALException(String message, Node location) {
-        super(message);
-        this.location = location;
-    }
-
-    @SuppressWarnings("sync-override")
-    @Override
-    public final Throwable fillInStackTrace() {
-        return this;
-    }
-
-    @Override
-    public Node getLocation() {
-        return location;
+        super(message, location);
     }
 
     /**
