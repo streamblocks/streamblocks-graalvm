@@ -5,6 +5,8 @@ namespace test:
 
 
 		action ==>
+		var
+		    world
 		do
             world := "World";
 			println("Hello, ");
