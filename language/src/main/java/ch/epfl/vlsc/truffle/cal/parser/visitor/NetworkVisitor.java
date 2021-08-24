@@ -84,7 +84,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                     newFIFOValueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     newFIFOValueNode.addExpressionTag();
 
-                    CALExpressionNode newFIFONode = ScopeEnvironment.getInstance().createWriteNode(newFIFOName, newFIFOValueNode, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
+                    CALExpressionNode newFIFONode = ScopeEnvironment.getInstance().createNewVariableWriteNode(newFIFOName, newFIFOValueNode, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     headStatementNodes.add(newFIFONode);
 
                     FIFONode = ScopeEnvironment.getInstance().createReadNode(newFIFOName, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
@@ -124,7 +124,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
             valueNode.setSourceSection(instance.sourceSection);
             valueNode.addExpressionTag();
 
-            CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createWriteNode(instance.name, valueNode, instance.sourceSection);
+            CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(instance.name, valueNode, instance.sourceSection);
             headStatementNodes.add(instanceNode);
         }
 

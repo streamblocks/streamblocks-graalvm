@@ -4,6 +4,7 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -31,6 +32,8 @@ public class ScopeEnvironment {
 
     private Scope currentScope;
 
+	private static int VARIABLE_ID;
+
     private static int LAMBDA_ID;
 
 	private static int FIFO_ID;
@@ -45,6 +48,7 @@ public class ScopeEnvironment {
 
 	public static void createInstance(CALLanguage language, Source source) {
 		instance = new ScopeEnvironment(language, source);
+		VARIABLE_ID = 1;
 		LAMBDA_ID = 1;
 		FIFO_ID = 1;
 	}
@@ -165,14 +169,36 @@ public class ScopeEnvironment {
 		currentScope.put(name, readOnlySlot);
 	}
 
-	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
+	public CALExpressionNode createNewVariableWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
+		if (currentScope.containsKey(name)) {
+			throw new CALParseError(source, sourceSection.getStartLine(), sourceSection.getStartColumn(), sourceSection.getCharLength(), "Variable " + name + " has already been defined");
+		}
+
+		return createWriteNode(name, valueNode, true, sourceSection);
+	}
+
+	public CALExpressionNode createExistingVariableWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
+		if (!currentScope.containsKey(name)) {
+			throw new CALParseError(source, sourceSection.getStartLine(), sourceSection.getStartColumn(), sourceSection.getCharLength(), "Cannot write to undefined variable " + name);
+		}
+
+		return createWriteNode(name, valueNode, false, sourceSection);
+	}
+
+	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode, boolean isNewVariable, SourceSection sourceSection) {
 		createFrameSlot(name);
 
 		CALExpressionNode nameNode = new StringLiteralNode(name);
 		DepthFrameSlot slot = currentScope.get(name);
-		boolean isNewVariable = !currentScope.containsKey(name);
 
 		return slot.createWriteNode(nameNode, valueNode, isNewVariable, currentScope.getDepth(), sourceSection);
+	}
+
+	public static String generateVariableName() {
+		String variableName = "$temp" + VARIABLE_ID;
+		VARIABLE_ID++;
+
+		return variableName;
 	}
 
 	public static String generateLambdaName() {

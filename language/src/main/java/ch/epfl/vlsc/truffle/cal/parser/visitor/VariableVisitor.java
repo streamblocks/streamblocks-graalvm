@@ -167,7 +167,7 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             valueNode.addExpressionTag();
         }
 
-        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -233,7 +233,7 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         ScopeEnvironment.getInstance().popScope();
 
-        return ScopeEnvironment.getInstance().createWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**

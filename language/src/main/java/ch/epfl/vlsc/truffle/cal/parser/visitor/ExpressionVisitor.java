@@ -3,7 +3,6 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
@@ -570,7 +569,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
                     nullLiteralNode.addExpressionTag();
 
                     // Note: Custom source section to precisely specify a variable token
-                    variableNode = ScopeEnvironment.getInstance().createWriteNode(
+                    variableNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                             variable.getText(),
                             nullLiteralNode,
                             ScopeEnvironment.getInstance().getSource().createSection(variable.getLine(), variable.getCharPositionInLine() + 1, variable.getText().length())
@@ -602,32 +601,35 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
             /**
              * Comprehension expression is translated into a block of statements:
-             *      $tempList = [];
-             *      $comprehensionCounter = 0;
+             *      $list = [];
+             *      $counter = 0;
              *      foreach (<Variable> in <Collection>) {
-             *          $tempList[$comprehensionCounter] = <Computation Expression>; // Note: Computation Expression use Variable
-             *          $comprehensionCounter++;
+             *          $list[$counter] = <Computation Expression>; // Note: Computation Expression use Variable
+             *          $counter++;
              *      }
-             *      return $tempList;
+             *      return $list;
              */
+            String listVariableName = ScopeEnvironment.generateVariableName();
+            String counterVariableName = ScopeEnvironment.generateVariableName();
+
             CALStatementNode[] comprehensionStatementNodes = new CALStatementNode[3];
-            comprehensionStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$tempList",
+            comprehensionStatementNodes[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    listVariableName,
                     new UnknownSizeListInitNode(),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $tempList = [];
-            comprehensionStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$comprehensionCounter",
+            ); // $list = [];
+            comprehensionStatementNodes[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    counterVariableName,
                     new LongLiteralNode(0),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $comprehensionCounter = 0;
+            ); // $counter = 0;
 
             CALStatementNode[] loopStatementNodes = new CALStatementNode[2];
             loopStatementNodes[0] = ListWriteNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode("$tempList", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
-                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(listVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                     computationExpression
-            ); // $tempList[$comprehensionCounter] = <Computation Expression>;
+            ); // $list[$counter] = <Computation Expression>;
             loopStatementNodes[0].setUnavailableSourceSection();
             loopStatementNodes[0].addStatementTag();
 
@@ -636,17 +638,17 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             oneLiteralNode.addExpressionTag();
 
             CALBinaryAddNode incrementCounterNode = CALBinaryAddNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                     oneLiteralNode
             );
             incrementCounterNode.setUnavailableSourceSection();
             incrementCounterNode.addExpressionTag();
 
-            loopStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$comprehensionCounter",
+            loopStatementNodes[1] = ScopeEnvironment.getInstance().createExistingVariableWriteNode(
+                    counterVariableName,
                     incrementCounterNode,
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $comprehensionCounter++;
+            ); // $counter++;
 
             CALStatementNode loopBodyNode = new StmtBlockNode(loopStatementNodes);
             loopBodyNode.setUnavailableSourceSection();
@@ -660,9 +662,9 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             comprehensionBodyNode.setUnavailableSourceSection();
             comprehensionBodyNode.addStatementTag();
 
-            CALExpressionNode comprehensionReturnNode = ScopeEnvironment.getInstance().createReadNode("$tempList", ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+            CALExpressionNode comprehensionReturnNode = ScopeEnvironment.getInstance().createReadNode(listVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection());
 
-            ReturnsLastBodyNode generatorsComprehensionNode = new ReturnsLastBodyNode(comprehensionBodyNode, comprehensionReturnNode); // ... return $tempList;
+            ReturnsLastBodyNode generatorsComprehensionNode = new ReturnsLastBodyNode(comprehensionBodyNode, comprehensionReturnNode); // ... return $list;
             generatorsComprehensionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
             generatorsComprehensionNode.addExpressionTag();
 

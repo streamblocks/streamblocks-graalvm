@@ -200,25 +200,28 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
             /**
              * Repeated input pattern is translated into a block of statements:
-             *      $tempList = [];
-             *      $comprehensionCounter = 0;
+             *      $list = [];
+             *      $counter = 0;
              *      for (<0..Repeat Expression - 1>) {
-             *          $tempList[$comprehensionCounter] = <Port Queue>.remove(0);
-             *          $comprehensionCounter++;
+             *          $list[$counter] = <Port Queue>.remove(0);
+             *          $counter++;
              *      }
-             *      <Pattern Variable> = $tempList;
+             *      <Pattern Variable> = $list;
              */
+            String listVariableName = ScopeEnvironment.generateVariableName();
+            String counterVariableName = ScopeEnvironment.generateVariableName();
+
             CALStatementNode[] inputPatternStatementNodes = new CALStatementNode[3];
-            inputPatternStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$tempList",
+            inputPatternStatementNodes[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    listVariableName,
                     new UnknownSizeListInitNode(),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $tempList = [];
-            inputPatternStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$comprehensionCounter",
+            ); // $list = [];
+            inputPatternStatementNodes[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    counterVariableName,
                     new LongLiteralNode(0),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $comprehensionCounter = 0;
+            ); // $counter = 0;
 
             CALExpressionNode rangeListNode = ListRangeInitNodeGen.create(new LongLiteralNode(0), CALBinarySubNodeGen.create(repeatValueNode, new LongLiteralNode(1))); // <0..Repeat Expression - 1>
             rangeListNode.setUnavailableSourceSection();
@@ -226,15 +229,15 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
             CALStatementNode[] loopStatementNodes = new CALStatementNode[2];
 
-            CALReadFIFONode portQueueNode = new CALReadFIFONode(portQueue);
+            CALReadFIFONode portQueueNode = new CALReadFIFONode(portQueue); // <Port Queue>.remove(0);
             portQueueNode.setSourceSection(portQueue.getSourceSection());
             portQueueNode.addExpressionTag();
 
             loopStatementNodes[0] = ListWriteNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode("$tempList", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
-                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(listVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                     portQueueNode
-            ); // <Port Queue>.add(<Token Expression>[$comprehensionCounter]);
+            ); // $list[$counter] = <Port Queue>.remove(0);
             loopStatementNodes[0].setUnavailableSourceSection();
             loopStatementNodes[0].addStatementTag();
 
@@ -243,17 +246,17 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             oneLiteralNode.addExpressionTag();
 
             CALBinaryAddNode incrementCounterNode = CALBinaryAddNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                     oneLiteralNode
             );
             incrementCounterNode.setUnavailableSourceSection();
             incrementCounterNode.addExpressionTag();
 
-            loopStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$comprehensionCounter",
+            loopStatementNodes[1] = ScopeEnvironment.getInstance().createExistingVariableWriteNode(
+                    counterVariableName,
                     incrementCounterNode,
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $comprehensionCounter++;
+            ); // $counter++;
 
             CALStatementNode loopBodyNode = new StmtBlockNode(loopStatementNodes);
             loopBodyNode.setUnavailableSourceSection();
@@ -267,14 +270,14 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             inputPatternBodyNode.setUnavailableSourceSection();
             inputPatternBodyNode.addStatementTag();
 
-            CALExpressionNode inputPatternReturnNode = ScopeEnvironment.getInstance().createReadNode("$tempList", ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+            CALExpressionNode inputPatternReturnNode = ScopeEnvironment.getInstance().createReadNode(listVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection());
 
-            valueNode = new ReturnsLastBodyNode(inputPatternBodyNode, inputPatternReturnNode); // ... return $tempList;
+            valueNode = new ReturnsLastBodyNode(inputPatternBodyNode, inputPatternReturnNode); // ... return $list;
             valueNode.setUnavailableSourceSection();
             valueNode.addExpressionTag();
         }
 
-        return ScopeEnvironment.getInstance().createWriteNode(patternVariableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(patternVariableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -363,18 +366,20 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
             /**
              * Repeated output expression is translated into a block of statements:
-             *      $comprehensionCounter = 0;
+             *      $counter = 0;
              *      for (<0..Repeat Expression - 1>) {
-             *          <Port Queue>.add(<Token Expression>[$comprehensionCounter]);
-             *          $comprehensionCounter++;
+             *          <Port Queue>.add(<Token Expression>[$counter]);
+             *          $counter++;
              *      }
              */
+            String counterVariableName = ScopeEnvironment.generateVariableName();
+
             CALStatementNode[] outputExpressionStatementNodes = new CALStatementNode[2];
-            outputExpressionStatementNodes[0] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$comprehensionCounter",
+            outputExpressionStatementNodes[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    counterVariableName,
                     new LongLiteralNode(0),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $comprehensionCounter = 0;
+            ); // $counter = 0;
 
             CALExpressionNode rangeListNode = ListRangeInitNodeGen.create(new LongLiteralNode(0), CALBinarySubNodeGen.create(repeatValueNode, new LongLiteralNode(1))); // <0..Repeat Expression - 1>
             rangeListNode.setUnavailableSourceSection();
@@ -384,12 +389,12 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
             ListReadNode tokenExpressionElementNode = ListReadNodeGen.create(
                     tokenExpression,
-                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection())
+                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())
             );
             tokenExpressionElementNode.setSourceSection(portQueue.getSourceSection());
             tokenExpressionElementNode.addExpressionTag();
 
-            loopStatementNodes[0] = new CALWriteFIFONode(portQueue, tokenExpressionElementNode); // <Port Queue>.add(<Token Expression>[$comprehensionCounter]);
+            loopStatementNodes[0] = new CALWriteFIFONode(portQueue, tokenExpressionElementNode); // <Port Queue>.add(<Token Expression>[$counter]);
             loopStatementNodes[0].setUnavailableSourceSection();
             loopStatementNodes[0].addStatementTag();
 
@@ -398,17 +403,17 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             oneLiteralNode.addExpressionTag();
 
             CALBinaryAddNode incrementCounterNode = CALBinaryAddNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode("$comprehensionCounter", ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                     oneLiteralNode
             );
             incrementCounterNode.setUnavailableSourceSection();
             incrementCounterNode.addExpressionTag();
 
-            loopStatementNodes[1] = ScopeEnvironment.getInstance().createWriteNode(
-                    "$comprehensionCounter",
+            loopStatementNodes[1] = ScopeEnvironment.getInstance().createExistingVariableWriteNode(
+                    counterVariableName,
                     incrementCounterNode,
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $comprehensionCounter++;
+            ); // $counter++;
             CALStatementNode loopBodyNode = new StmtBlockNode(loopStatementNodes);
 
             outputExpressionStatementNodes[1] = ForeacheNodeGen.create(loopBodyNode, null, rangeListNode); // for (<0..Repeat Expression - 1>) { ... }

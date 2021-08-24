@@ -139,11 +139,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unrecognized lvalue accessor type"); // Note: Unreachable case
             }
         } else {
-            if (!ScopeEnvironment.getInstance().getCurrentScope().containsKey(variableName)) {
-                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Cannot write to undefined variable " + variableName);
-            }
-
-            return ScopeEnvironment.getInstance().createWriteNode(variableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+            return ScopeEnvironment.getInstance().createExistingVariableWriteNode(variableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
         }
     }
 
@@ -255,7 +251,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 nullLiteralNode.addExpressionTag();
 
                 // Note: Custom source section to precisely specify a variable token
-                variableNode = ScopeEnvironment.getInstance().createWriteNode(
+                variableNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                         variable.getText(),
                         nullLiteralNode,
                         ScopeEnvironment.getInstance().getSource().createSection(variable.getLine(), variable.getCharPositionInLine() + 1, variable.getText().length())
