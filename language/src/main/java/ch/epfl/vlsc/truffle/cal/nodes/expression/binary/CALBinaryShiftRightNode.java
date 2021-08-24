@@ -12,6 +12,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 public abstract class CALBinaryShiftRightNode extends CALBinaryNode {
 
     @Specialization(rewriteOn = ArithmeticException.class)
+    protected int shiftRight(int left, int right) {
+        return left >> right;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
     protected long shiftRight(long left, long right) {
         return left >> right;
     }
@@ -19,7 +24,7 @@ public abstract class CALBinaryShiftRightNode extends CALBinaryNode {
     @Specialization
     @CompilerDirectives.TruffleBoundary
     protected CALBigNumber shiftRight(CALBigNumber left, CALBigNumber right) {
-        return new CALBigNumber(right.getValue().shiftRight(left.getValue().intValue()));
+        return new CALBigNumber(left.getValue().shiftRight(right.getValue().intValue()));
     }
 
     @CompilerDirectives.TruffleBoundary

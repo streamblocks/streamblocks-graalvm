@@ -12,6 +12,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 public abstract class CALBinarySubNode extends CALBinaryNode {
 
     @Specialization(rewriteOn = ArithmeticException.class)
+    protected int sub(int left, int right) {
+        return Math.subtractExact(left, right);
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
     protected long sub(long left, long right) {
         return Math.subtractExact(left, right);
     }

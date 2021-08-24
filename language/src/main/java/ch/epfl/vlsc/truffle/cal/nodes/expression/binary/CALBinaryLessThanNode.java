@@ -11,6 +11,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 @NodeInfo(shortName = "<")
 public abstract class CALBinaryLessThanNode extends CALBinaryNode {
     @Specialization
+    protected boolean lessThan(int left, int right) {
+        return left < right;
+    }
+
+    @Specialization
     protected boolean lessThan(long left, long right) {
         return left < right;
     }

@@ -11,6 +11,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 @NodeInfo(shortName = "*")
 public abstract class CALBinaryMulNode extends CALBinaryNode {
     @Specialization(rewriteOn = ArithmeticException.class)
+    protected int mul(int left, int right) {
+        return Math.multiplyExact(left, right);
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
     protected long mul(long left, long right) {
         return Math.multiplyExact(left, right);
     }

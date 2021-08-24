@@ -23,6 +23,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 @NodeInfo(shortName = "+")
 public abstract class CALBinaryAddNode extends CALBinaryNode {
 
+    @Specialization(rewriteOn = ArithmeticException.class)
+    protected int add(int left, int right) {
+        return Math.addExact(left, right);
+    }
+
     /**
      * Specialization for primitive {@code long} values. This is the fast path of the
      * arbitrary-precision arithmetic. We need to check for overflows of the addition, and switch to

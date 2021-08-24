@@ -12,6 +12,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 public abstract class CALBinaryBitAndNode extends CALBinaryNode {
 
     @Specialization(rewriteOn = ArithmeticException.class)
+    protected int bitAnd(int left, int right) {
+        return left & right;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
     protected long bitAnd(long left, long right) {
         return left & right;
     }
@@ -23,7 +28,7 @@ public abstract class CALBinaryBitAndNode extends CALBinaryNode {
     }
 
     @CompilerDirectives.TruffleBoundary
-    protected String xor(Object left, Object right) {
+    protected String bitAnd(Object left, Object right) {
         throw CALException.typeError(this, left, right);
     }
 

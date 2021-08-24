@@ -17,6 +17,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 public abstract class CALBinaryEqualNode  extends CALBinaryNode {
 
     @Specialization
+    protected boolean doInt(int left, int right) {
+        return left == right;
+    }
+
+    @Specialization
     protected boolean doLong(long left, long right) {
         return left == right;
     }

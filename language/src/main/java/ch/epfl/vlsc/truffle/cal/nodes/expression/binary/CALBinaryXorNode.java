@@ -12,6 +12,11 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 public abstract class CALBinaryXorNode extends CALBinaryNode {
 
     @Specialization(rewriteOn = ArithmeticException.class)
+    protected int xor(int left, int right) {
+        return left ^ right;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
     protected long xor(long left, long right) {
         return left ^ right;
     }
