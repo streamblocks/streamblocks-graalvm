@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
@@ -24,6 +25,7 @@ public class CALFunctionRegistry {
      * Returns the canonical {@link CALFunction} object for the given name. If it does not exist yet,
      * it is created.
      */
+    @CompilerDirectives.TruffleBoundary
     public CALFunction lookup(String name, boolean createIfNotPresent) {
         CALFunction result = functionsObject.functions.get(name);
         if (result == null && createIfNotPresent) {
@@ -44,6 +46,7 @@ public class CALFunctionRegistry {
         return function;
     }
 
+    @CompilerDirectives.TruffleBoundary
     public void register(Map<String, RootCallTarget> newFunctions) {
         for (Map.Entry<String, RootCallTarget> entry : newFunctions.entrySet()) {
             register(entry.getKey(), entry.getValue());
