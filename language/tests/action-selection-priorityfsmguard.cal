@@ -1,0 +1,23 @@
+namespace test:
+    actor test () ==>:
+        state := 0;
+
+        a1.a: action ==> guard state = 0 do println(1); state := 1; end
+        a1.b: action ==> guard state = 1 do println(2); state := 0; end
+        a1.c: action ==> guard state = 1 do println(3); state := 0; end
+        a2.a: action ==> guard state = 0 do println(4); state := 1; end
+        a2.b: action ==> guard state = 1 do println(5); state := 0; end
+        a2.c: action ==> guard state = 1 do println(6); state := 0; end
+        a3.a: action ==> guard state = 0 do println(7); state := 1; end
+        a3.b: action ==> guard state = 1 do println(8); state := 0; end
+        a3.c: action ==> guard state = 1 do println(9); state := 0; end
+        priority a1.c > a1.b > a1.a; end
+        priority a2.a > a2.b > a2.c; end
+        priority a3.c > a3.b > a3.a; end
+        schedule fsm s1:
+            s1 (a1) --> s2;
+            s2 (a2) --> s3;
+            s3 (a3) --> s1;
+        end
+    end
+end
