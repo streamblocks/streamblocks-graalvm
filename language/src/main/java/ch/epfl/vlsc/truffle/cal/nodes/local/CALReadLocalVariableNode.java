@@ -36,7 +36,6 @@ public class CALReadLocalVariableNode extends CALExpressionNode implements Frame
 		return tag == ReadVariableTag.class || super.hasTag(tag);
 	}
 
-	// TODO: Check if this is needed
 	@Override
 	public Object getNodeObject() {
 		return NodeObjectDescriptor.readVariable(getSlot().getIdentifier().toString());

@@ -10,12 +10,6 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
 @NodeInfo(shortName = "<<")
 public abstract class CALBinaryShiftLeftNode extends CALBinaryNode {
-
-    @Specialization(rewriteOn = ArithmeticException.class)
-    protected int shiftLeft(int left, int right) {
-        return left << right;
-    }
-
     @Specialization(rewriteOn = ArithmeticException.class)
     protected long shiftLeft(long left, long right) {
         return left << right;

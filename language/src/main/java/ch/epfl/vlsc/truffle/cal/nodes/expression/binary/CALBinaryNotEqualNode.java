@@ -17,12 +17,6 @@ import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
 @NodeInfo(shortName = "!=")
 public abstract class CALBinaryNotEqualNode extends CALBinaryNode {
-
-    @Specialization
-    protected boolean doInt(int left, int right) {
-        return left != right;
-    }
-
     @Specialization
     protected boolean doLong(long left, long right) {
         return left != right;

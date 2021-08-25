@@ -10,12 +10,6 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
 @NodeInfo(shortName = "&")
 public abstract class CALBinaryBitAndNode extends CALBinaryNode {
-
-    @Specialization(rewriteOn = ArithmeticException.class)
-    protected int bitAnd(int left, int right) {
-        return left & right;
-    }
-
     @Specialization(rewriteOn = ArithmeticException.class)
     protected long bitAnd(long left, long right) {
         return left & right;

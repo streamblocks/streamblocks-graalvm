@@ -10,19 +10,6 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
 @NodeInfo(shortName = "%")
 public abstract class CALBinaryModNode extends CALBinaryNode {
-
-    @Specialization(rewriteOn = ArithmeticException.class)
-    protected int div(int left, int right) throws ArithmeticException {
-        int result = left % right;
-        /*
-         * The division overflows if left is Long.MIN_VALUE and right is -1.
-         */
-        if ((left & right & result) < 0) {
-            throw new ArithmeticException("long overflow");
-        }
-        return result;
-    }
-
     @Specialization(rewriteOn = ArithmeticException.class)
     protected long div(long left, long right) throws ArithmeticException {
         long result = left % right;
