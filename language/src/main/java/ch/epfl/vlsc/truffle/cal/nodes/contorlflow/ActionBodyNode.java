@@ -1,6 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.nodes.contorlflow;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -24,6 +26,11 @@ public final class ActionBodyNode extends CALExpressionNode {
     public ActionBodyNode(CALStatementNode bodyNode) {
         this.bodyNode = bodyNode;
         addRootTag();
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return (tag == StandardTags.RootBodyTag.class) || super.hasTag(tag);
     }
 
     @Override

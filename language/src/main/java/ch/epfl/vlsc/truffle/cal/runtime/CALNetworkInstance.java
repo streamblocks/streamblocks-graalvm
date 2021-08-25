@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -51,6 +52,7 @@ public class CALNetworkInstance extends CALValue {
         // TODO do FSM-thingy here and invalidate callTargetStable when
         // the action changes
         // For new we assume actions.length == 1, so we never invalidate
+        CompilerDirectives.transferToInterpreter();
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(body);
         return callTarget;
     }

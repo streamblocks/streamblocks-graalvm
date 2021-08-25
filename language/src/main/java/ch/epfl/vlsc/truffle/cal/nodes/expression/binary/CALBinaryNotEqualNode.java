@@ -17,7 +17,6 @@ import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
 @NodeInfo(shortName = "!=")
 public abstract class CALBinaryNotEqualNode extends CALBinaryNode {
-
     @Specialization
     protected boolean doLong(long left, long right) {
         return left != right;
@@ -69,7 +68,9 @@ public abstract class CALBinaryNotEqualNode extends CALBinaryNode {
                  * We return false in good dynamic language manner. Stricter languages might throw
                  * an error here.
                  */
-                return false;
+                // TODO: What should we return here?
+                // CompilerDirectives.transferToInterpreter();
+                return true;
             }
         } catch (UnsupportedMessageException e) {
             throw shouldNotReachHere(e);

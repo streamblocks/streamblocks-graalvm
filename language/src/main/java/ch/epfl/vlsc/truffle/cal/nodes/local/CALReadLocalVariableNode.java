@@ -4,6 +4,9 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.instrumentation.StandardTags.ReadVariableTag;
+import ch.epfl.vlsc.truffle.cal.nodes.interop.NodeObjectDescriptor;
 
 public class CALReadLocalVariableNode extends CALExpressionNode implements FrameSlotNode {
 
@@ -28,4 +31,13 @@ public class CALReadLocalVariableNode extends CALExpressionNode implements Frame
 		return readFrameSlotNode.executeRead(frame);
 	}
 
+	@Override
+	public boolean hasTag(Class<? extends Tag> tag) {
+		return tag == ReadVariableTag.class || super.hasTag(tag);
+	}
+
+	@Override
+	public Object getNodeObject() {
+		return NodeObjectDescriptor.readVariable(getSlot().getIdentifier().toString());
+	}
 }

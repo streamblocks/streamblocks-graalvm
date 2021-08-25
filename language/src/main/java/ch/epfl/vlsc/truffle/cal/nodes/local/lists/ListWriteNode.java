@@ -8,6 +8,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import ch.epfl.vlsc.truffle.cal.runtime.ListLibrary;
+import com.oracle.truffle.api.CompilerDirectives;
 
 @NodeChild(value = "list", type = CALExpressionNode.class)
 @NodeChild(value = "index", type = CALExpressionNode.class)
@@ -20,6 +21,7 @@ public abstract class ListWriteNode extends CALStatementNode {
 
     @Specialization(guards = "lists.isList(list)", limit = "2")
     public void write(Object list, CALBigNumber index, Object value, @CachedLibrary("list") ListLibrary lists) {
+        CompilerDirectives.transferToInterpreter();
         lists.write(list, index.getValue().intValue(), value);
     }
 }

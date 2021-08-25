@@ -8,7 +8,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import ch.epfl.vlsc.truffle.cal.CALException;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 
-@NodeInfo(shortName = "<")
+@NodeInfo(shortName = ">")
 public abstract class CALBinaryGreaterThanNode extends CALBinaryNode {
     @Specialization
     protected boolean greaterThan(long left, long right) {
@@ -25,5 +25,4 @@ public abstract class CALBinaryGreaterThanNode extends CALBinaryNode {
     protected Object typeError(Object left, Object right) {
         throw CALException.typeError(this, left, right);
     }
-
 }
