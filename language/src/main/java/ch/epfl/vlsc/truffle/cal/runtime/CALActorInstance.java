@@ -61,7 +61,7 @@ public class CALActorInstance extends CALValue {
     //
     /**
      * This method is, e.g., called when using a function literal in a string concatenation. So
-     * changing it has an effect on SL programs.
+     * changing it has an effect on CAL programs.
      */
     @Override
     public String toString() {
