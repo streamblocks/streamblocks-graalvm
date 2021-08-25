@@ -1,7 +1,7 @@
 # StreamBlock graalvm
 
 ## Usage
-Set JAVA_HOME to graalvm 20.3.0 version root and add graalvm-20.3.0/bin subfolder to PATH.
+Set JAVA_HOME to graalvm 21.2.0 version root and add graalvm-21.2.0/bin subfolder to PATH.
 ```
 mvn package
 ./cal <path> --cal.actor=<actor to run> --cal.iterations=<number of iterations> --cal.directory-lookup=<true to recursively load and parse all the files in the directory>
