@@ -1,0 +1,18 @@
+namespace test:
+    actor test () ==>:
+        a1.a: action ==> do println(1); end
+        a1.b: action ==> do println(2); end
+        a2.a: action ==> do println(3); end
+        a2.b: action ==> do println(4); end
+        a3.a: action ==> do println(5); end
+        a3.b: action ==> do println(6); end
+        priority a1.a > a1.b; end
+        priority a2.a > a2.b; end
+        priority a3.a > a3.b; end
+        schedule fsm s1:
+            s1 (a1) --> s2;
+            s2 (a2) --> s3;
+            s3 (a3) --> s1;
+        end
+    end
+end

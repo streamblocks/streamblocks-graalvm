@@ -23,6 +23,17 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore("Not implemented yet")
+    public void actionSelectionPriorityFsmTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-priorityfsm").setIterations(10).build());
+    }
+
+    @Test
+    public void actionSelectionPriorityGuardTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-priorityguard").setIterations(10).build());
+    }
+
+    @Test
     public void precedenceTest() throws IOException {
         runTest(TestCase.newBuilder("precedence").build());
     }
