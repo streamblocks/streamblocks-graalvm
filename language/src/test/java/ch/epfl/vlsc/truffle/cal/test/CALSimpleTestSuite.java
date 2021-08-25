@@ -1,6 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class CALSimpleTestSuite extends CALTestSuite {
@@ -13,6 +14,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void actionSelectionGuardTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-guard").setIterations(10).build());
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    public void actionSelectionFsmTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-schedulefsm").setIterations(10).build());
     }
 
     @Test
