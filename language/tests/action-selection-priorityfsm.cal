@@ -6,9 +6,9 @@ namespace test:
         a2.b: action ==> do println(4); end
         a3.a: action ==> do println(5); end
         a3.b: action ==> do println(6); end
-        priority a1.a > a1.b; end
+        priority a1.b > a1.a; end
         priority a2.a > a2.b; end
-        priority a3.a > a3.b; end
+        priority a3.b > a3.a; end
         schedule fsm s1:
             s1 (a1) --> s2;
             s2 (a2) --> s3;
