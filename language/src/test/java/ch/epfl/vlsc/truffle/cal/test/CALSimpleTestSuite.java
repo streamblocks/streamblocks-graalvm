@@ -1,6 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
+
+import ch.epfl.vlsc.truffle.cal.parser.utils.PartialOrderViolationException;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -42,6 +44,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void actionSelectionPriorityGuardTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-priorityguard").setIterations(10).build());
+    }
+
+    @Test
+    public void actionSelectionPriorityAntiSymmetry() throws IOException {
+        runTestRegex(TestCase.newBuilder("action-selection-priorityantisymmetry").setIterations(10).build());
     }
 
     @Test

@@ -11,7 +11,7 @@ public class ActorNodeUtils {
     /**
      * Sort the array @param actions in an order that respects the partial order induced by @param priorities
      */
-    public static List<ActionNode> topologicalSortByPriorities(List<ActionNode> actionsList, List<List<QualifiedID>> priorities){
+    public static List<ActionNode> topologicalSortByPriorities(List<ActionNode> actionsList, List<List<QualifiedID>> priorities) throws PartialOrderViolationException {
         ActionNode[] actions = actionsList.toArray(new ActionNode[actionsList.size()]);
         // TODO : A Lot of optimizations can be performed in this method
         // Reducing space usage by considering only actions[i:] instead of the full array
@@ -90,7 +90,7 @@ public class ActorNodeUtils {
 
     private enum NodeStatus {Unvisited, Inprogress, Visited}
 
-    private static void recursiveTopologicalSort(int v, NodeStatus[] visited, List<Integer>[] neighbours, List<Integer> topologicallySorted) {
+    private static void recursiveTopologicalSort(int v, NodeStatus[] visited, List<Integer>[] neighbours, List<Integer> topologicallySorted) throws PartialOrderViolationException {
         visited[v] = NodeStatus.Inprogress;
         Iterator<Integer> it = neighbours[v].iterator();
         while (it.hasNext())
@@ -99,7 +99,7 @@ public class ActorNodeUtils {
             if (visited[i] == NodeStatus.Unvisited)
                 recursiveTopologicalSort(i, visited, neighbours, topologicallySorted);
             else if(visited[i] == NodeStatus.Inprogress)
-                throw new RuntimeException("Order defined by priorities is not a Partial Order");
+                throw new PartialOrderViolationException("Order defined by priorities is not a Partial Order");
         }
         visited[v] = NodeStatus.Visited;
         topologicallySorted.add(v);

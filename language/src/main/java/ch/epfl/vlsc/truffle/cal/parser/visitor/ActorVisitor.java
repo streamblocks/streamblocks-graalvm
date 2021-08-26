@@ -13,6 +13,7 @@ import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.utils.ActorNodeUtils;
+import ch.epfl.vlsc.truffle.cal.parser.utils.PartialOrderViolationException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,7 +96,11 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.priorityOrder().size() > 0) {
             // Order the actions by priorities
-            actionNodes = ActorNodeUtils.topologicalSortByPriorities(actionNodes, ctx.priorityOrder().stream().map(po -> visitPriorityOrder(po)).collect(Collectors.toList()));
+            try {
+                actionNodes = ActorNodeUtils.topologicalSortByPriorities(actionNodes, ctx.priorityOrder().stream().map(po -> visitPriorityOrder(po)).collect(Collectors.toList()));
+            } catch (PartialOrderViolationException e) {
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, e.getMessage());
+            }
         }
 
         if (ctx.actionSchedule().size() > 0) {
