@@ -44,3 +44,10 @@ tags
 # Antlr
 *.interp
 *.tokens
+native/calnative
+native/calnative.build_artifacts.txt
+language/src/main/java/ch/epfl/vlsc/truffle/cal/nodes/util/IRNodeTreePrinterConsumer.java
+commits_to_merge
+.gitignore
+merge_tools.bash
+processed
