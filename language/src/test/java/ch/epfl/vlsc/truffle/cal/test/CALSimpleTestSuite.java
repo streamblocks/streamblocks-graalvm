@@ -2,7 +2,6 @@ package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
 
-import ch.epfl.vlsc.truffle.cal.parser.utils.PartialOrderViolationException;
 import org.junit.Ignore;
 import org.junit.Test;
 
