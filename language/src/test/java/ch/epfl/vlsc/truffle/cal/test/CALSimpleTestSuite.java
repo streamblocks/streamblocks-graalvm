@@ -88,6 +88,16 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void initializePriorityTest() throws IOException {
+        runTest(TestCase.newBuilder("initialize-priority").setIterations(10).build());
+    }
+
+    @Test
+    public void initializePriorityAndNotPriorityTest() throws IOException {
+        runTest(TestCase.newBuilder("initialize-priorityandnonpriority").setIterations(10).build());
+    }
+
+    @Test
     public void lambdaTest() throws IOException {
         runTest(TestCase.newBuilder("lambda").build());
     }
