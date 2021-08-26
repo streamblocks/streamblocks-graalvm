@@ -6,15 +6,19 @@ import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.utils.ActorNodeUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Singleton class that provides an implementation for an actor sub-tree.
@@ -90,10 +94,8 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         }
 
         if (ctx.priorityOrder().size() > 0) {
-            // TODO Add support for action priorities
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Action priorities are not yet supported");
-            }
+            // Order the actions by priorities
+            actionNodes = ActorNodeUtils.topologicalSortByPriorities(actionNodes, ctx.priorityOrder().stream().map(po -> visitPriorityOrder(po)).collect(Collectors.toList()));
         }
 
         if (ctx.actionSchedule().size() > 0) {
@@ -180,18 +182,25 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitPriorityOrder(CALParser.PriorityOrderContext ctx) {
-        // TODO Create Priority Order node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Actor priorities are not yet supported");
+    @Override public List<QualifiedID> visitPriorityOrder(CALParser.PriorityOrderContext ctx) {
+        if (ctx.priorityInequality().size() == 1) {
+            return visitPriorityInequality(ctx.priorityInequality(0));
+        } else if (ctx.priorityInequality().size() == 0) {
+            return Collections.emptyList();
+        } else {
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unexpected number of Priority Inequalities in Priorities");
+        }
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitPriorityInequality(CALParser.PriorityInequalityContext ctx) {
-        // TODO First resolve #visitPriorityOrder
-        // Note: Unreachable for now
-        return super.visitPriorityInequality(ctx);
+    @Override public List<QualifiedID> visitPriorityInequality(CALParser.PriorityInequalityContext ctx) {
+        return ctx.actionTag().stream().map(tag -> visitActionTag(tag)).collect(Collectors.toList());
     }
 
+    @Override
+    public QualifiedID visitActionTag(CALParser.ActionTagContext ctx) {
+        return CollectionVisitor.qualifiedIdCreator(ActionVisitor.getInstance().visitActionTag(ctx));
+    }
 }

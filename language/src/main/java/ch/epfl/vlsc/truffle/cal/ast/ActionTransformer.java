@@ -41,6 +41,7 @@ import se.lth.cs.tycho.ir.stmt.Statement;
 
 public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
+    public static final String UNNAMED_ACTION = "unnammed action";
     Action action;
 
     // FIXME we should use different frameDescriptor as the one used in actor is
@@ -188,7 +189,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         if (action.getTag() != null)
         	name = new QualifiedID(action.getTag().parts());
         else
-        	name = QualifiedID.of("unnammed action");
+        	name = QualifiedID.of(this.UNNAMED_ACTION);
         return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name);
     }
 }

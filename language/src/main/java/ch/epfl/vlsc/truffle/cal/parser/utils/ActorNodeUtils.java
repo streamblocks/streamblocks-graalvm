@@ -1,88 +1,18 @@
-package ch.epfl.vlsc.truffle.cal.ast;
+package ch.epfl.vlsc.truffle.cal.parser.utils;
 
+import ch.epfl.vlsc.truffle.cal.ast.ActionTransformer;
+import ch.epfl.vlsc.truffle.cal.ast.ActorTransformer;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
-import com.oracle.truffle.api.source.SourceSection;
-import se.lth.cs.tycho.ir.QID;
-import se.lth.cs.tycho.ir.decl.LocalVarDecl;
-import se.lth.cs.tycho.ir.decl.VarDecl;
-import se.lth.cs.tycho.ir.entity.PortDecl;
-import se.lth.cs.tycho.ir.entity.cal.Action;
-import se.lth.cs.tycho.ir.entity.cal.CalActor;
-import se.lth.cs.tycho.ir.util.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Iterator;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class ActorTransformer extends ScopedTransformer<ActorNode> {
-
-    CalActor actor;
-    QID name;
-
-    public ActorTransformer(CalActor actor, QID name, TransformContext context) {
-    	super(context);
-    	// We want a clean frame
-    	// TODO support global variables
-    	context.clearLexicalScopeAndFrame();
-        this.actor = actor;
-        this.name = name;
-    }
-
-    public ActorNode transform() {
-        List<CALStatementNode> headStatements = new ArrayList<CALStatementNode>(actor.getVarDecls().size()
-                + actor.getValueParameters().size() + actor.getOutputPorts().size() + actor.getInputPorts().size());
-        int i = 0;
-
-        // TODO we are making assumptions about the number of arguments
-        // and that EVERY argument and port is effectively passed
-
-        // WARNING keep as the first declaration as it needs to match the arguments
-        // position
-        // Prepend arguments so they are specialized the same way as in the body
-        for (VarDecl varDecl : actor.getValueParameters()) {
-            headStatements.add(transformArgument(varDecl, i));
-            i++;
-        }
-
-        for (PortDecl in : actor.getInputPorts()) {
-            // Input ports are passed as arguments
-            headStatements.add(transformPortDecl(in, i));
-            i++;
-        }
-        for (PortDecl out : actor.getOutputPorts()) {
-            // Input ports are passed as arguments
-            headStatements.add(transformPortDecl(out, i));
-            i++;
-        }
-        for (LocalVarDecl varDecl : actor.getVarDecls()) {
-            headStatements.add(transformVarDecl(varDecl));
-            i++;
-        }
-
-        // FIXME we can probably use a StmtBlockNode
-        CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
-        ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
-
-        // Order the actions by priorities
-        if(!this.actor.getPriorities().isEmpty())
-            topologicalSortByPriorities(actions, this.actor.getPriorities());
-
-        SourceSection actorSrc = getSourceSection(actor);
-        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, head, actorSrc, name.toString());
-    }
-
+public class ActorNodeUtils {
     /**
      * Sort the array @param actions in an order that respects the partial order induced by @param priorities
      */
-    private void topologicalSortByPriorities(ActionNode[] actions, ImmutableList<ImmutableList<QID>> priorities){
+    public static List<ActionNode> topologicalSortByPriorities(List<ActionNode> actionsList, List<List<QualifiedID>> priorities){
+        ActionNode[] actions = actionsList.toArray(new ActionNode[actionsList.size()]);
         // TODO : A Lot of optimizations can be performed in this method
         // Reducing space usage by considering only actions[i:] instead of the full array
         // Change recursive method to iterative
@@ -117,7 +47,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         // Create adjacency list of neighbours based on priority order
         List<Integer>[] neighbours = new List[actions.length]; // TODO i space slots can be saved here
         Arrays.setAll(neighbours, x -> new LinkedList<>());
-        for(ImmutableList<QID> priority: priorities){
+        for(List<QualifiedID> priority: priorities){
             for(int k = 0; k + 1 < priority.size(); ++k){
                 for(int sourceAction: tagToActions.get(priority.get(k+1).parts())){
                     for(int targetAction: tagToActions.get(priority.get(k).parts())){
@@ -151,11 +81,16 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
                 next = temp;
             }
         }
+        List<ActionNode> list = new ArrayList<>();
+        for (ActionNode action : actions) {
+            list.add(action);
+        }
+        return list;
     }
 
     private enum NodeStatus {Unvisited, Inprogress, Visited}
 
-    private void recursiveTopologicalSort(int v, NodeStatus[] visited, List<Integer>[] neighbours, List<Integer> topologicallySorted) {
+    private static void recursiveTopologicalSort(int v, NodeStatus[] visited, List<Integer>[] neighbours, List<Integer> topologicallySorted) {
         visited[v] = NodeStatus.Inprogress;
         Iterator<Integer> it = neighbours[v].iterator();
         while (it.hasNext())
@@ -169,9 +104,4 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         visited[v] = NodeStatus.Visited;
         topologicallySorted.add(v);
     }
-
-    public ActionNode transformAction(Action action) {
-        return (new ActionTransformer(action, context.deeper(false))).transform();
-    }
-
 }

@@ -51,3 +51,5 @@ commits_to_merge
 .gitignore
 merge_tools.bash
 processed
+.PROCESSING
+.PROCESSED
