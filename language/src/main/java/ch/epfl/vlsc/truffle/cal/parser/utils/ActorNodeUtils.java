@@ -49,8 +49,8 @@ public class ActorNodeUtils {
         Arrays.setAll(neighbours, x -> new LinkedList<>());
         for(List<QualifiedID> priority: priorities){
             for(int k = 0; k + 1 < priority.size(); ++k){
-                for(int sourceAction: tagToActions.get(priority.get(k+1).parts())){
-                    for(int targetAction: tagToActions.get(priority.get(k).parts())){
+                for(int sourceAction: tagToActions.getOrDefault(priority.get(k+1).parts(), Collections.emptyList())){
+                    for(int targetAction: tagToActions.getOrDefault(priority.get(k).parts(), Collections.emptyList())){
                         neighbours[sourceAction].add(targetAction);
                     }
                 }
@@ -70,6 +70,8 @@ public class ActorNodeUtils {
                 recursiveTopologicalSort(j, visited, neighbours, topologicallySorted);
 
         // Permute the original array as per the ordering obtained by topological sorting
+        // The array topologicallySorted is a permutation on the indices of the array actions
+        // We use the permutation cycle algorithm to swap elements in succession to obtain the permuted array
         for (int j = 0; j < actions.length; j++) {
             int next = j;
             while (topologicallySorted.get(next) >= 0) {

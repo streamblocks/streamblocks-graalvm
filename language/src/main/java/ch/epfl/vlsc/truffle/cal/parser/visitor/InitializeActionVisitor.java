@@ -16,14 +16,13 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import ch.epfl.vlsc.truffle.cal.parser.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
-import ch.epfl.vlsc.truffle.cal.parser.CALParser;
-import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import com.oracle.truffle.api.source.SourceSection;
 import org.antlr.v4.runtime.Token;
-import se.lth.cs.tycho.ir.QID;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,16 +32,15 @@ import java.util.List;
 /**
  * Singleton class that provides an implementation for an action sub-tree.
  */
-public class ActionVisitor extends CALParserBaseVisitor<Object> {
+public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
 
-    private static ActionVisitor instance;
-    public final static String UNNAMED_ACTION = "unnamed action";
+    private static InitializeActionVisitor instance;
 
-    private ActionVisitor() {}
+    private InitializeActionVisitor() {}
 
-    public static ActionVisitor getInstance() {
+    public static InitializeActionVisitor getInstance() {
         if (instance == null) {
-            instance = new ActionVisitor();
+            instance = new InitializeActionVisitor();
         }
 
         return instance;
@@ -51,7 +49,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public ActionNode visitActionDefinition(CALParser.ActionDefinitionContext ctx) {
+    @Override public ActionNode visitInitializationActionDefinition(CALParser.InitializationActionDefinitionContext ctx) {
         if (ctx.delay != null) {
             // TODO Add support for action delay
             if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
@@ -65,13 +63,10 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         if (ctx.actionTag() != null) {
             actionName = CollectionVisitor.qualifiedIdCreator(visitActionTag(ctx.actionTag()));
         } else {
-            actionName = QualifiedID.of(UNNAMED_ACTION); // Note: Compliant with corresponding transformer, but probably unnecessary
+            actionName = QualifiedID.of(ActionVisitor.UNNAMED_ACTION); // Note: Compliant with corresponding transformer, but probably unnecessary
         }
 
         List<CALStatementNode> actionStatements = new ArrayList<>();
-        if (ctx.inputPatterns() != null) {
-            actionStatements.addAll(CollectionVisitor.getInstance().visitInputPatterns(ctx.inputPatterns()));
-        }
         if (ctx.localVariables != null) {
             actionStatements.addAll(CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables));
         }
@@ -92,31 +87,6 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
         // Firing condition = Sufficient number of input tokens + Guards
         List<CALExpressionNode> firingConditions = new LinkedList<>();
-        if (ctx.inputPatterns() != null) {
-            for (CALParser.InputPatternContext patternCtx: ctx.inputPatterns().inputPattern()) {
-                // Note: All necessary checks are performed during input patterns visit (previously called)
-                CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(patternCtx.port.getText(), ScopeEnvironment.getInstance().createSourceSection(patternCtx));
-                CALExpressionNode minimumQueueSizeNode;
-                if (patternCtx.repeat == null) {
-                    minimumQueueSizeNode = new LongLiteralNode(1);
-                    minimumQueueSizeNode.setUnavailableSourceSection();
-                    minimumQueueSizeNode.addExpressionTag();
-
-                } else {
-                    minimumQueueSizeNode = ExpressionVisitor.getInstance().visit(patternCtx.repeat);
-                }
-
-                CALFIFOSizeNode portQueueSizeNode = new CALFIFOSizeNode(portQueue);
-                portQueueSizeNode.setUnavailableSourceSection();
-                portQueueSizeNode.addExpressionTag();
-
-                CALBinaryGreaterOrEqualNode firingCondition = CALBinaryGreaterOrEqualNodeGen.create(portQueueSizeNode, minimumQueueSizeNode);
-                firingCondition.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(patternCtx));
-                firingCondition.addExpressionTag();
-
-                firingConditions.add(firingCondition);
-            }
-        }
         if (ctx.guards != null) {
             firingConditions.addAll(CollectionVisitor.getInstance().visitExpressions(ctx.guards));
         }
@@ -429,15 +399,6 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
             return repeatedOutputExpressionNode;
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override public Object visitInitializationActionDefinition(CALParser.InitializationActionDefinitionContext ctx) {
-        // TODO First resolve ActorVisitor#visitActorDeclaration => implement similar to #visitActionDefinition (w/o input patterns)
-        // Note: Unreachable for now
-        return super.visitInitializationActionDefinition(ctx);
     }
 
     /**

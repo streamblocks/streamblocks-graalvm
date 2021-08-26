@@ -8,17 +8,18 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import se.lth.cs.tycho.ir.QID;
 
 public class ActorNode extends CALRootNode {
-
-    @Child ActorInstantiateNode instantiateNode;
+    @Child private ActorInstantiateNode instantiateNode;
     @Children private ActionNode[] actions;
+    @Children private ActionNode[] initializeractions;
     private final String name;
     private boolean isCloningAllowed;
     private final SourceSection sourceSection;
 
-    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, CALStatementNode head, SourceSection sourceSection, String name) {
+    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, ActionNode[] initactions, CALStatementNode head, SourceSection sourceSection, String name) {
         // FIXME null-hack
         super(language, frameDescriptor, null, sourceSection, name.toString());
         this.actions = actions;
+        this.initializeractions = initactions;
         this.sourceSection = sourceSection;
         this.name = name;
         this.instantiateNode = new ActorInstantiateNode(this, head);
@@ -35,7 +36,6 @@ public class ActorNode extends CALRootNode {
         //getNextAction().executeGeneric(frame);
         // fix frame arguments
         return instantiateNode.executeGeneric(frame);
-
     }
 
     @Override
@@ -46,6 +46,8 @@ public class ActorNode extends CALRootNode {
     public ActionNode[] getActions() {
         return actions;
     }
+
+    public ActionNode[] getInitializerActions() { return initializeractions; }
 
     @Override
     public String getName() {
@@ -65,5 +67,4 @@ public class ActorNode extends CALRootNode {
     public String toString() {
         return "root " + name;
     }
-
 }

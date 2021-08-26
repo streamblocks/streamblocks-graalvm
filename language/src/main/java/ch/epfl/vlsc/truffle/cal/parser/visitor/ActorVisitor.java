@@ -15,11 +15,9 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.utils.ActorNodeUtils;
 import ch.epfl.vlsc.truffle.cal.parser.utils.PartialOrderViolationException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Singleton class that provides an implementation for an actor sub-tree.
@@ -87,17 +85,19 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
             }
         }
 
+        List<ActionNode> initactions = new ArrayList<>();
         if (ctx.initializationActionDefinition().size() > 0) {
-            // TODO Add support for initialization actions
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Initialization action is not yet supported");
+            for (CALParser.InitializationActionDefinitionContext actionCtx: ctx.initializationActionDefinition()) {
+                initactions.add(InitializeActionVisitor.getInstance().visitInitializationActionDefinition(actionCtx));
             }
         }
 
         if (ctx.priorityOrder().size() > 0) {
             // Order the actions by priorities
+            List<List<QualifiedID>> priorities = ctx.priorityOrder().stream().map(po -> visitPriorityOrder(po)).flatMap(x -> x).collect(Collectors.toList());
             try {
-                actionNodes = ActorNodeUtils.topologicalSortByPriorities(actionNodes, ctx.priorityOrder().stream().map(po -> visitPriorityOrder(po)).collect(Collectors.toList()));
+                actionNodes = ActorNodeUtils.topologicalSortByPriorities(actionNodes, priorities);
+                initactions = ActorNodeUtils.topologicalSortByPriorities(initactions, priorities);
             } catch (PartialOrderViolationException e) {
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, e.getMessage());
             }
@@ -121,6 +121,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 actionNodes.toArray(new ActionNode[0]),
+                initactions.toArray(new ActionNode[0]),
                 headNode,
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 actorName
@@ -187,14 +188,8 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public List<QualifiedID> visitPriorityOrder(CALParser.PriorityOrderContext ctx) {
-        if (ctx.priorityInequality().size() == 1) {
-            return visitPriorityInequality(ctx.priorityInequality(0));
-        } else if (ctx.priorityInequality().size() == 0) {
-            return Collections.emptyList();
-        } else {
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unexpected number of Priority Inequalities in Priorities");
-        }
+    @Override public Stream<List<QualifiedID>> visitPriorityOrder(CALParser.PriorityOrderContext ctx) {
+        return ctx.priorityInequality().stream().map(po -> visitPriorityInequality(po));
     }
 
     /**
