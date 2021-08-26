@@ -15,6 +15,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -22,6 +23,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import com.oracle.truffle.api.source.SourceSection;
 import org.antlr.v4.runtime.Token;
+import se.lth.cs.tycho.ir.QID;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,11 +60,11 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
         ScopeEnvironment.getInstance().pushScope();
 
-        String actionName;
+        QualifiedID actionName;
         if (ctx.actionTag() != null) {
-            actionName = CollectionVisitor.qualifiedIdToString(visitActionTag(ctx.actionTag()));
+            actionName = CollectionVisitor.qualifiedIdCreator(visitActionTag(ctx.actionTag()));
         } else {
-            actionName = "unnamed action"; // Note: Compliant with corresponding transformer, but probably unnecessary
+            actionName = QualifiedID.of("unnamed action"); // Note: Compliant with corresponding transformer, but probably unnecessary
         }
 
         List<CALStatementNode> actionStatements = new ArrayList<>();

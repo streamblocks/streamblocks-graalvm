@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import org.antlr.v4.runtime.Token;
@@ -26,6 +27,10 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
         }
 
         return instance;
+    }
+
+    public static QualifiedID qualifiedIdCreator(Collection<Token> visitActionTag) {
+        return new QualifiedID(visitActionTag.stream().map(token -> token.getText()).collect(Collectors.toList()));
     }
 
     /**

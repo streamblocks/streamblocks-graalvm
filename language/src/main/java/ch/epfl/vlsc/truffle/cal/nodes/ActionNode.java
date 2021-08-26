@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -12,13 +13,13 @@ public final class ActionNode extends CALRootNode {
     private CALExpressionNode body;
     @Child
     private CALExpressionNode firingCondition;
-    private final String name;
+    private final QualifiedID name;
     private boolean isCloningAllowed;
     private final SourceSection sourceSection;
 
     public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body,
-            CALExpressionNode firingCondition, SourceSection sourceSection, String name) {
-        super(language, frameDescriptor, body, sourceSection, name);
+                      CALExpressionNode firingCondition, SourceSection sourceSection, QualifiedID name) {
+        super(language, frameDescriptor, body, sourceSection, name.toString());
         this.body = body;
         this.firingCondition = firingCondition;
         this.sourceSection = sourceSection;
@@ -55,7 +56,7 @@ public final class ActionNode extends CALRootNode {
 
     @Override
     public String getName() {
-        return name;
+        return name.toString();
     }
 
     public void setCloningAllowed(boolean isCloningAllowed) {

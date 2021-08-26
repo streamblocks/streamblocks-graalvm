@@ -1,9 +1,11 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
@@ -27,6 +29,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
+import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.InputPattern;
@@ -181,11 +184,11 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
         SourceSection actionSrc = getSourceSection(action);
-        String name;
+        QualifiedID name;
         if (action.getTag() != null)
-        	name = action.getTag().toString();
+        	name = new QualifiedID(action.getTag().parts());
         else
-        	name = "unnammed action";
+        	name = QualifiedID.of("unnammed action");
         return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name);
     }
 }
