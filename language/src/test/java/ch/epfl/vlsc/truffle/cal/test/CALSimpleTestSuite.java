@@ -52,9 +52,8 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Failing. Priorities has wrong implementation")
     public void actionSelectionPriorityGuardPrefix() throws IOException {
-        runTest(TestCase.newBuilder("action-selection-priorityguardprefix").setIterations(10).build());
+        runTestRegex(TestCase.newBuilder("action-selection-priorityguardprefix").setIterations(10).build());
     }
 
     @Test
