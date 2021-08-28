@@ -1,0 +1,11 @@
+namespace test:
+	actor test() ==> :
+		action ==>
+		do
+            println(8&12);
+            println(15&12&8);
+            println(8 >> 1);
+            println(15 >> 2);
+		end
+	end
+end
