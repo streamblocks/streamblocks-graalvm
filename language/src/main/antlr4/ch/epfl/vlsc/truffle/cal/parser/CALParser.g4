@@ -460,15 +460,23 @@ scheduleRegExp:
 regExp:
     actionTag
     |
-    '(' regExp ')'
+    regExpGroup
     |
-    '[' regExp ']'
+    regExpOptional
     |
     regExp '*'
     |
     regExp regExp
     |
     regExp '|' regExp
+;
+
+regExpGroup:
+    '(' regExp ')'
+;
+
+regExpOptional:
+    '[' regExp ']'
 ;
 
 // ----------------------------------------------------------------------------

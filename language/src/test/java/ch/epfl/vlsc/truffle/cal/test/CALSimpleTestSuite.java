@@ -2,7 +2,6 @@ package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class CALSimpleTestSuite extends CALTestSuite {
@@ -23,9 +22,13 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Not implemented yet")
     public void actionSelectionRegexTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-scheduleregex").setIterations(10).build());
+    }
+
+    @Test
+    public void actionSelectionRegexOptionalTest() throws IOException {
+        runTest(TestCase.newBuilder("action-selection-scheduleregex-optional").setIterations(10).build());
     }
 
     @Test
@@ -45,12 +48,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
 
     @Test
     public void actionSelectionPriorityAntiSymmetry() throws IOException {
-        runTestRegex(TestCase.newBuilder("action-selection-priorityantisymmetry").setIterations(10).build());
+        runTestRegexPartial(TestCase.newBuilder("action-selection-priorityantisymmetry").setIterations(10).build());
     }
 
     @Test
     public void actionSelectionPriorityGuardPrefix() throws IOException {
-        runTestRegex(TestCase.newBuilder("action-selection-priorityguardprefix").setIterations(10).build());
+        runTestRegexPartial(TestCase.newBuilder("action-selection-priorityguardprefix").setIterations(10).build());
     }
 
     @Test
@@ -177,5 +180,4 @@ public class CALSimpleTestSuite extends CALTestSuite {
     public void idctTest() throws IOException {
         runTest(TestCase.newBuilder("dct/src/TopIDCT").setActorName("RVC.TopIDCT").setDirLookup(true).build());
     }
-
 }

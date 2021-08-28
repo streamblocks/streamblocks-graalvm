@@ -14,6 +14,13 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.utils.ActorNodeUtils;
 import ch.epfl.vlsc.truffle.cal.parser.utils.PartialOrderViolationException;
 import com.oracle.truffle.api.frame.FrameSlot;
+import dk.brics.automaton.Automaton;
+import dk.brics.automaton.RegExp;
+import dk.brics.automaton.State;
+import dk.brics.automaton.Transition;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -118,7 +125,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
             currStateSlot = ScopeEnvironment.getInstance().findFrameSlot(currStateSlotName);
 
             FSMDescription fsm = visitActionSchedule(ctx.actionSchedule().get(0));
-            ArrayList<HashMap<Integer, Integer>> transitions = TransitionsToMap(fsm.getTransitions(), actionNodes, fsm.getInitialState());
+            ArrayList<HashMap<Integer, Integer>> transitions = ActorNodeUtils.TransitionsToMap(fsm.getTransitions(), actionNodes, fsm.getInitialState());
 
             fsmStateCheckNode = new FsmStateCheckNode(transitions, currStateSlot, actorIndSlot);
             fsmStateTransitionNode = new FsmStateTransitionNode(transitions, currStateSlot, actorIndSlot);
@@ -153,29 +160,6 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         return actorNode;
     }
 
-    private ArrayList<HashMap<Integer, Integer>> TransitionsToMap(List<Transition> allTransitions, List<ActionNode> actions, String initialState) {
-        int i = 0;
-        HashMap<String, Integer> stateToIndex = new HashMap<String, Integer>();
-        stateToIndex.put(initialState, i++);
-        for(Transition t: allTransitions){
-            if(!stateToIndex.containsKey(t.getSource())) stateToIndex.put(t.getSource(), i++);
-            if(!stateToIndex.containsKey(t.getDestination())) stateToIndex.put(t.getDestination(), i++);
-        }
-        ArrayList<HashMap<Integer, Integer>> transitions = new ArrayList<HashMap<Integer, Integer>>(stateToIndex.size());
-        for(int j = 0; j < stateToIndex.size(); ++j) transitions.add(new HashMap<Integer, Integer>());
-        for(Transition t: allTransitions){
-            HashMap<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSource()));
-            int finalStateIndex = stateToIndex.get(t.getDestination());
-            QualifiedID tQID = t.getActionTag();
-            for(int j = 0; j < actions.size(); ++j){
-                if(tQID.isPrefixOf(actions.get(j).getQID())){
-                    m.put(j, finalStateIndex);
-                }
-            }
-        }
-        return transitions;
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -191,6 +175,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         if (ctx.scheduleFSM() != null) {
             return visitScheduleFSM(ctx.scheduleFSM());
         } else if (ctx.scheduleRegExp() != null) {
+            // If the schedule is given as a Regex, convert it to FSM
             return visitScheduleRegExp(ctx.scheduleRegExp());
         } else {
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unexpected Schedule Type found");
@@ -224,16 +209,35 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public FSMDescription visitScheduleRegExp(CALParser.ScheduleRegExpContext ctx) {
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Schedule Regex not supported currently");
-    }
+        Pair<BidiMap<QualifiedID, Character>, String> p = (new RegexVisitor()).visitRegExp(ctx.regExp());
+        RegExp regex = new RegExp(p.getRight());
+        Automaton automaton = regex.toAutomaton(true);
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override public Object visitRegExp(CALParser.RegExpContext ctx) {
-        // TODO First resolve #visitScheduleRegExp
-        // Note: Unreachable for now
-        return super.visitRegExp(ctx);
+        BidiMap<State, String> state2name = new DualHashBidiMap<>();
+        int stateCounter = 0;
+        String initStateName = "s" + (stateCounter++);
+        state2name.put(automaton.getInitialState(), initStateName);
+        ArrayList<Transition> transitions = new ArrayList<>();
+        transitions.ensureCapacity(automaton.getNumberOfTransitions());
+
+        for(State s: automaton.getStates()) {
+            if (!state2name.containsKey(s)) {
+                String stateName = "s" + (stateCounter++);
+                state2name.put(s, stateName);
+            }
+        }
+
+        for(State s: automaton.getStates()) {
+            String stateName = state2name.get(s);
+            for(dk.brics.automaton.Transition t: s.getTransitions()) {
+                for(char c = t.getMin(); c <= t.getMax(); ++c) {
+                    transitions.add(new Transition(stateName, new TransitionTarget(state2name.get(t.getDest()), p.getLeft().getKey(c))));
+                }
+            }
+        }
+
+        transitions.trimToSize();
+        return new FSMDescription(initStateName, transitions);
     }
 
     /**
@@ -255,7 +259,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         return CollectionVisitor.qualifiedIdCreator(ActionVisitor.getInstance().visitActionTag(ctx));
     }
 
-    private class Transition {
+    public class Transition {
         public Transition(String source, TransitionTarget tr) {
             this.source = source;
             this.tr = tr;

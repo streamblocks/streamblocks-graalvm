@@ -5,6 +5,7 @@ import ch.epfl.vlsc.truffle.cal.ast.ActorTransformer;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import ch.epfl.vlsc.truffle.cal.parser.visitor.ActorVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 
 import java.util.*;
@@ -92,6 +93,30 @@ public class ActorNodeUtils {
         return list;
     }
 
+
+    public static ArrayList<HashMap<Integer, Integer>> TransitionsToMap(List<ActorVisitor.Transition> allTransitions, List<ActionNode> actions, String initialState) {
+        int i = 0;
+        HashMap<String, Integer> stateToIndex = new HashMap<String, Integer>();
+        stateToIndex.put(initialState, i++);
+        for(ActorVisitor.Transition t: allTransitions){
+            if(!stateToIndex.containsKey(t.getSource())) stateToIndex.put(t.getSource(), i++);
+            if(!stateToIndex.containsKey(t.getDestination())) stateToIndex.put(t.getDestination(), i++);
+        }
+        ArrayList<HashMap<Integer, Integer>> transitions = new ArrayList<HashMap<Integer, Integer>>(stateToIndex.size());
+        for(int j = 0; j < stateToIndex.size(); ++j) transitions.add(new HashMap<Integer, Integer>());
+        for(ActorVisitor.Transition t: allTransitions){
+            HashMap<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSource()));
+            int finalStateIndex = stateToIndex.get(t.getDestination());
+            QualifiedID tQID = t.getActionTag();
+            for(int j = 0; j < actions.size(); ++j){
+                if(tQID.isPrefixOf(actions.get(j).getQID())){
+                    m.put(j, finalStateIndex);
+                }
+            }
+        }
+        return transitions;
+    }
+
     private enum NodeStatus {Unvisited, Inprogress, Visited}
 
     private static void recursiveTopologicalSort(int v, NodeStatus[] visited, List<Integer>[] neighbours, List<Integer> topologicallySorted) throws PartialOrderViolationException {
@@ -108,29 +133,4 @@ public class ActorNodeUtils {
         visited[v] = NodeStatus.Visited;
         topologicallySorted.add(v);
     }
-
-//    public ArrayList<HashMap<Integer, Integer>> transformFsm(CalActor actor, ActionNode[] actions) {
-//        int i = 0;
-//        HashMap<String, Integer> stateToIndex = new HashMap<String, Integer>();
-//        stateToIndex.put(actor.getScheduleFSM().getInitialState(), i++);
-//        for(Transition t: actor.getScheduleFSM().getTransitions()){
-//            if(!stateToIndex.containsKey(t.getSourceState())) stateToIndex.put(t.getSourceState(), i++);
-//            if(!stateToIndex.containsKey(t.getDestinationState())) stateToIndex.put(t.getDestinationState(), i++);
-//        }
-//        ArrayList<HashMap<Integer, Integer>> transitions = new ArrayList<HashMap<Integer, Integer>>(stateToIndex.size());
-//        for(int j = 0; j < stateToIndex.size(); ++j) transitions.add(new HashMap<Integer, Integer>());
-//        for(Transition t: actor.getScheduleFSM().getTransitions()){
-//            HashMap<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSourceState()));
-//            int finalStateIndex = stateToIndex.get(t.getDestinationState());
-//            for(QID tempQID: t.getActionTags()){
-//                QualifiedID tQID = new QualifiedID(tempQID.parts());
-//                for(int j = 0; j < actions.length; ++j){
-//                    if(tQID.isPrefixOf(actions[j].getQID())){
-//                        m.put(j, finalStateIndex);
-//                    }
-//                }
-//            }
-//        }
-//        return transitions;
-//    }
 }

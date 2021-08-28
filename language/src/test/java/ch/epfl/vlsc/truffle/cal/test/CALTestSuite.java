@@ -177,7 +177,7 @@ abstract class CALTestSuite {
 		}
 	}
 
-	protected void runTestRegex(TestCase testCase) throws IOException {
+	protected void runTestRegexPartial(TestCase testCase) throws IOException {
 		Context context = null;
 		try {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -200,7 +200,7 @@ abstract class CALTestSuite {
 
 			Pattern pattern = Pattern.compile(testCase.expectedOutput);
 			Matcher matcher = pattern.matcher(actualOutput);
-			Assert.assertTrue(testCase.name.toString(), matcher.find());
+			Assert.assertTrue("Actual output:::" + actualOutput + "::: does not match expected pattern " + testCase.expectedOutput, matcher.find());
 		} finally {
 			if (context != null) {
 				context.close();
