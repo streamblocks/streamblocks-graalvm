@@ -185,11 +185,16 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
         SourceSection actionSrc = getSourceSection(action);
+
         QualifiedID name;
-        if (action.getTag() != null)
-        	name = new QualifiedID(action.getTag().parts());
-        else
-        	name = QualifiedID.of(this.UNNAMED_ACTION);
-        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name);
+        boolean isQidTagged;
+        if (action.getTag() != null) {
+            name = new QualifiedID(action.getTag().parts());
+            isQidTagged = true;
+        }else {
+            name = QualifiedID.of(UNNAMED_ACTION);
+            isQidTagged = false;
+        }
+        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name, isQidTagged);
     }
 }

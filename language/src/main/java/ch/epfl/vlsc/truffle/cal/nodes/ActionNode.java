@@ -15,15 +15,17 @@ public final class ActionNode extends CALRootNode {
     private CALExpressionNode firingCondition;
     private final QualifiedID name;
     private boolean isCloningAllowed;
+    private boolean isQIDTagged; // TODO Tag as compile time constant
     private final SourceSection sourceSection;
 
     public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body,
-                      CALExpressionNode firingCondition, SourceSection sourceSection, QualifiedID name) {
+                      CALExpressionNode firingCondition, SourceSection sourceSection, QualifiedID name, boolean isQidTagged) {
         super(language, frameDescriptor, body, sourceSection, name.toString());
         this.body = body;
         this.firingCondition = firingCondition;
         this.sourceSection = sourceSection;
         this.name = name;
+        this.isQIDTagged = isQidTagged;
     }
 
     @Override
@@ -61,6 +63,10 @@ public final class ActionNode extends CALRootNode {
 
     public QualifiedID getQID() {
         return name;
+    }
+
+    public boolean isQidTagged(){
+        return this.isQIDTagged;
     }
 
     public void setCloningAllowed(boolean isCloningAllowed) {

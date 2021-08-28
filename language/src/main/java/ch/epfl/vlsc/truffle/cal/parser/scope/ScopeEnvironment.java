@@ -214,4 +214,10 @@ public class ScopeEnvironment {
 
 		return fifoName;
 	}
+
+	// FIXME: TODO: This method is STRICTLY a hack and needs to be removed
+	// The visitors should not be directly holding references to frameslots, to ensure lexical scoping
+	public FrameSlot findFrameSlot(String actionIndexSlotName) {
+    	return getCurrentScope().get(actionIndexSlotName).getSlot();
+	}
 }

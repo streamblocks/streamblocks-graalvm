@@ -34,6 +34,7 @@ class ActorInstantiateNode extends CALExpressionNode {
             if (executed)
                 break;
         }
+        if(actor.getCurrStateSlot() != null) actorFrame.setLong(actor.getCurrStateSlot(), 0);
         CALActorInstance actorInstance = new CALActorInstance(actor, actorFrame);
         return actorInstance;
     }

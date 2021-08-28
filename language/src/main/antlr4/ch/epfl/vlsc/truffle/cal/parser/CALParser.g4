@@ -441,10 +441,18 @@ scheduleFSM:
 ;
 
 stateTransition:
-    ID '(' actionTags ')' '-->' ID ('|' '(' actionTags ')' '-->' ID)*
+    source=ID transitionTargetList
 ;
 
- // RegExp schedules (CLR §9.2.2)
+transitionTargetList:
+    transitionTarget ('|' transitionTarget)*
+;
+
+transitionTarget:
+    '(' actionTags ')' '-->' target=ID
+;
+
+// RegExp schedules (CLR §9.2.2)
 scheduleRegExp:
     'schedule' 'regexp' regExp ('end' | 'endschedule')
 ;

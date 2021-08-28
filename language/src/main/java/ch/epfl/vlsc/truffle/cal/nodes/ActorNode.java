@@ -1,7 +1,12 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
@@ -12,10 +17,14 @@ public class ActorNode extends CALRootNode {
     @Children private ActionNode[] actions;
     @Children private ActionNode[] initializeractions;
     private final String name;
+    @Child private FsmStateCheckNode fsmNode;
+    @Child private FsmStateTransitionNode fsmStateTransitionNode;
     private boolean isCloningAllowed;
     private final SourceSection sourceSection;
+    private final FrameSlot actorIndexSlot;
+    private final FrameSlot currStateSlot;
 
-    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, ActionNode[] initactions, CALStatementNode head, SourceSection sourceSection, String name) {
+    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, ActionNode[] initactions, CALStatementNode head, SourceSection sourceSection, String name, FsmStateCheckNode fsmNodeLoc, FsmStateTransitionNode fsmStateTransitionNodeArg, FrameSlot actorIndSlot, FrameSlot currStateSlot) {
         // FIXME null-hack
         super(language, frameDescriptor, null, sourceSection, name.toString());
         this.actions = actions;
@@ -23,6 +32,10 @@ public class ActorNode extends CALRootNode {
         this.sourceSection = sourceSection;
         this.name = name;
         this.instantiateNode = new ActorInstantiateNode(this, head);
+        this.fsmNode = fsmNodeLoc;
+        this.actorIndexSlot = actorIndSlot;
+        this.fsmStateTransitionNode = fsmStateTransitionNodeArg;
+        this.currStateSlot = currStateSlot;
     }
 
     @Override
@@ -66,5 +79,21 @@ public class ActorNode extends CALRootNode {
     @Override
     public String toString() {
         return "root " + name;
+    }
+
+    public FsmStateCheckNode getFsmStateCheckNode() {
+        return this.fsmNode;
+    }
+
+    public FrameSlot getActorIndexSlot() {
+        return this.actorIndexSlot;
+    }
+
+    public FrameSlot getCurrStateSlot() {
+        return currStateSlot;
+    }
+
+    public FsmStateTransitionNode getFsmStateTransitionNode() {
+        return this.fsmStateTransitionNode;
     }
 }

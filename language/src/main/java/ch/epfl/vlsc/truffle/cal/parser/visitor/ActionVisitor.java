@@ -62,10 +62,13 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         ScopeEnvironment.getInstance().pushScope();
 
         QualifiedID actionName;
+        boolean isQIDTagged;
         if (ctx.actionTag() != null) {
             actionName = CollectionVisitor.qualifiedIdCreator(visitActionTag(ctx.actionTag()));
+            isQIDTagged = true;
         } else {
             actionName = QualifiedID.of(UNNAMED_ACTION); // Note: Compliant with corresponding transformer, but probably unnecessary
+            isQIDTagged = false;
         }
 
         List<CALStatementNode> actionStatements = new ArrayList<>();
@@ -147,7 +150,8 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 actionBodyNode,
                 firingCondition,
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
-                actionName
+                actionName,
+                isQIDTagged
         );
         // TODO Add RootTag / CallTag for actionNode
 

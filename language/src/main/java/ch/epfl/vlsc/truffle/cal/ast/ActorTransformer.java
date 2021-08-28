@@ -1,10 +1,10 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.source.SourceSection;
 import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
@@ -12,6 +12,7 @@ import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.CalActor;
+import se.lth.cs.tycho.ir.entity.cal.Transition;
 import se.lth.cs.tycho.ir.util.ImmutableList;
 
 import java.util.*;
@@ -61,8 +62,6 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             i++;
         }
 
-        // FIXME we can probably use a StmtBlockNode
-        CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
         ActionNode[] actions = this.actor.getActions().map(x -> transformAction(x)).toArray(new ActionNode[0]);
         ActionNode[] initializeractions = this.actor.getInitializers().map(x -> transformAction(x)).toArray(new ActionNode[0]);
 
@@ -72,8 +71,58 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             topologicalSortByPriorities(initializeractions, this.actor.getPriorities());
         }
 
+        FsmStateCheckNode fsmStateCheckNode = null;
+        FsmStateTransitionNode fsmStateTransitionNode = null;
+        FrameSlot actorIndSlot = null;
+        FrameSlot currStateSlot = null;
+        if(actor.getScheduleFSM() != null){
+            String actionIndexSlotName = String.valueOf(actor.hashCode() + "#fsmActorIndex");
+            headStatements.add(createAssignment(actionIndexSlotName, new LongLiteralNode(0)));
+            ++i;
+
+            String currStateSlotName = String.valueOf(actor.hashCode()) + "#fsmCurrState";
+            headStatements.add(createAssignment(currStateSlotName, new LongLiteralNode(0)));
+            ++i;
+
+            actorIndSlot = context.getFrameDescriptor().findFrameSlot(actionIndexSlotName);
+            currStateSlot = context.getFrameDescriptor().findFrameSlot(currStateSlotName);
+
+            ArrayList<HashMap<Integer, Integer>> transitions = transformFsm(actor, actions, headStatements, actorIndSlot);
+
+            fsmStateCheckNode = new FsmStateCheckNode(transitions, currStateSlot, actorIndSlot);
+            fsmStateTransitionNode = new FsmStateTransitionNode(transitions, currStateSlot, actorIndSlot);
+        }
+
+        // FIXME we can probably use a StmtBlockNode
+        CALStatementNode head = new StmtBlockNode(headStatements.toArray(new CALStatementNode[headStatements.size()]));
+
         SourceSection actorSrc = getSourceSection(actor);
-        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, initializeractions, head, actorSrc, name.toString());
+        return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, initializeractions, head, actorSrc, name.toString(), fsmStateCheckNode, fsmStateTransitionNode, actorIndSlot, currStateSlot);
+    }
+
+    private ArrayList<HashMap<Integer, Integer>> transformFsm(CalActor actor, ActionNode[] actions, List<CALStatementNode> headStatements, FrameSlot actorIndSlot) {
+        int i = 0;
+        HashMap<String, Integer> stateToIndex = new HashMap<String, Integer>();
+        stateToIndex.put(actor.getScheduleFSM().getInitialState(), i++);
+        for(Transition t: actor.getScheduleFSM().getTransitions()){
+            if(!stateToIndex.containsKey(t.getSourceState())) stateToIndex.put(t.getSourceState(), i++);
+            if(!stateToIndex.containsKey(t.getDestinationState())) stateToIndex.put(t.getDestinationState(), i++);
+        }
+        ArrayList<HashMap<Integer, Integer>> transitions = new ArrayList<HashMap<Integer, Integer>>(stateToIndex.size());
+        for(int j = 0; j < stateToIndex.size(); ++j) transitions.add(new HashMap<Integer, Integer>());
+        for(Transition t: actor.getScheduleFSM().getTransitions()){
+            HashMap<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSourceState()));
+            int finalStateIndex = stateToIndex.get(t.getDestinationState());
+            for(QID tempQID: t.getActionTags()){
+                QualifiedID tQID = new QualifiedID(tempQID.parts());
+                for(int j = 0; j < actions.length; ++j){
+                    if(tQID.isPrefixOf(actions[j].getQID())){
+                        m.put(j, finalStateIndex);
+                    }
+                }
+            }
+        }
+        return transitions;
     }
 
     /**

@@ -18,7 +18,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Not implemented yet")
     public void actionSelectionFsmTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-schedulefsm").setIterations(10).build());
     }
@@ -35,7 +34,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Not implemented yet")
     public void actionSelectionPriorityFsmTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-priorityfsm").setIterations(10).build());
     }
@@ -61,7 +59,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Not implemented yet")
     public void actionSelectionPriorityFsmGuardTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-priorityfsmguard").setIterations(10).build());
     }
