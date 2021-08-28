@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class CALSimpleTestSuite extends CALTestSuite {
@@ -169,6 +170,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void ifElseStatementTest() throws IOException {
         runTest(TestCase.newBuilder("if-else-statement").build());
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    public void ProcedureTest() throws IOException {
+        runTest(TestCase.newBuilder("procedure").setIterations(10).build());
     }
 
     @Test

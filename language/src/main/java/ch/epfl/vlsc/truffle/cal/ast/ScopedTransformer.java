@@ -327,7 +327,8 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
                 entry("mod", 5),
                 entry("*", 5),
                 entry("/", 5),
-                entry("^", 6)
+                entry("^", 6),
+                entry(">>", 6)
                 );
 
         int lower = 7;
@@ -399,6 +400,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             break;
         case "and":
             result = new CALBinaryLogicalAndNode(left, right);
+            break;
+        case ">>":
+            result = CALBinaryShiftRightNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);
