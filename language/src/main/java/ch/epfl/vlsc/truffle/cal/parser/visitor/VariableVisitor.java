@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
@@ -240,8 +241,60 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitProcedureVariableDeclaration(CALParser.ProcedureVariableDeclarationContext ctx) {
-        // TODO First resolve ExpressionVisitor#visitProcExpression  => use named proc closure as a procedure variable
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Procedure declaration is not yet supported");
+        // FIXME: Copied over as it is from Lambda Visitor
+        StmtBlockNode headNode;
+        CALExpressionNode bodyNode;
+
+        ScopeEnvironment.getInstance().pushScope(false);
+
+        if (ctx.formalParameters() != null) {
+            Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
+            headNode = new StmtBlockNode(formalParameterNodes.toArray(new CALStatementNode[0]));
+            headNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.formalParameters()));
+            headNode.addStatementTag();
+        } else {
+            headNode = new StmtBlockNode(new CALStatementNode[0]);
+        }
+
+        if (ctx.localVariables != null) {
+            ScopeEnvironment.getInstance().pushScope(true, false);
+
+            Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
+            StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
+            letHeadNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.localVariables));
+            letHeadNode.addStatementTag();
+
+            CALExpressionNode letBodyNode = new StmtFunctionBodyNode(StatementVisitor.getInstance().visit(ctx.statements()));
+
+            bodyNode = new LetExprNode(letHeadNode, letBodyNode);
+            bodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            bodyNode.addExpressionTag();
+
+            ScopeEnvironment.getInstance().popScope();
+        } else {
+            bodyNode = new StmtFunctionBodyNode(StatementVisitor.getInstance().visit(ctx.statements()));
+        }
+
+        ReturnsLastBodyNode lambdaBodyNode = new ReturnsLastBodyNode(headNode, bodyNode);
+        lambdaBodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        lambdaBodyNode.addExpressionTag();
+
+        CALRootNode lambdaBodyRootNode = new CALRootNode(
+                ScopeEnvironment.getInstance().getLanguage(),
+                ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
+                lambdaBodyNode,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
+                ScopeEnvironment.generateLambdaName()
+        );
+        // TODO Add RootTag / CallTag for lambdaBodyRootNode
+
+        LambdaNode valueNode = new LambdaNode(lambdaBodyRootNode);
+        valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        valueNode.addExpressionTag();
+
+        ScopeEnvironment.getInstance().popScope();
+
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
