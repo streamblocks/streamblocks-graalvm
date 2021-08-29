@@ -10,8 +10,9 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ShortCircuitNode;
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
+import ch.epfl.vlsc.truffle.cal.runtime.CALFunction;
+import ch.epfl.vlsc.truffle.cal.runtime.CALNull;
 
 import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 

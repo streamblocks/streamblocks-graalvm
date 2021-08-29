@@ -8,6 +8,12 @@ namespace test:
             println(15 >> 2);
             println(8 mod 3);
             println(8 mod 5);
+            println(1 != 1);
+            // println([1,2] != [1,2]);
+            println("12" != "12");
+            println(1 != 2);
+            // println([1,2] != [2,2]);
+            println("12" != "32");
 		end
 	end
 end
