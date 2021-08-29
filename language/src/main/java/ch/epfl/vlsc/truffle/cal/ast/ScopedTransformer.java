@@ -377,6 +377,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "/":
             result = CALBinaryDivNodeGen.create(left, right);
             break;
+        case "mod":
+            result = CALBinaryModNodeGen.create(left, right);
+            break;
         case "<=":
             result = CALBinaryLessOrEqualNodeGen.create(left, right);
             break;
