@@ -52,6 +52,7 @@ import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.expr.*;
 import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
 import se.lth.cs.tycho.ir.stmt.*;
+import se.lth.cs.tycho.ir.stmt.lvalue.LValue;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 import se.lth.cs.tycho.ir.util.ImmutableList;
@@ -505,11 +506,20 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             return createAssignment(name, stmtAssignment.getExpression());
         } else if (stmtAssignment.getLValue() instanceof LValueIndexer) {
             LValueIndexer lvalue = (LValueIndexer) stmtAssignment.getLValue();
-            String name = ((LValueVariable) lvalue.getStructure()).getVariable().getName();
-            return ListWriteNodeGen.create(getReadNode(name), transformExpr(lvalue.getIndex()),
+            return ListWriteNodeGen.create(getReadNode(lvalue.getStructure()), transformExpr(lvalue.getIndex()),
                     transformExpr(stmtAssignment.getExpression()));
         } else {
             throw new Error("unknown lvalue " + stmtAssignment.getLValue().getClass().getName());
+        }
+    }
+
+    private CALExpressionNode getReadNode(LValue structure) {
+        if(structure instanceof LValueVariable){
+            return getReadNode(((LValueVariable) structure).getVariable().getName());
+        }else if(structure instanceof  LValueIndexer){
+            return ListReadNodeGen.create(getReadNode(((LValueIndexer) structure).getStructure()), transformExpr(((LValueIndexer) structure).getIndex()));
+        }else{
+            throw new TransformException("Unknown LValue structure for ReadNode: " + structure.toString(), context.getSource());
         }
     }
 
