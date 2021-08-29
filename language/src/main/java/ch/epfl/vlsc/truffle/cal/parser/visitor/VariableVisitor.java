@@ -5,6 +5,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ProcNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
@@ -275,22 +276,22 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             bodyNode = new StmtFunctionBodyNode(StatementVisitor.getInstance().visit(ctx.statements()));
         }
 
-        ReturnsLastBodyNode lambdaBodyNode = new ReturnsLastBodyNode(headNode, bodyNode);
-        lambdaBodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-        lambdaBodyNode.addExpressionTag();
+        ReturnsLastBodyNode procBodyNode = new ReturnsLastBodyNode(headNode, bodyNode);
+        procBodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        procBodyNode.addStatementTag();
 
-        CALRootNode lambdaBodyRootNode = new CALRootNode(
+        CALRootNode procBodyRootNode = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
-                lambdaBodyNode,
+                procBodyNode,
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 ScopeEnvironment.generateLambdaName()
         );
-        // TODO Add RootTag / CallTag for lambdaBodyRootNode
+        // TODO Add RootTag / CallTag for procBodyRootNode
 
-        LambdaNode valueNode = new LambdaNode(lambdaBodyRootNode);
+        LambdaNode valueNode = new LambdaNode(procBodyRootNode);
         valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-        valueNode.addExpressionTag();
+        valueNode.addStatementTag();
 
         ScopeEnvironment.getInstance().popScope();
 

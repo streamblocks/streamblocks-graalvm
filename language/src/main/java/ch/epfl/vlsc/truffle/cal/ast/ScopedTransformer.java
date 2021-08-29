@@ -49,11 +49,7 @@ import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
 import se.lth.cs.tycho.ir.expr.*;
 import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
-import se.lth.cs.tycho.ir.stmt.Statement;
-import se.lth.cs.tycho.ir.stmt.StmtAssignment;
-import se.lth.cs.tycho.ir.stmt.StmtCall;
-import se.lth.cs.tycho.ir.stmt.StmtForeach;
-import se.lth.cs.tycho.ir.stmt.StmtIf;
+import se.lth.cs.tycho.ir.stmt.*;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
 import se.lth.cs.tycho.ir.util.ImmutableList;
@@ -422,10 +418,27 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         	output = transformStmtForeach((StmtForeach) statement);
         } else if (statement instanceof StmtIf) {
         	output = transformStmtIf((StmtIf) statement);
+        } else if (statement instanceof StmtBlock) {
+            output = transformStmtBlock((StmtBlock) statement);
         } else {
             throw new Error("unknown statement " + statement.getClass().getName());
         }
         return withSourceSection(output, statement);
+    }
+
+    private StmtBlockNode transformStmtBlock(StmtBlock statement) {
+        CALStatementNode[] body = new CALStatementNode[statement.getVarDecls().size() + statement.getStatements().size()];
+        int i = 0;
+
+        for (VarDecl varDecl : statement.getVarDecls()) {
+            body[i] = transformArgument(varDecl, i);
+            i++;
+        }
+        for(Statement stmt: statement.getStatements()){
+            body[i] = transformStatement(stmt);
+            i++;
+        }
+        return new StmtBlockNode(body);
     }
 
     private CALStatementNode transformStatementsList(List<Statement> statements) {

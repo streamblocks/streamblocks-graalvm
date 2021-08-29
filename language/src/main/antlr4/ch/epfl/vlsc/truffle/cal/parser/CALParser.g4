@@ -788,7 +788,7 @@ lambdaExpression:
 // Procedure closure (CLR §6.9.2)
 procExpression:
     'proc' '(' formalParameters? ')'
-    ('var' blockVariableDeclarations)?
+    ('var' localVariables=blockVariableDeclarations)?
     ('do' | 'begin')
     statements
     ('end' | 'endproc')

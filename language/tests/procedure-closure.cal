@@ -1,0 +1,20 @@
+namespace test:
+	actor test() ==> :
+	    state := 0;
+	    procedure_closure := proc () do println(state); end;
+
+		action ==>
+		guard state = 0
+		do
+            procedure_closure();
+            state := 1;
+		end
+
+		action ==>
+        guard state = 1
+        do
+            procedure_closure();
+            state := 0;
+        end
+	end
+end
