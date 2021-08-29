@@ -417,6 +417,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "&":
             result = CALBinaryBitAndNodeGen.create(left, right);
             break;
+        case "|":
+            result = CALBinaryBitOrNodeGen.create(left, right);
+            break;
         default:
             throw new Error("unimplemented bin op " + opeString);
         }
