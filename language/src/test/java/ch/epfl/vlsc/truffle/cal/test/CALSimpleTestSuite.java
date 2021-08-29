@@ -13,6 +13,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore
+    public void blockStatementTest() throws IOException {
+        runTest(TestCase.newBuilder("block-statement").build());
+    }
+
+    @Test
     public void actionSelectionGuardTest() throws IOException {
         runTest(TestCase.newBuilder("action-selection-guard").setIterations(10).build());
     }
@@ -158,7 +164,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore("Not implemented yet")
     public void whileLoopTest() throws IOException {
         runTest(TestCase.newBuilder("while-loop").build());
     }

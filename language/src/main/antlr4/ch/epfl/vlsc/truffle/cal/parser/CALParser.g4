@@ -906,7 +906,7 @@ callStatement:
 // Statement block (CLR §7.3)
 blockStatement:
     'begin'
-    ('var' blockVariableDeclarations 'do')?
+    ('var' localVariables=blockVariableDeclarations 'do')?
     statements
     'end'
 ;

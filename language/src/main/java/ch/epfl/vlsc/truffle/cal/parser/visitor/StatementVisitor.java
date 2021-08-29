@@ -3,25 +3,29 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtIfNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
+import ch.epfl.vlsc.truffle.cal.parser.CALLexer;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
-import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -221,8 +225,27 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALStatementNode visitWhileStatement(CALParser.WhileStatementContext ctx) {
-        // TODO Create While statement node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "While statement is not yet supported");
+        if (ctx.blockVariableDeclarations() != null) {
+            ScopeEnvironment.getInstance().pushScope(false, false);
+            Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.blockVariableDeclarations());
+            StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
+            letHeadNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.blockVariableDeclarations()));
+            letHeadNode.addStatementTag();
+
+            StmtWhileNode letBodyNode = new StmtWhileNode(ExpressionVisitor.getInstance().visit(ctx.expression()), StatementVisitor.getInstance().visit(ctx.statements()));
+            letBodyNode.addStatementTag();
+            StmtBlockNode block = new StmtBlockNode(new CALStatementNode[]{letHeadNode, letBodyNode});
+            block.addStatementTag();
+            block.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            ScopeEnvironment.getInstance().popScope();
+            return block;
+        } else {
+            StmtWhileNode whileNode = new StmtWhileNode(ExpressionVisitor.getInstance().visit(ctx.expression()), StatementVisitor.getInstance().visit(ctx.statements()));
+            whileNode.addStatementTag();
+            whileNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            return whileNode;
+        }
+
     }
 
     /**
