@@ -107,7 +107,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             currStateSlot = context.getFrameDescriptor().findFrameSlot(currStateSlotName);
 
             // Convert the states from strings to numbers and transitions correspondingly
-            ArrayList<HashMap<Integer, Integer>> transitions = transformFsm(actorScheduleFsm, actions, headStatements, actorIndSlot);
+            List<Map<Integer, Integer>> transitions = transformFsm(actorScheduleFsm, actions, headStatements, actorIndSlot);
 
             fsmStateCheckNode = new FsmStateCheckNode(transitions, currStateSlot, actorIndSlot);
             fsmStateTransitionNode = new FsmStateTransitionNode(transitions, currStateSlot, actorIndSlot);
@@ -120,7 +120,7 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         return new ActorNode(context.getLanguage(), context.getFrameDescriptor(), actions, initializeractions, head, actorSrc, name.toString(), fsmStateCheckNode, fsmStateTransitionNode, actorIndSlot, currStateSlot);
     }
 
-    private ArrayList<HashMap<Integer, Integer>> transformFsm(ScheduleFSM actorScheduleFsm, ActionNode[] actions, List<CALStatementNode> headStatements, FrameSlot actorIndSlot) {
+    private List<Map<Integer, Integer>> transformFsm(ScheduleFSM actorScheduleFsm, ActionNode[] actions, List<CALStatementNode> headStatements, FrameSlot actorIndSlot) {
         int i = 0;
         HashMap<String, Integer> stateToIndex = new HashMap<String, Integer>();
         stateToIndex.put(actorScheduleFsm.getInitialState(), i++);
@@ -128,10 +128,10 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             if(!stateToIndex.containsKey(t.getSourceState())) stateToIndex.put(t.getSourceState(), i++);
             if(!stateToIndex.containsKey(t.getDestinationState())) stateToIndex.put(t.getDestinationState(), i++);
         }
-        ArrayList<HashMap<Integer, Integer>> transitions = new ArrayList<HashMap<Integer, Integer>>(stateToIndex.size());
+        List<Map<Integer, Integer>> transitions = new ArrayList<>(stateToIndex.size());
         for(int j = 0; j < stateToIndex.size(); ++j) transitions.add(new HashMap<Integer, Integer>());
         for(Transition t: actorScheduleFsm.getTransitions()){
-            HashMap<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSourceState()));
+            Map<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSourceState()));
             int finalStateIndex = stateToIndex.get(t.getDestinationState());
             for(QID tempQID: t.getActionTags()){
                 QualifiedID tQID = new QualifiedID(tempQID.parts());

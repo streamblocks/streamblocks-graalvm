@@ -113,5 +113,16 @@
       <artifactId>graal-sdk</artifactId>
       <version>${graalvm.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.graalvm.sdk</groupId>
+      <artifactId>launcher-common</artifactId>
+      <version>${graalvm.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.epfl.vlsc</groupId>
+      <artifactId>shared</artifactId>
+      <version>${graalvm.version}</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 </project>

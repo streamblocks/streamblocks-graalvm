@@ -13,6 +13,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.utils.ActorNodeUtils;
 import ch.epfl.vlsc.truffle.cal.parser.utils.PartialOrderViolationException;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.frame.FrameSlot;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.RegExp;
@@ -72,7 +73,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         }
         if (ctx.time != null) {
             // TODO Add support for actor time
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Actor time is not yet supported");
             }
         }
@@ -125,7 +126,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
             currStateSlot = ScopeEnvironment.getInstance().findFrameSlot(currStateSlotName);
 
             FSMDescription fsm = visitActionSchedule(ctx.actionSchedule().get(0));
-            ArrayList<HashMap<Integer, Integer>> transitions = ActorNodeUtils.TransitionsToMap(fsm.getTransitions(), actionNodes, fsm.getInitialState());
+            List<Map<Integer, Integer>> transitions = ActorNodeUtils.TransitionsToMap(fsm.getTransitions(), actionNodes, fsm.getInitialState());
 
             fsmStateCheckNode = new FsmStateCheckNode(transitions, currStateSlot, actorIndSlot);
             fsmStateTransitionNode = new FsmStateTransitionNode(transitions, currStateSlot, actorIndSlot);
@@ -135,7 +136,7 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.processDescription().size() > 0) {
             // TODO Add support for process descriptions
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Process description is not yet supported");
             }
         }

@@ -52,9 +52,12 @@
   </properties>
   <packaging>pom</packaging>
   <modules>
+    <module>annotations</module>
+    <module>processor</module>
+    <module>shared</module>
     <module>language</module>
     <module>launcher</module>
     <module>native</module>
-    <!--<module>component</module>-->
+    <module>component</module>
   </modules>
 </project>

@@ -6,12 +6,14 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class FsmStateTransitionNode extends CALExpressionNode{
-    FrameSlot stateSlot;
-    FrameSlot actorIndexSlot;
-    ArrayList<HashMap<Integer, Integer>> transitions;
-    public FsmStateTransitionNode(ArrayList<HashMap<Integer, Integer>> transitionsArg, FrameSlot stateSlotArg, FrameSlot actorIndSlot) {
+    private final FrameSlot stateSlot;
+    private final FrameSlot actorIndexSlot;
+    private final List<Map<Integer, Integer>> transitions;
+    public FsmStateTransitionNode(List<Map<Integer, Integer>> transitionsArg, FrameSlot stateSlotArg, FrameSlot actorIndSlot) {
         this.stateSlot = stateSlotArg;
         this.actorIndexSlot = actorIndSlot;
         this.transitions = transitionsArg;

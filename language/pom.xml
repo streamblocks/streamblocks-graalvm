@@ -237,5 +237,11 @@
       <artifactId>commons-collections4</artifactId>
       <version>4.4</version>
     </dependency>
+    <dependency>
+      <groupId>ch.epfl.vlsc</groupId>
+      <artifactId>shared</artifactId>
+      <version>${graalvm.version}</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 </project>

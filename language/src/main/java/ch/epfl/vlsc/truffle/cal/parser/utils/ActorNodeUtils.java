@@ -94,7 +94,7 @@ public class ActorNodeUtils {
     }
 
 
-    public static ArrayList<HashMap<Integer, Integer>> TransitionsToMap(List<ActorVisitor.Transition> allTransitions, List<ActionNode> actions, String initialState) {
+    public static List<Map<Integer, Integer>> TransitionsToMap(List<ActorVisitor.Transition> allTransitions, List<ActionNode> actions, String initialState) {
         int i = 0;
         HashMap<String, Integer> stateToIndex = new HashMap<String, Integer>();
         stateToIndex.put(initialState, i++);
@@ -102,10 +102,10 @@ public class ActorNodeUtils {
             if(!stateToIndex.containsKey(t.getSource())) stateToIndex.put(t.getSource(), i++);
             if(!stateToIndex.containsKey(t.getDestination())) stateToIndex.put(t.getDestination(), i++);
         }
-        ArrayList<HashMap<Integer, Integer>> transitions = new ArrayList<HashMap<Integer, Integer>>(stateToIndex.size());
+        List<Map<Integer, Integer>> transitions = new ArrayList<>(stateToIndex.size());
         for(int j = 0; j < stateToIndex.size(); ++j) transitions.add(new HashMap<Integer, Integer>());
         for(ActorVisitor.Transition t: allTransitions){
-            HashMap<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSource()));
+            Map<Integer, Integer> m = transitions.get(stateToIndex.get(t.getSource()));
             int finalStateIndex = stateToIndex.get(t.getDestination());
             QualifiedID tQID = t.getActionTag();
             for(int j = 0; j < actions.size(); ++j){
