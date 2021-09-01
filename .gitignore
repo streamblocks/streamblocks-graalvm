@@ -13,7 +13,7 @@ graalvm/
 /Coco.jar
 component/cal-component.jar
 language/dependency-reduced-pom.xml
-native/slnative
+native/calnative
 
 # Vim 
 # Swap
