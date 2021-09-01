@@ -45,7 +45,7 @@ if [[ $SL_BUILD_NATIVE == "false" ]]; then
     exit 0
 fi
 "$JAVA_HOME"/bin/native-image \
-    --macro:truffle --no-fallback --initialize-at-build-time --verbose \
+    --macro:truffle --no-fallback --allow-incomplete-classpath  --initialize-at-build-time --verbose \
     -cp ../language/target/cal.jar:../launcher/target/cal-launcher.jar \
-    ch.epfl.vlsc.truffle.cal.launcher.CALMain \
+    ch.epfl.vlsc.truffle.cal.launcher.CalLauncher\
     calnative

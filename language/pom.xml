@@ -194,19 +194,19 @@
       <groupId>org.graalvm.truffle</groupId>
       <artifactId>truffle-api</artifactId>
       <version>${graalvm.version}</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.graalvm.truffle</groupId>
       <artifactId>truffle-dsl-processor</artifactId>
       <version>${graalvm.version}</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.graalvm.truffle</groupId>
       <artifactId>truffle-tck</artifactId>
       <version>${graalvm.version}</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -218,31 +218,31 @@
       <groupId>se.lth.cs.tycho</groupId>
       <artifactId>core</artifactId>
       <version>1.0-SNAPSHOT</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>se.lth.cs.tycho</groupId>
       <artifactId>compiler</artifactId>
       <version>1.0-SNAPSHOT</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>dk.brics</groupId>
       <artifactId>automaton</artifactId>
       <version>1.12-3</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
       <version>3.12.0</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
       <version>4.4</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>ch.epfl.vlsc</groupId>
