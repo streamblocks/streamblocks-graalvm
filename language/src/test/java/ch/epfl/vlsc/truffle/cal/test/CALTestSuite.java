@@ -120,7 +120,7 @@ abstract class CALTestSuite {
 
 			public TestCase build() throws FileNotFoundException, IOException {
 				Map<String, String> options = new HashMap<>();
-				options.put("cal.actor", actorName);
+				options.put("cal.entity-qid", actorName);
 				options.put("cal.iterations", iterations.toString());
 				options.put("cal.directory-lookup", dirLookup.toString());
 				options.put("cal.show-warnings", showWarnings.toString());

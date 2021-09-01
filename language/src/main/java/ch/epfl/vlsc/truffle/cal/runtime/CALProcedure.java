@@ -18,7 +18,7 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.api.utilities.TriState;
-
+import com.oracle.truffle.api.CompilerDirectives;
 
 // A procedure
 @ExportLibrary(InteropLibrary.class)
@@ -40,6 +40,7 @@ public class CALProcedure extends CALValue {
     // TODO how to get called?
     // TODO add child annotation
     public RootCallTarget getCallTarget() {
+        CompilerDirectives.transferToInterpreter();
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(body);
         return callTarget;
     }

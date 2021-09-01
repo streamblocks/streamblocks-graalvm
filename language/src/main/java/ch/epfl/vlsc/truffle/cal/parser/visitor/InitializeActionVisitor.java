@@ -21,6 +21,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.source.SourceSection;
 import org.antlr.v4.runtime.Token;
 
@@ -52,7 +53,7 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
     @Override public ActionNode visitInitializationActionDefinition(CALParser.InitializationActionDefinitionContext ctx) {
         if (ctx.delay != null) {
             // TODO Add support for action delay
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Action delay is not yet supported");
             }
         }
@@ -148,12 +149,12 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
             return null;
         } else if (ctx.patterns().pattern().size() > 1) {
             // TODO Add support for multiple patterns in an input pattern
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with multiple patterns is not yet supported");
             }
         } else if (!(ctx.patterns().pattern().get(0) instanceof CALParser.SimplePatternContext)) {
             // TODO Add support for complex patterns in an input pattern
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with multiple patterns is not yet supported");
             }
         }
@@ -161,7 +162,7 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.channelSelector() != null) {
             // TODO Add support for channel selector
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an input pattern is not yet supported");
             }
         }
@@ -317,7 +318,7 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.expressions().expression().size() > 1) {
             // TODO Add support for multiple token expressions in an output expression
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Output expression with multiple tokens is not yet supported");
             }
         }
@@ -326,7 +327,7 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.channelSelector() != null) {
             // TODO Add support for channel selector
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an output expression is not yet supported");
             }
         }

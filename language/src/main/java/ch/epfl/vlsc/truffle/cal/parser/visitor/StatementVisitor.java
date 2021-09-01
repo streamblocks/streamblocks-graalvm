@@ -18,6 +18,7 @@ import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -257,14 +258,14 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         if (ctx.foreachGenerators().foreachGenerator().size() > 1) {
             // TODO Add support for multiple generators
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx.foreachGenerators(), "Multiple foreach generators are not yet supported");
             }
         }
         for (CALParser.ForeachGeneratorContext generatorCtx: ctx.foreachGenerators().foreachGenerator()) {
             if (generatorCtx.generatorBody().variables.size() > 1) {
                 // TODO Add support for multiple variables in a generator
-                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                     throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a foreach generator are not yet supported");
                 }
             }
@@ -289,7 +290,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
             if (generatorCtx.generatorBody().generatorExpressions().filters.size() > 1) {
                 // TODO Add support for generator filters
-                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                     throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Foreach generator filters are not yet supported");
                 }
             }

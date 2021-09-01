@@ -235,6 +235,7 @@ public class CALActorInstance extends CALValue {
                     }
                 }
                 if (!actionFsmFireable) continue;
+                CompilerDirectives.transferToInterpreter();
                 CallTarget target = Truffle.getRuntime().createCallTarget(action);
                 Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
                 if (executed) {

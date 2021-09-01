@@ -43,7 +43,7 @@
 # If you update this number make sure the graalvm.version value in ./pom.xml matches
 VERSION="21.2.0"
 
-MAIN_CLASS="ch.epfl.vlsc.truffle.cal.launcher.CALMain"
+MAIN_CLASS="ch.epfl.vlsc.truffle.cal.launcher.CalLauncher"
 SCRIPT_HOME="$(cd "$(dirname "$0")" && pwd -P)"
 
 function extractGraalVMVersion() {
@@ -81,6 +81,7 @@ if [[ "$GRAALVM_VERSION" != "" ]]; then
 else
     LANGUAGE_PATH="$SCRIPT_HOME/language/target/cal.jar"
     LAUNCHER_PATH="$SCRIPT_HOME/launcher/target/launcher-$VERSION.jar"
+    SHARED_PATH="$SCRIPT_HOME/shared/target/shared-$VERSION.jar"
     # Check the GraalVM version in JAVA_HOME
     if [[ "$JAVA_HOME" != "" ]]; then
         GRAALVM_VERSION=$(extractGraalVMVersion "$JAVA_HOME"/release)
@@ -123,7 +124,8 @@ if [[ "$GRAALVM_VERSION" != "" ]]; then
             PROGRAM_ARGS+=("$opt") ;;
       esac
     done
-    "$JAVACMD" "${JAVA_ARGS[@]}" -Dtruffle.class.path.append="$LANGUAGE_PATH" -cp "$LAUNCHER_PATH" "$MAIN_CLASS" "${PROGRAM_ARGS[@]}"
+    GRAAL_LAUNCHER_COMMON_PATH="$HOME/.m2/repository/org/graalvm/sdk/launcher-common/$VERSION/launcher-common-$VERSION.jar"
+    "$JAVACMD" "${JAVA_ARGS[@]}" -Dtruffle.class.path.append="$LANGUAGE_PATH" -cp "$LAUNCHER_PATH":"$GRAAL_LAUNCHER_COMMON_PATH":"$SHARED_PATH" "$MAIN_CLASS" "${PROGRAM_ARGS[@]}"
 else
     echo "Warning: Could not find GraalVM on $JAVA_HOME. Running on JDK without support for compilation."
     echo
@@ -151,6 +153,7 @@ else
         exit 1
     fi
     GRAAL_SDK_PATH="$HOME/.m2/repository/org/graalvm/sdk/graal-sdk/$VERSION/graal-sdk-$VERSION.jar"
+    GRAAL_LAUNCHER_COMMON_PATH="$HOME/.m2/repository/org/graalvm/sdk/launcher-common/$VERSION/launcher-common-$VERSION.jar"
     TRUFFLE_API_PATH="$HOME/.m2/repository/org/graalvm/truffle/truffle-api/$VERSION/truffle-api-$VERSION.jar"
-    "$JAVACMD" "${JAVA_ARGS[@]}" -cp "$GRAAL_SDK_PATH":"$LAUNCHER_PATH":"$LANGUAGE_PATH":"$TRUFFLE_API_PATH" "$MAIN_CLASS" "${PROGRAM_ARGS[@]}"
+    "$JAVACMD" "${JAVA_ARGS[@]}" -cp "$GRAAL_SDK_PATH":"$GRAAL_LAUNCHER_COMMON_PATH":"$LAUNCHER_PATH":"$LANGUAGE_PATH":"$TRUFFLE_API_PATH" "$MAIN_CLASS" "${PROGRAM_ARGS[@]}"
 fi

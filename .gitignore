@@ -11,9 +11,9 @@ graalvm/
 .project
 /bin/
 /Coco.jar
-component/sl-component.jar
+component/cal-component.jar
 language/dependency-reduced-pom.xml
-native/slnative
+native/calnative
 
 # Vim 
 # Swap

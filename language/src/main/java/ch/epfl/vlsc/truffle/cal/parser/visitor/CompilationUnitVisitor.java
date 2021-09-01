@@ -7,6 +7,7 @@ import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import org.antlr.v4.runtime.Token;
@@ -89,13 +90,13 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
         Map<String, RootCallTarget> entities = new HashMap<>();
         if (ctx.typeDefinition().size() > 0) {
             // TODO Add support for type definitions
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Type definition is not yet supported");
             }
         }
         if (ctx.globalVariableDeclaration().size() > 0) {
             // TODO Add support for global variables
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Global variable is not yet supported");
             }
         }
@@ -166,7 +167,7 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     @Override public Pair<String, String> visitSingleImport(CALParser.SingleImportContext ctx) {
         if (ctx.kind != null) {
             // TODO Add support for explicit import kind
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Explicit import kind is not yet supported");
             }
         }
