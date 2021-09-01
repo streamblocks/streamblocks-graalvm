@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -125,7 +127,6 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // result.addExpressionTag();
 
         return result;
-
     }
 
     public CALExpressionNode getReadNode(String name) {
@@ -214,50 +215,19 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
-        if (comprehension.getFilters().size() > 0)
-            throw new TransformException("filters not implemented", context.getSource(), comprehension);
-        Generator generator = comprehension.getGenerator();
-        // FIXME filters
-        ImmutableList<Expression> filters = comprehension.getFilters();
-        if (filters.size() > 0)
-            throw new TransformException("Filters not supported", context.getSource(), comprehension);
-        if (!(comprehension.getCollection() instanceof ExprList))
-            throw new TransformException("for comp should have a collection", context.getSource(), comprehension);
-        // [ f(x) : for x in originalList ] 
-        ExprList collection = (ExprList) comprehension.getCollection();
-
         CALStatementNode[] init = new CALStatementNode[3];
         // tempList=[]
-        init[0] = createAssignment("$tempList", new UnknownSizeListInitNode());
+        String tempListName = "$tempList" + String.valueOf(comprehension.hashCode());
+        init[0] = createAssignment(tempListName, new UnknownSizeListInitNode());
+
         // i=0
-        init[1] = createAssignment("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
+        String listIndexVarName = "$comprehensionCounter" + String.valueOf(comprehension.hashCode());
+        init[1] = createAssignment(listIndexVarName, new BigIntegerLiteralNode(new BigInteger("0")));
 
-        // resolve originalList
-        CALExpressionNode list = transformExpr(generator.getCollection());
-        if (generator.getVarDecls().size() != 1) {
-            throw new TransformException("unsupported multiple var decls in for loop", context.getSource(), generator);
-        }
-        // x = originalList[i]
-        CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
-        if (collection.getElements().size() > 1)
-            throw new TransformException("unsupported more than 1 element for for-comp", context.getSource(), generator);
-        CALStatementNode[] bodyNodes = new CALStatementNode[2];
-        // tempList[i] = f(x)
-        bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
-                transformExpr(collection.getElements().get(0)));
-        // i= i + 1
-        bodyNodes[1] = createAssignment("$comprehensionCounter", CALBinaryAddNodeGen
-                .create(getReadNode("$comprehensionCounter"), new BigIntegerLiteralNode(new BigInteger("1"))));
+        // The Comprehension nodes will generate the content into the above list
+        init[2] = (new ExprComprehensionTransformer(comprehension, tempListName, listIndexVarName, context)).transform();
 
-        CALStatementNode body = new StmtBlockNode(bodyNodes);
-
-        if (write instanceof CALWriteLocalVariableNode) {
-            init[2] = ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) write, list);
-            return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode("$tempList"));
-        } else {
-            throw new TransformException("Node write error", context.getSource(), comprehension);
-        }
-        // Transform the for loop and return the temporary list
+        return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode(tempListName));
     }
 
     private CALExpressionNode transformExprIndexer(ExprIndexer exprIndexer) {

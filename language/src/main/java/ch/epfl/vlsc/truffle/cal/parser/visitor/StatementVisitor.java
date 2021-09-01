@@ -284,10 +284,10 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                     throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Variable name re-use in a foreach generator is not yet supported");
                 }
             }
-            List<CALExpressionNode> expressionNodes = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(generatorCtx.generatorBody().expressions()));
-            collectionNode = expressionNodes.get(0);
+            // List<CALExpressionNode> expressionNodes = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(generatorCtx.generatorBody().));
+            collectionNode = ExpressionVisitor.getInstance().visit(generatorCtx.generatorBody().generatorExpressions().collection);
 
-            if (expressionNodes.size() > 1) {
+            if (generatorCtx.generatorBody().generatorExpressions().filters.size() > 1) {
                 // TODO Add support for generator filters
                 if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
                     throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Foreach generator filters are not yet supported");

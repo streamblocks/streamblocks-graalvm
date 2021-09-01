@@ -93,13 +93,13 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         if(actorScheduleFsm != null){
             // Create Frameslot for storing actor index during processing checks
             // See the implementation of doIndirect in CALActorInstance for more details
-            String actionIndexSlotName = String.valueOf(actor.hashCode() + "#fsmActorIndex");
+            String actionIndexSlotName = String.valueOf("$" + actor.hashCode() + "#fsmActorIndex");
             headStatements.add(createAssignment(actionIndexSlotName, new LongLiteralNode(0)));
             ++i;
 
             // Create Frameslot for storing the number of current state
             // See the implementation of doIndirect in CALActorInstance for more details
-            String currStateSlotName = String.valueOf(actor.hashCode()) + "#fsmCurrState";
+            String currStateSlotName = String.valueOf("$" + actor.hashCode()) + "#fsmCurrState";
             headStatements.add(createAssignment(currStateSlotName, new LongLiteralNode(0)));
             ++i;
 

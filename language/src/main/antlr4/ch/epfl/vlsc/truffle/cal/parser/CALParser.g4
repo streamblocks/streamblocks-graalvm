@@ -651,12 +651,16 @@ chooseGenerator:
 ;
 
 generatorBody:
-    type? variables+=ID (',' variables+=ID)? 'in' expressions
+    type? variables+=ID (',' variables+=ID)? 'in' generatorExpressions
 ;
 
 // ----------------------------------------------------------------------------
 // -- Expressions (CLR §6, but extended)
 // ----------------------------------------------------------------------------
+
+generatorExpressions:
+    collection=expression (',' filters+=expression)*
+;
 
 expressions:
     expression (',' expression)*
@@ -800,7 +804,7 @@ setComprehension:
 ;
 
 listComprehension:
-    '[' (computations=expressions (':' generators)?)? ']'
+    '[' (computations=expressions (':' generators)?  ('|' tail=expression )?)? ']'
 ;
 
 mapComprehension:
