@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Singleton class that provides an implementation for an action sub-tree.
@@ -346,25 +347,17 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
         );
 
-        if (ctx.expressions().expression().size() > 1) {
-            // TODO Add support for multiple token expressions in an output expression
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Output expression with multiple tokens is not yet supported");
-            }
-        }
         List<CALExpressionNode> tokenExpressions = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.expressions());
-        CALExpressionNode tokenExpression = tokenExpressions.get(0);
+        // CALExpressionNode tokenExpression = tokenExpressions.get(0);
 
         if (ctx.channelSelector() != null) {
             // TODO Add support for channel selector
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an output expression is not yet supported");
-            }
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an output expression is not yet supported");
         }
 
         if (ctx.repeat == null) {
             // Simple output expression
-            CALWriteFIFONode simpleOutputExpressionNode = new CALWriteFIFONode(portQueue, tokenExpression);
+            StmtBlockNode simpleOutputExpressionNode = new StmtBlockNode(tokenExpressions.stream().map(expr -> new CALWriteFIFONode(portQueue, expr)).toArray(CALWriteFIFONode[]::new));
             simpleOutputExpressionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
             simpleOutputExpressionNode.addStatementTag();
 
@@ -395,14 +388,18 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
             CALStatementNode[] loopStatementNodes = new CALStatementNode[2];
 
-            ListReadNode tokenExpressionElementNode = ListReadNodeGen.create(
-                    tokenExpression,
-                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())
-            );
-            tokenExpressionElementNode.setSourceSection(portQueue.getSourceSection());
-            tokenExpressionElementNode.addExpressionTag();
+            List<ListReadNode> tokenExpressionElementNodes = tokenExpressions.stream().map(expr -> {
+                ListReadNode listReadNode = ListReadNodeGen.create(
+                        expr,
+                        ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())
+                );
+                listReadNode.setSourceSection(portQueue.getSourceSection());
+                listReadNode.addExpressionTag();
+                return listReadNode;
+            }).collect(Collectors.toList());
 
-            loopStatementNodes[0] = new CALWriteFIFONode(portQueue, tokenExpressionElementNode); // <Port Queue>.add(<Token Expression>[$counter]);
+
+            loopStatementNodes[0] = new StmtBlockNode(tokenExpressionElementNodes.stream().map(expr -> new CALWriteFIFONode(portQueue, expr)).toArray(CALWriteFIFONode[]::new)); // <Port Queue>.add(<Token Expression>[$counter]);
             loopStatementNodes[0].setUnavailableSourceSection();
             loopStatementNodes[0].addStatementTag();
 

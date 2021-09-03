@@ -139,6 +139,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void multipleOutputExpressionsTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-output-expressions").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void listInitTest() throws IOException {
         runTest(TestCase.newBuilder("init-list").build());
     }
@@ -154,8 +159,13 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    public void repeatOutputTest() throws IOException {
-        runTest(TestCase.newBuilder("repeat-output").setActorName("simple.dwf.SourceSink").build());
+    public void repeatOutputSingleExprTest() throws IOException {
+        runTest(TestCase.newBuilder("repeat-output-single-expr").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
+    public void repeatOutputMultipleExprTest() throws IOException {
+        runTest(TestCase.newBuilder("repeat-output-multiple-expr").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test
@@ -179,9 +189,14 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void forComprehensionTest() throws IOException {
         runTest(TestCase.newBuilder("for-comprehensions").build());
+    }
+
+    @Test
+    @Ignore
+    public void forComprehensionExtendedTest() throws IOException {
+        runTest(TestCase.newBuilder("for-comprehensions-comprehensive").build());
     }
 
     @Test

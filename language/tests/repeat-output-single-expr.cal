@@ -42,7 +42,7 @@ namespace simple.dwf:
      * SourceSink network
      * Instatiates Source and Sink actors and interconnects them.
      */
-    network SourceSink() 
+    network SourceSink()
         ==> :
 
         entities
