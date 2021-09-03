@@ -40,7 +40,6 @@ tags
 .vim
 
 .vimspector.json
-
 # Antlr
 *.interp
 *.tokens
@@ -53,3 +52,4 @@ merge_tools.bash
 processed
 .PROCESSING
 .PROCESSED
+language/src/main/java/ch/epfl/vlsc/truffle/cal/nodes/util/IRNodeTreePrinterConsumer.java

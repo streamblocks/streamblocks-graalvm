@@ -86,7 +86,7 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
         CALParser.GeneratorContext generator = ctx.generators().generator(i);
 
         if (generator.generatorBody().variables.size() != 1) {
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generator.generatorBody(), "Only 1 Variable binding is supported in for-comprehensions");
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generator.generatorBody(), "Support for multiple variables in Generators are not supported yet");
         }
 
         NullLiteralNode nullLiteralNode = new NullLiteralNode();
