@@ -1,0 +1,27 @@
+namespace jpeg.decoder.parallel.idct:
+
+import entity jpeg.decoder.parallel.idct.Scale;
+import entity jpeg.decoder.parallel.idct.Rightshift;
+import entity jpeg.decoder.parallel.idct.Scaled_1d_idct;
+import entity jpeg.decoder.parallel.idct.Transpose;
+	
+	network IDCT2D() int(size=13) IN ==> uint(size=8) OUT :
+	
+	entities
+		scale = Scale();
+		row = Scaled_1d_idct();
+		transpose = Transpose();
+		column = Scaled_1d_idct();
+		retranspose = Transpose();
+		shift = Rightshift();
+	structure
+		IN --> scale.IN;
+		scale.OUT --> row.IN;
+		row.OUT --> transpose.IN;
+		transpose.OUT --> column.IN;
+		column.OUT --> retranspose.IN;
+		retranspose.OUT --> shift.IN;
+		shift.OUT --> OUT;	
+	end
+
+end

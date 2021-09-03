@@ -6,7 +6,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class CALSimpleTestSuite extends CALTestSuite {
-
     @Test
     public void addTest() throws IOException {
         runTest(TestCase.newBuilder("add").build());
@@ -237,5 +236,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void idctTest() throws IOException {
         runTest(TestCase.newBuilder("dct/src/TopIDCT").setActorName("RVC.TopIDCT").setDirLookup(true).build());
+    }
+
+    @Test
+    @Ignore
+    public void jpegSingleImageTest() throws IOException {
+        runTest(TestCase.newBuilder("jpeg/SingleImageTest").setActorName("jpeg.SingleImagePrinter").setDirLookup(true).build());
     }
 }

@@ -1,0 +1,34 @@
+namespace jpeg.decoder.parallel:
+
+	//@pipeline(flushing=true)
+	actor Merger420 () uint(size=8) Y, uint(size=8) Cb, uint(size=8) Cr ==> uint(size=8) YCbCr :
+	
+		// Select the Y blocks
+		@loop_merge 
+		Y:action Y:[y] repeat 64 ==> YCbCr:[y] repeat 64
+		end
+		
+		
+		// Select the Cb blocks 
+		@loop_merge
+		Cb:action Cb:[cb] repeat 64 ==> YCbCr:[cb] repeat 64
+		end
+	
+		// Select the Cr blocks
+		@loop_merge 
+		Cr:action Cr:[cr] repeat 64 ==> YCbCr:[cr] repeat 64
+		end
+	
+		schedule fsm Y0 :
+			Y0 (Y) --> Y1;
+			Y1 (Y) --> Y2;
+			Y2 (Y) --> Y3;
+			Y3 (Y) --> Cb;
+			
+			Cb(Cb)-->Cr;
+			Cr(Cr)-->Y0;
+		end
+	
+	end
+
+end

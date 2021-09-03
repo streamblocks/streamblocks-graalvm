@@ -1,0 +1,53 @@
+namespace jpeg.decoder.parallel:
+
+import entity jpeg.decoder.parallel.parser.Parser;
+import entity jpeg.decoder.parallel.huffman.Huffman420;
+import entity jpeg.decoder.parallel.Splitter420;
+import entity jpeg.decoder.parallel.idct.IDCT2D;
+import entity jpeg.decoder.parallel.dequant.Dequant;
+import entity jpeg.decoder.parallel.Merger420;
+
+	network JpegDecoder() uint(size=8) Byte ==>  int(size=16) SOI, uint(size=8) YCbCr:
+	
+	entities
+		parser = Parser();
+		huffman = Huffman420();
+		splitter420 = Splitter420();
+		idct_Y = IDCT2D();
+		idct_Cb = IDCT2D();
+		idct_Cr = IDCT2D();
+		iq_Y = Dequant(mb=4);
+		iq_Cb = Dequant(mb=1);
+		iq_Cr = Dequant(mb=1);
+		merger = Merger420();
+		
+	structure
+		Byte --> parser.Byte;
+		parser.Data --> huffman.Bit;
+		parser.HT --> huffman.HT;
+		parser.QT_Y --> iq_Y.QT;
+		parser.QT_UV --> iq_Cb.QT;
+		parser.QT_UV --> iq_Cr.QT;
+		parser.SOI --> SOI;
+		parser.SOI --> huffman.SOI;
+		parser.SOI --> iq_Y.SOI;
+		parser.SOI --> iq_Cb.SOI;
+		parser.SOI --> iq_Cr.SOI;
+		
+		huffman.Block --> splitter420.YCbCr;
+		
+		splitter420.Y --> iq_Y.Block;
+		splitter420.Cb --> iq_Cb.Block;
+		splitter420.Cr --> iq_Cr.Block;
+		
+		iq_Y.Out --> idct_Y.IN;
+		iq_Cb.Out --> idct_Cb.IN;
+		iq_Cr.Out --> idct_Cr.IN;
+		
+		idct_Y.OUT --> merger.Y;
+		idct_Cb.OUT --> merger.Cb;
+		idct_Cr.OUT --> merger.Cr;
+		merger.YCbCr --> YCbCr;
+	end
+
+end
