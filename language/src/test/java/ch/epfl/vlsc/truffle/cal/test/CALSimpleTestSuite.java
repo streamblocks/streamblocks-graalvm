@@ -163,6 +163,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore
+    public void networkLoopConnectionTest() throws IOException {
+        runTest(TestCase.newBuilder("network-loop-connection").setActorName("test.Sum").build());
+    }
+
+    @Test
     public void listInitTest() throws IOException {
         runTest(TestCase.newBuilder("init-list").build());
     }
