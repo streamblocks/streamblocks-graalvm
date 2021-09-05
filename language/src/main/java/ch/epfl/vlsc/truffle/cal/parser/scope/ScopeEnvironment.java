@@ -94,6 +94,10 @@ public class ScopeEnvironment {
 		imports.put(importEntity.getLeft(), importEntity.getRight());
 	}
 
+	public void addImportMultiple(Map<String, String> importEntities) {
+		imports.putAll(importEntities);
+	}
+
 	public String getEntityFullName(String name) {
 		if (imports.containsKey(name)) {
 			return imports.get(name);

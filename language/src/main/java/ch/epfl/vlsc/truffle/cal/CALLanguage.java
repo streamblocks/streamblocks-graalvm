@@ -12,8 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
@@ -132,9 +135,20 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             allFiles = Arrays.asList(entry);
 
         Map<String, RootCallTarget> entities = new HashMap<>();
+        Map<List<String>, List<QualifiedID>> namespaceEntities = new HashMap<>();
+        List<ImmutablePair<Source, CALParser.CompilationUnitContext>> sourceParsers = new LinkedList<>();
         for (File file : allFiles) {
             Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
-            entities.putAll(CALParser.parseCAL(this, iSource));
+            Pair<Map<List<String>, List<QualifiedID>>, CALParser.CompilationUnitContext> namespaceEntitiesAndParser = CALParser.getNamespaceEntitiesAndParser(iSource);
+            for (List<String> namespaceParts : namespaceEntitiesAndParser.getLeft().keySet()) {
+                if(!namespaceEntities.containsKey(namespaceParts)) namespaceEntities.put(namespaceParts, new LinkedList<>());
+                namespaceEntities.get(namespaceParts).addAll(namespaceEntitiesAndParser.getLeft().get(namespaceParts));
+            }
+            sourceParsers.add(new ImmutablePair<>(iSource, namespaceEntitiesAndParser.getRight()));
+        }
+
+        for(ImmutablePair<Source, CALParser.CompilationUnitContext> p : sourceParsers){
+            entities.putAll(CALParser.parseCAL(this, p.getRight(), p.getLeft(), namespaceEntities));
         }
 
         return Truffle.getRuntime().createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), entities));

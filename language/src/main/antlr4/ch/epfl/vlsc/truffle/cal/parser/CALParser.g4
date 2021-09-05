@@ -71,26 +71,39 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.*;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 }
 
 @parser::members
 {
+    public static Pair<Map<List<String>, List<QualifiedID>>, CompilationUnitContext> getNamespaceEntitiesAndParser(Source source) {
+        CALLexer lexer = new CALLexer(CharStreams.fromString(source.getCharacters().toString()));
+        CALParser parser = new CALParser(new CommonTokenStream(lexer));
 
-public static Map<String, RootCallTarget> parseCAL(CALLanguage language, Source source) {
-    CALLexer lexer = new CALLexer(CharStreams.fromString(source.getCharacters().toString()));
-    CALParser parser = new CALParser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
 
-    lexer.removeErrorListeners();
-    parser.removeErrorListeners();
+        ErrorListener listener = new ErrorListener(source);
+        lexer.addErrorListener(listener);
+        parser.addErrorListener(listener);
 
-    ErrorListener listener = new ErrorListener(source);
-    lexer.addErrorListener(listener);
-    parser.addErrorListener(listener);
+        CompilationUnitContext compilationUnitContext = parser.compilationUnit();
+        if (compilationUnitContext instanceof NamespaceCompilationUnitContext)
+            return new ImmutablePair<>(
+                    NamespaceEntitiesMapVisitor.getInstance().visitNamespaceCompilationUnit((NamespaceCompilationUnitContext) compilationUnitContext),
+                    compilationUnitContext
+            );
+        else
+            return new ImmutablePair(Map.of(), compilationUnitContext);
+    }
 
-    ScopeEnvironment.createInstance(language, source);
-
-    return (Map<String, RootCallTarget>) CompilationUnitVisitor.getInstance().visit(parser.compilationUnit());
-}
+    public static Map<String, RootCallTarget> parseCAL(CALLanguage language, CompilationUnitContext compilationUnitContext, Source source, Map<List<String>, List<QualifiedID>> namespaceEntities) {
+        ScopeEnvironment.createInstance(language, source);
+        CompilationUnitVisitor.getInstance().setNamespaceEntitiesMap(namespaceEntities);
+        return (Map<String, RootCallTarget>) CompilationUnitVisitor.getInstance().visit(compilationUnitContext);
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -108,16 +121,28 @@ compilationUnit:
 // ----------------------------------------------------------------------------
 
 namespaceDeclaration:
-    body=namespaceBody # UnnamedNamespaceDeclaration
+    namedNamespaceDeclaration
     |
+    packageNamespaceDeclaration
+    |
+    unnamedNamespaceDeclaration
+;
+
+packageNamespaceDeclaration:
+    DOC_COMMENT*
+    'package' name=qualifiedID ';'
+    namespaceBody
+;
+
+namedNamespaceDeclaration:
     DOC_COMMENT*
     'namespace' name=qualifiedID ':'
     body=namespaceBody
-    ('end' | 'endnamespace') # NamedNamespaceDeclaration
-    |
-    DOC_COMMENT*
-    'package' name=qualifiedID ';'
-    namespaceBody # PackageNamespaceDeclaration
+    ('end' | 'endnamespace')
+;
+
+unnamedNamespaceDeclaration:
+    body=namespaceBody
 ;
 
 namespaceBody:

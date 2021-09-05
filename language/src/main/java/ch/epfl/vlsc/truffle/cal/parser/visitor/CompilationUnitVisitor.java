@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
 
     private static CompilationUnitVisitor instance;
+    private Map<List<String>, List<QualifiedID>> NamespaceEntitiesMap;
 
     private CompilationUnitVisitor() {}
 
@@ -34,6 +36,10 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
         }
 
         return instance;
+    }
+
+    public void setNamespaceEntitiesMap(Map<List<String>, List<QualifiedID>> NamespaceEntitiesMap) {
+        this.NamespaceEntitiesMap = NamespaceEntitiesMap;
     }
 
     /**
@@ -84,6 +90,8 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
         for (CALParser.ImportDeclarationContext importCtx: ctx.importDeclaration()) {
             if (importCtx instanceof CALParser.SingleImportDeclarationContext) {
                 ScopeEnvironment.getInstance().addImport(visitSingleImportDeclaration((CALParser.SingleImportDeclarationContext) importCtx));
+            } else if (importCtx instanceof  CALParser.GroupImportDeclarationContext) {
+                ScopeEnvironment.getInstance().addImportMultiple(visitGroupImportDeclaration((CALParser.GroupImportDeclarationContext) importCtx));
             }
         }
 
@@ -157,7 +165,7 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitGroupImportDeclaration(CALParser.GroupImportDeclarationContext ctx) {
+    @Override public Map<String, String> visitGroupImportDeclaration(CALParser.GroupImportDeclarationContext ctx) {
         return visitGroupImport(ctx.groupImport());
     }
 
@@ -187,9 +195,21 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitGroupImport(CALParser.GroupImportContext ctx) {
-        // TODO Add support for group imports
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Group import is not yet supported");
+    @Override public Map<String, String> visitGroupImport(CALParser.GroupImportContext ctx) {
+        if (ctx.kind != null) {
+            // TODO Add support for explicit import kind
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Explicit import kind is not yet supported");
+        }
+
+        QualifiedID globalName = CollectionVisitor.qualifiedIdCreator(CollectionVisitor.getInstance().visitQualifiedID(ctx.globalName));
+
+        Map<String, String> locNameToGlobName = new HashMap<>();
+        for(QualifiedID qid: NamespaceEntitiesMap.get(globalName.parts())) {
+            String localName = qid.getLast().toString();
+            locNameToGlobName.put(localName, globalName.concat(qid).toString());
+        }
+
+        return locNameToGlobName;
     }
 
     /**
