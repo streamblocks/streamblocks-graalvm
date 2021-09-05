@@ -618,13 +618,13 @@ types:
 ;
 
 type:
-    ID
+    name=ID
     |
     'type'
     |
-    ID '[' typeParameters ']'
+    name=ID '[' typeParameters ']'
     |
-    ID '(' typeAttributes? ')' // NominalType (in Tycho) / Type (in Orrc)
+    name=ID '(' typeAttributes? ')' // NominalType (in Tycho) / Type (in Orrc)
     |
     '[' types? '-->' type? ']' // LambdaType (in Tycho)
 ;
@@ -642,9 +642,9 @@ typeAttributes:
 ;
 
 typeAttribute:
-    (ID | 'type') ':' type
+    typeAttributeName=(ID | 'type') ':' type
     |
-    ID '=' expression
+    exprAttributeName=ID '=' expression
 ;
 
 // ----------------------------------------------------------------------------

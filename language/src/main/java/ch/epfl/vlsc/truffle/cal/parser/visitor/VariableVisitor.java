@@ -6,8 +6,12 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ProcNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNodeSizeExpression;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -16,7 +20,10 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.math.BigInteger;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Singleton class that provides an implementation for a variable sub-tree.
@@ -132,6 +139,33 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         }
     }
 
+    private CALExpressionNode fetchDefaultValue(CALParser.TypeContext varDeclType) {
+        if (varDeclType.name == null) {
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), varDeclType, "Types without name not yet supported");
+        }
+
+        if (varDeclType.name.getText().equals("List")) {
+
+            if (varDeclType.typeAttributes() != null) {
+                List<CALExpressionNode> sizeDecl =  varDeclType.typeAttributes().typeAttribute().stream().filter(x -> x.exprAttributeName != null && x.exprAttributeName.getText().equals("size")).map(x -> ExpressionVisitor.getInstance().visit(x.expression())).collect(Collectors.toList());
+                List<CALExpressionNode> typeDecl = varDeclType.typeAttributes().typeAttribute().stream().filter(x -> x.typeAttributeName != null && x.typeAttributeName.getText().equals("type")).map(x -> fetchDefaultValue(x.type())).collect(Collectors.toList());
+                if (sizeDecl.size() > 0) {
+                    if (typeDecl.size() > 0) {
+                        return new ListInitNodeSizeExpression(sizeDecl.get(0), typeDecl.get(0));
+                    } else
+                        return  new ListInitNodeSizeExpression(sizeDecl.get(0), new NullLiteralNode());
+                } else
+                    return new UnknownSizeListInitNode();
+            } else
+                return new UnknownSizeListInitNode();
+        } else if (varDeclType.name.getText().equals("int")) {
+            return new BigIntegerLiteralNode(new BigInteger("0"));
+        } else if (varDeclType.name.getText().equals("uint")) {
+            return new BigIntegerLiteralNode(new BigInteger("0"));
+        } else
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), varDeclType, "No default value for type unknows type " + varDeclType.name.getText());
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -142,18 +176,14 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Mutable variable is not yet supported");
             }
         }
-        if (ctx.type() != null) {
-            // TODO Add support for variable type
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Variable type is not yet supported");
-            }
-        }
+
         if (ctx.isAssignable == null && ctx.value != null) {
             // TODO Add support for non-assignable variables ('=')
             if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Non-assignable variable is not yet supported");
             }
         }
+
         if (ctx.expression().size() > 1) {
             // TODO Add support for indexing ('[]')
             if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
@@ -164,6 +194,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         CALExpressionNode valueNode;
         if (ctx.value != null) {
             valueNode = ExpressionVisitor.getInstance().visit(ctx.value);
+        } else if (ctx.type() != null) {
+            valueNode = fetchDefaultValue(ctx.type());
         } else {
             valueNode = new NullLiteralNode();
             valueNode.setSourceSection(ScopeEnvironment.getInstance().getSource().createUnavailableSection());

@@ -3,12 +3,18 @@ namespace test:
 	actor test() ==> :
 		action ==>
 		var
-			List(type: int, size=2) a := [1,2]
+			List(type: int, size=2) a := [1,2],
+			List(type: List(type: int, size=2), size=3) defaultInitList
 		do
 			a[0] := a[0] + 1;
 			a[1] := a[1] + 2;
 			println(a[0]);
 			println(a[1]);
+			foreach List l in defaultInitList do
+                foreach int i in l do
+                    println(i);
+                end
+            end
 		end
 	end
 end

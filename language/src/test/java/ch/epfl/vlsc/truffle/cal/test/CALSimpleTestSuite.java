@@ -138,6 +138,22 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void multipleInputExpressionsTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-input-expressions").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
+    @Ignore
+    public void networkActionselectionGuardInputToken() throws IOException {
+        runTest(TestCase.newBuilder("network-actionselection-guard-input-token").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
+    public void multipleInputExpressionsRepeatTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-input-expressions-repeat").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void multipleOutputExpressionsTest() throws IOException {
         runTest(TestCase.newBuilder("network-input-multiple-output-expressions").setActorName("simple.dwf.SourceSink").build());
     }
