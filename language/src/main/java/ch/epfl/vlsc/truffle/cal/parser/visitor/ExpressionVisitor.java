@@ -8,6 +8,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
@@ -100,7 +102,8 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             case "dom":
                 // TODO: Create CALUnaryMapDomainNode
             case "#":
-                // TODO: Create CALUnaryCollectionSizeNode
+                unaryOperationNode = CALUnaryListSizeNodeGen.create(operand);
+                break;
             default:
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unary operator \"" + operator + "\" is not yet supported");
         }

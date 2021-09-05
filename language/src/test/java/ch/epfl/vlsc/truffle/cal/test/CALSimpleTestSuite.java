@@ -83,6 +83,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void unaryopTest() throws IOException {
+        runTest(TestCase.newBuilder("unary-op").build());
+    }
+
+    @Test
     public void actorStateTest() throws IOException {
         runTest(TestCase.newBuilder("add-stored-var").setIterations(10).build());
     }
