@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
@@ -23,9 +24,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
@@ -110,10 +108,13 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
         // Firing conditions
         List<CALExpressionNode> firingConditions = new LinkedList<>();
-
+        List<CALStatementNode> inputTokenBindings = new LinkedList<>();
+        List<CALFifoTransactionCommit> transactionCommits = new LinkedList<>();
+        List<CALFifoTransactionRollback> transactionRollbacks = new LinkedList<>();
         // Bind input tokens to input variables/expressions/patterns
         if(action.getInputPatterns().size() == 1){
             InputPattern input = action.getInputPatterns().get(0);
+            inputTokenBindings.add(new CALFifoTransactionInit(getReadNode(input.getPort().getName())));
             if(input.getRepeatExpr() == null){
                 for(int j = 0; j < input.getMatches().size(); ++j){
                     Pattern pat = input.getMatches().get(j).getExpression().getAlternatives().get(0).getPattern();
@@ -122,11 +123,11 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
                         name = ((PatternBinding) pat).getDeclaration().getName();
                     else
                         throw new TransformException("Pattern not implemented", context.getSource(), pat);
-                    bodyArr.add(createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
+                    inputTokenBindings.add(createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
                 }
                 firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(input.getMatches().size()),
                         new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
-            }else{
+            } else {
                 ArrayList<String> inputExprNames = new ArrayList<String>();
                 inputExprNames.ensureCapacity(input.getMatches().size());
                 for(int j = 0; j < input.getMatches().size(); ++j){
@@ -138,15 +139,18 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
                     } else
                         throw new TransformException("Pattern not implemented", context.getSource(), pat);
                 }
-                List<CALExpressionNode> listReadNodes = createRepeatBatchInput(bodyArr, inputExprNames, input.getPort().getName(), transformExpr(input.getRepeatExpr()));
+                List<CALExpressionNode> listReadNodes = createRepeatBatchInput(inputTokenBindings, inputExprNames, input.getPort().getName(), transformExpr(input.getRepeatExpr()));
                 for(int j = 0; j < listReadNodes.size(); ++j){
-                    bodyArr.add(createAssignment(inputExprNames.get(j), listReadNodes.get(j)));
+                    inputTokenBindings.add(createAssignment(inputExprNames.get(j), listReadNodes.get(j)));
                 }
                 firingConditions.add(CALBinaryLessOrEqualNodeGen.create(CALBinaryMulNodeGen.create(transformExpr(input.getRepeatExpr()), new LongLiteralNode(input.getMatches().size())),
                         new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
             }
+            transactionCommits.add(new CALFifoTransactionCommit(getReadNode(input.getPort().getName())));
+            transactionRollbacks.add(new CALFifoTransactionRollback(getReadNode(input.getPort().getName())));
         }else{
             for (InputPattern input : action.getInputPatterns()) {
+                inputTokenBindings.add(new CALFifoTransactionInit(getReadNode(input.getPort().getName())));
                 // TODO implement patterns
                 // FIXME
                 Pattern pat = input.getMatches().get(0).getExpression().getAlternatives().get(0).getPattern();
@@ -157,15 +161,41 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
                     throw new TransformException("Pattern not implemented", context.getSource(), pat);
 
                 if (input.getRepeatExpr() != null){
-                    bodyArr.add(createAssignment(name, batchReadInput(input)));
+                    inputTokenBindings.add(createAssignment(name, batchReadInput(input)));
                     firingConditions.add(CALBinaryLessOrEqualNodeGen.create(transformExpr(input.getRepeatExpr()),
                             new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
                 } else {
-                    bodyArr.add(createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
+                    inputTokenBindings.add(createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
                     firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
                             new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
                 }
+                transactionCommits.add(new CALFifoTransactionCommit(getReadNode(input.getPort().getName())));
+                transactionRollbacks.add(new CALFifoTransactionRollback(getReadNode(input.getPort().getName())));
             }
+        }
+
+        CALExpressionNode guardCondition;
+        // Parse guards
+        if(action.getGuards().size() > 0){
+            int i = 0;
+            guardCondition = transformExpr(action.getGuards().get(i++));
+            while(i < action.getGuards().size()){
+                guardCondition = new CALBinaryLogicalAndNode(guardCondition, transformExpr(action.getGuards().get(i++)));
+            }
+        } else {
+            guardCondition = new BooleanLiteralNode(true);
+        }
+
+        firingConditions.add(new ReturnsLastBodyNode(new StmtBlockNode(inputTokenBindings.toArray(new CALStatementNode[inputTokenBindings.size()])), guardCondition));
+
+        // Build the boolean expression to determine whether an action is fireable
+        CALExpressionNode firingCondition;
+        if (firingConditions.size() > 0) {
+            firingCondition = firingConditions.remove(0);
+            for (CALExpressionNode cond : firingConditions)
+                firingCondition = new CALBinaryLogicalAndNode(firingCondition, cond);
+        } else {
+            firingCondition = new BooleanLiteralNode(true);
         }
 
         // Prepend local variable declarations to the body nodes
@@ -175,6 +205,7 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         for (Statement statement : action.getBody()) {
             bodyArr.add(transformStatement(statement));
         }
+
         // get the variables name linked to the output and add a write to the FIFO
         // in the tail of the action
         for (OutputExpression output : action.getOutputExpressions()) {
@@ -193,21 +224,6 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             }
         }
 
-        // Parse guards
-        for (Expression guard : action.getGuards()) {
-            firingConditions.add(transformExpr(guard));
-        }
-        // Build the boolean expression to determine whether an action is fireable
-        CALExpressionNode firingCondition;
-        if (firingConditions.size() > 0) {
-            firingCondition = firingConditions.remove(0);
-            for (CALExpressionNode cond : firingConditions)
-                firingCondition = new CALBinaryLogicalAndNode(firingCondition, cond);
-        } else {
-            firingCondition = new BooleanLiteralNode(true);
-        }
-
-
         CALStatementNode[] body = bodyArr.toArray(new CALStatementNode[bodyArr.size()]);
 
         StmtBlockNode block = new StmtBlockNode(body);
@@ -223,10 +239,10 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             name = QualifiedID.of(UNNAMED_ACTION);
             isQidTagged = false;
         }
-        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name, isQidTagged);
+        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name, isQidTagged, transactionCommits.toArray(new CALStatementNode[transactionCommits.size()]), transactionRollbacks.toArray(new CALStatementNode[transactionRollbacks.size()]));
     }
 
-    private List<CALExpressionNode> createRepeatBatchInput(ArrayList<CALStatementNode> bodyArr, ArrayList<String> inputExprNames, String portName, CALExpressionNode repeatExpr) {
+    private List<CALExpressionNode> createRepeatBatchInput(List<CALStatementNode> bodyArr, ArrayList<String> inputExprNames, String portName, CALExpressionNode repeatExpr) {
         LinkedList<CALStatementNode> init = new LinkedList<CALStatementNode>();
         List<String> tempListNames = inputExprNames.stream().map(exprName -> "$tempList" + exprName.hashCode()).collect(Collectors.toList());
         List<String> comprehensionCounterVarNames = inputExprNames.stream().map(exprName -> "$comprehensionCounter" + exprName.hashCode()).collect(Collectors.toList());

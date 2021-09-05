@@ -122,7 +122,9 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
                 firingCondition,
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 actionName,
-                isQIDTagged
+                isQIDTagged,
+                new CALStatementNode[0],
+                new CALStatementNode[0]
         );
         // TODO Add RootTag / CallTag for actionNode
 

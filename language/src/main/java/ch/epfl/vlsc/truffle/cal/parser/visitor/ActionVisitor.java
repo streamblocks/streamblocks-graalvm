@@ -11,9 +11,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
@@ -24,6 +22,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.source.SourceSection;
 import org.antlr.v4.runtime.Token;
+import org.apache.commons.lang3.tuple.Triple;
 import se.lth.cs.tycho.ir.QID;
 
 import java.util.ArrayList;
@@ -74,8 +73,15 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         }
 
         List<CALStatementNode> actionStatements = new ArrayList<>();
+        List<CALExpressionNode> inputTokenBindings = new LinkedList<>();
+        List<CALFifoTransactionCommit> transactionCommits = new LinkedList<>();
+        List<CALFifoTransactionRollback> transactionRollbacks = new LinkedList<>();
         if (ctx.inputPatterns() != null) {
-            actionStatements.addAll(CollectionVisitor.getInstance().visitInputPatterns(ctx.inputPatterns()));
+            CollectionVisitor.getInstance().visitInputPatterns(ctx.inputPatterns()).forEach(x -> {
+                inputTokenBindings.add(x.getLeft());
+                transactionCommits.add(x.getMiddle());
+                transactionRollbacks.add(x.getRight());
+            });
         }
         if (ctx.localVariables != null) {
             actionStatements.addAll(CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables));
@@ -95,7 +101,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         actionBodyNode.setUnavailableSourceSection();
         actionBodyNode.addStatementTag();
 
-        // Firing condition = Sufficient number of input tokens + Guards
+        // Firing condition = Sufficient number of input tokens + Bind Tokens + Guards
         List<CALExpressionNode> firingConditions = new LinkedList<>();
         if (ctx.inputPatterns() != null) {
             for (CALParser.InputPatternContext patternCtx: ctx.inputPatterns().inputPattern()) {
@@ -120,23 +126,20 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
                 firingConditions.add(firingCondition);
             }
+            firingConditions.addAll(inputTokenBindings);
         }
+
         if (ctx.guards != null) {
             firingConditions.addAll(CollectionVisitor.getInstance().visitExpressions(ctx.guards));
         }
 
         CALExpressionNode firingCondition;
         if (firingConditions.size() > 0) {
-            firingCondition = firingConditions.remove(0);
-            for (CALExpressionNode condition : firingConditions) {
-                SourceSection newSourceSection = ScopeEnvironment.getInstance().getSource().createSection(
-                        firingCondition.getSourceSection().getStartLine(),
-                        firingCondition.getSourceSection().getStartColumn(),
-                        condition.getSourceSection().getEndLine(),
-                        condition.getSourceSection().getEndColumn()
-                );
-                firingCondition = new CALBinaryLogicalAndNode(firingCondition, condition);
-                firingCondition.setSourceSection(newSourceSection);
+            firingCondition = firingConditions.remove(firingConditions.size() - 1);
+            for (int i = firingConditions.size() - 1; i >= 0; --i) {
+                CALExpressionNode condition = firingConditions.remove(i);
+                firingCondition = new CALBinaryLogicalAndNode(condition, firingCondition);
+                firingCondition.setUnavailableSourceSection();
                 firingCondition.addExpressionTag();
             }
         } else {
@@ -152,7 +155,9 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 firingCondition,
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 actionName,
-                isQIDTagged
+                isQIDTagged,
+                transactionCommits.toArray(new CALStatementNode[0]),
+                transactionRollbacks.toArray(new CALStatementNode[0])
         );
         // TODO Add RootTag / CallTag for actionNode
 
@@ -164,7 +169,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public CALExpressionNode visitInputPattern(CALParser.InputPatternContext ctx) {
+    @Override public Triple<CALExpressionNode, CALFifoTransactionCommit, CALFifoTransactionRollback> visitInputPattern(CALParser.InputPatternContext ctx) {
         if (ctx.port == null) {
             // TODO Add support for implicit input pattern
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit input pattern is not yet supported");
@@ -181,21 +186,22 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
         );
 
-        if (ctx.patterns() == null || ctx.patterns().pattern().size() == 0) {
-            return null;
-        } else if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext)) {
+        if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext)) {
+            CALFifoTransactionCommit commit = new CALFifoTransactionCommit(portQueue);
+            CALFifoTransactionRollback rollback = new CALFifoTransactionRollback(portQueue);
+            CALFifoTransactionInit transactionInit = new CALFifoTransactionInit(portQueue);
+            CALExpressionNode body;
             if (ctx.repeat == null) {
                 // Simple input pattern
-                StmtBlockNode readBlock = new StmtBlockNode( ctx.patterns().pattern().stream().map(x -> {
+                StmtBlockNode readBlock = new StmtBlockNode(ctx.patterns().pattern().stream().map(x -> {
                     CALExpressionNode valueNode = new CALReadFIFONode(portQueue);
                     valueNode.setUnavailableSourceSection();
                     valueNode.addExpressionTag();
                     return ScopeEnvironment.getInstance().createNewVariableWriteNode(((CALParser.SimplePatternContext) x).variable().name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(x));
                 }).toArray(CALStatementNode[]::new));
-                ReturnsLastBodyNode returnVal = new ReturnsLastBodyNode(readBlock);
-                returnVal.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-                returnVal.addStatementTag();
-                return returnVal;
+                body = new ReturnsLastBodyNode(readBlock, new BooleanLiteralNode(true));
+                body.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+                body.addStatementTag();
             } else {
                 CALExpressionNode repeatValueNode = ExpressionVisitor.getInstance().visit(ctx.repeat);
 
@@ -279,14 +285,17 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 inputPatternBodyNode.setUnavailableSourceSection();
                 inputPatternBodyNode.addStatementTag();
 
-                CALExpressionNode inputPatternReturnNode = new ReturnsLastBodyNode(inputPatternBodyNode);
-                inputPatternReturnNode.addExpressionTag();
-                inputPatternReturnNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-                return inputPatternReturnNode;
+                body = new ReturnsLastBodyNode(inputPatternBodyNode, new BooleanLiteralNode(true));
+                body.addExpressionTag();
+                body.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
             }
+            ReturnsLastBodyNode returnsLastBodyNode = new ReturnsLastBodyNode(transactionInit, body);
+            returnsLastBodyNode.addExpressionTag();
+            returnsLastBodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            return Triple.of(returnsLastBodyNode, commit, rollback);
         } else {
             // TODO Add support for complex patterns in an input pattern
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with multiple patterns is not yet supported");
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Input pattern with subpatterns is not yet supported");
         }
     }
 

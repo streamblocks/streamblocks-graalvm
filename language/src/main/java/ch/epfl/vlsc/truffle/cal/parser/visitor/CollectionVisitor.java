@@ -1,12 +1,15 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoTransactionCommit;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoTransactionRollback;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,8 +95,8 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
     /**
      * {@inheritDoc}
      */
-    @Override public Collection<CALExpressionNode> visitInputPatterns(CALParser.InputPatternsContext ctx) {
-        Collection<CALExpressionNode> patterns = new ArrayList<>();
+    @Override public Collection<Triple<CALExpressionNode, CALFifoTransactionCommit, CALFifoTransactionRollback>> visitInputPatterns(CALParser.InputPatternsContext ctx) {
+        Collection<Triple<CALExpressionNode, CALFifoTransactionCommit, CALFifoTransactionRollback>> patterns = new ArrayList<>();
         for (CALParser.InputPatternContext patternCtx: ctx.inputPattern()) {
             patterns.add(ActionVisitor.getInstance().visitInputPattern(patternCtx));
         }

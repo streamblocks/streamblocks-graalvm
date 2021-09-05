@@ -7,6 +7,8 @@ import com.oracle.truffle.api.interop.TruffleObject;
 
 public class CALFifo implements TruffleObject {
     private List<Object> content = new LinkedList<>();
+    private boolean transactionActive = false;
+    private int transactionIndex = 0;
 
     public int size() {
         return content.size();
@@ -14,8 +16,32 @@ public class CALFifo implements TruffleObject {
     public void add(Object val) {
         content.add(val);
     }
+
     public Object removeFirst() {
-        return content.remove(0);
+        if(transactionActive){
+            Object to_ret = content.get(transactionIndex);
+            transactionIndex++;
+            return to_ret;
+        }else
+            return content.remove(0);
+    }
+
+    public void startTransaction(){
+        transactionActive = true;
+        transactionIndex = 0;
+    }
+
+    public void commit(){
+        transactionActive = false;
+        for(int i = 0; i < transactionIndex; ++i){
+            content.remove(0);
+        }
+        transactionIndex = 0;
+    }
+
+    public void rollback(){
+        transactionActive = false;
+        transactionIndex = 0;
     }
 }
 
