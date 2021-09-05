@@ -21,6 +21,7 @@ import dk.brics.automaton.State;
 import dk.brics.automaton.Transition;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -36,12 +37,23 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
 
     private ActorVisitor() {}
 
+    private static Map<String, Pair<List<String>, List<String>>> actorToPortInfo = new HashMap<>();
+    private static String currentlyProcessingActor;
+
     public static ActorVisitor getInstance() {
         if (instance == null) {
             instance = new ActorVisitor();
         }
 
         return instance;
+    }
+
+    public static List<String> getActorInputPorts(String name) {
+        return actorToPortInfo.get(name).getLeft();
+    }
+
+    public static List<String> getActorOutputPorts(String name) {
+        return actorToPortInfo.get(name).getRight();
     }
 
     /**
@@ -51,6 +63,11 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         ScopeEnvironment.getInstance().pushScope();
 
         String actorName = ctx.name.getText();
+
+        List<String> inputPortNames = new LinkedList<>();
+        List<String> outputPortNames = new LinkedList<>();
+        actorToPortInfo.put(ScopeEnvironment.getInstance().getEntityFullName(actorName), new ImmutablePair<>(inputPortNames, outputPortNames));
+        this.currentlyProcessingActor = ScopeEnvironment.getInstance().getEntityFullName(actorName);
 
         List<CALStatementNode> headStatementNodes = new ArrayList<>();
         int startIndex = 0;
@@ -62,12 +79,14 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         if (ctx.inputPorts != null) {
             VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<InitializeArgNode> inputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.inputPorts);
+            ctx.inputPorts.portDeclaration().forEach(inpPort -> inputPortNames.add(inpPort.name.getText()));
             headStatementNodes.addAll(inputPortNodes);
             startIndex += ctx.inputPorts.portDeclaration().size();
         }
         if (ctx.outputPorts != null) {
             VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<InitializeArgNode> outputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.outputPorts);
+            ctx.outputPorts.portDeclaration().forEach(outPort -> outputPortNames.add(outPort.name.getText()));
             headStatementNodes.addAll(outputPortNodes);
             //startIndex += ctx.outputPorts.portDeclaration().size();
         }
@@ -258,6 +277,10 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
     @Override
     public QualifiedID visitActionTag(CALParser.ActionTagContext ctx) {
         return CollectionVisitor.qualifiedIdCreator(ActionVisitor.getInstance().visitActionTag(ctx));
+    }
+
+    public static String getCurrentlyProcessingActor() {
+        return currentlyProcessingActor;
     }
 
     public class Transition {

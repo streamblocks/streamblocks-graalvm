@@ -1,0 +1,33 @@
+// This test is obtained from Chapter 4 of "Tokens, What Tokens: A gentle introduction to dataflow programming"
+namespace test:
+
+    actor Source() ==> int OUT1, int OUT2:
+        int Counter := 0;
+        action ==> OUT1:[token], OUT2:[token*10]
+        guard
+            Counter < 16
+        var
+            int token = Counter
+        do
+            Counter := Counter + 1;
+        end
+
+    end
+
+    actor Sink() int IN1, int IN2 ==> :
+        action IN1:[token1], IN2:[token2] ==>
+        do
+            println(token1);
+            println(token2);
+        end
+    end
+
+    network NumPrinter () ==>:
+    entities
+        source = Source();
+        sink = Sink();
+    structure
+        source.OUT2 --> sink.IN1;
+        source.OUT1 --> sink.IN2;
+    end
+end

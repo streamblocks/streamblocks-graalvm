@@ -163,9 +163,19 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void networkLoopConnectionTest() throws IOException {
-        runTest(TestCase.newBuilder("network-loop-connection").setActorName("test.Sum").build());
+        runTest(TestCase.newBuilder("network-loop-connection").setIterations(-1).setActorName("test.Sum").build());
+    }
+
+    @Test
+    public void networkLoopConnectionFibsTest() throws IOException {
+        runTest(TestCase.newBuilder("network-loop-connection-fibs").setActorName("test.Fibs").build());
+    }
+
+    @Test
+    @Ignore
+    public void networkMultipleConnectionsOrderingTest() throws IOException {
+        runTest(TestCase.newBuilder("network-multiple-connections-actor").setActorName("test.NumPrinter").build());
     }
 
     @Test

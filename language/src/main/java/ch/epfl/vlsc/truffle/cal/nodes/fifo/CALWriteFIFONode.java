@@ -1,6 +1,8 @@
 package ch.epfl.vlsc.truffle.cal.nodes.fifo;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import ch.epfl.vlsc.truffle.cal.runtime.CALFifoFanout;
+import ch.epfl.vlsc.truffle.cal.runtime.FifoConsumer;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
@@ -23,11 +25,9 @@ public class CALWriteFIFONode extends CALStatementNode {
     public void executeVoid(VirtualFrame frame) {
         CompilerDirectives.transferToInterpreter();
         Object fifoObject = fifo.executeGeneric(frame);
-        if (fifoObject instanceof CALFifo)
-            ((CALFifo) fifoObject).add(value.executeGeneric(frame));
+        if (fifoObject instanceof FifoConsumer)
+            ((FifoConsumer) fifoObject).add(value.executeGeneric(frame));
         else
             throw new Error("not good type");
     }
-
-	
 }

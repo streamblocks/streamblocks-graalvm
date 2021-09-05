@@ -39,6 +39,8 @@ public class ScopeEnvironment {
 
 	private static int FIFO_ID;
 
+	private static int FANOUT_ID;
+
     private ScopeEnvironment(CALLanguage language, Source source) {
 		this.language = language;
 		this.source = source;
@@ -207,17 +209,24 @@ public class ScopeEnvironment {
 	}
 
 	public static String generateLambdaName() {
-    	String lambdaName = "lambda" + LAMBDA_ID;
+    	String lambdaName = "$lambda" + LAMBDA_ID;
 		LAMBDA_ID++;
 
 		return lambdaName;
 	}
 
 	public static String generateFIFOName() {
-		String fifoName = "fifo" + FIFO_ID;
+		String fifoName = "$fifo" + FIFO_ID;
 		FIFO_ID++;
 
 		return fifoName;
+	}
+
+	public static String generateFifoFanoutName() {
+		String fanoutName = "$fifoFanout" + FANOUT_ID;
+		FANOUT_ID++;
+
+		return fanoutName;
 	}
 
 	// FIXME: TODO: This method is STRICTLY a hack and needs to be removed

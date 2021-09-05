@@ -38,6 +38,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
     private static ActionVisitor instance;
     public final static String UNNAMED_ACTION = "unnamed action";
+    private static String activePortName;
 
     private ActionVisitor() {}
 
@@ -47,6 +48,10 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         }
 
         return instance;
+    }
+
+    public static void setPortName(String s) {
+        activePortName = s;
     }
 
     /**
@@ -104,9 +109,16 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         // Firing condition = Sufficient number of input tokens + Bind Tokens + Guards
         List<CALExpressionNode> firingConditions = new LinkedList<>();
         if (ctx.inputPatterns() != null) {
+            int i = 0;
             for (CALParser.InputPatternContext patternCtx: ctx.inputPatterns().inputPattern()) {
                 // Note: All necessary checks are performed during input patterns visit (previously called)
-                CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(patternCtx.port.getText(), ScopeEnvironment.getInstance().createSourceSection(patternCtx));
+                CALExpressionNode portQueue;
+                if (patternCtx.port != null)
+                    portQueue = ScopeEnvironment.getInstance().createReadNode(patternCtx.port.getText(), ScopeEnvironment.getInstance().createSourceSection(patternCtx));
+                else
+                    portQueue = ScopeEnvironment.getInstance().createReadNode(ActorVisitor.getActorInputPorts(ActorVisitor.getCurrentlyProcessingActor()).get(i), ScopeEnvironment.getInstance().createSourceSection(patternCtx));
+
+                ++i;
                 CALExpressionNode minimumQueueSizeNode;
                 if (patternCtx.repeat == null) {
                     minimumQueueSizeNode = new LongLiteralNode(patternCtx.patterns() != null ? patternCtx.patterns().pattern().size() : 1);
@@ -170,21 +182,24 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Triple<CALExpressionNode, CALFifoTransactionCommit, CALFifoTransactionRollback> visitInputPattern(CALParser.InputPatternContext ctx) {
-        if (ctx.port == null) {
-            // TODO Add support for implicit input pattern
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit input pattern is not yet supported");
-        }
-
         if (ctx.channelSelector() != null) {
             // TODO Add support for channel selector
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Channel selector in an input pattern is not yet supported");
         }
 
-        // Note: Custom source section to precisely specify a port token
-        CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(
-                ctx.port.getText(),
-                ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
-        );
+        CALExpressionNode portQueue;
+        if (ctx.port == null) {
+            portQueue = ScopeEnvironment.getInstance().createReadNode(
+                    activePortName,
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+            );
+        } else {
+            // Note: Custom source section to precisely specify a port token
+            portQueue = ScopeEnvironment.getInstance().createReadNode(
+                    ctx.port.getText(),
+                    ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
+            );
+        }
 
         if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext)) {
             CALFifoTransactionCommit commit = new CALFifoTransactionCommit(portQueue);
@@ -347,15 +362,20 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public CALStatementNode visitOutputExpression(CALParser.OutputExpressionContext ctx) {
+        CALExpressionNode portQueue;
+
         if (ctx.port == null) {
-            // TODO Add support for implicit output expressions
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit output expression is not yet supported");
+            portQueue = ScopeEnvironment.getInstance().createReadNode(
+                    activePortName,
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+            );
+        } else {
+            // Note: Custom source section to precisely specify a port token
+            portQueue = ScopeEnvironment.getInstance().createReadNode(
+                    ctx.port.getText(),
+                    ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
+            );
         }
-        // Note: Custom source section to precisely specify a port token
-        CALExpressionNode portQueue = ScopeEnvironment.getInstance().createReadNode(
-                ctx.port.getText(),
-                ScopeEnvironment.getInstance().getSource().createSection(ctx.port.getLine(), ctx.port.getCharPositionInLine() + 1, ctx.port.getText().length())
-        );
 
         List<CALExpressionNode> tokenExpressions = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.expressions());
         // CALExpressionNode tokenExpression = tokenExpressions.get(0);

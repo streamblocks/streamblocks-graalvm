@@ -1,13 +1,17 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
+import ch.epfl.vlsc.truffle.cal.ast.TransformException;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutAddFifo;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 
 import java.util.*;
@@ -71,6 +75,8 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
             }
         }
 
+        Map<String, String> outputPortToFanoutMapping = new HashMap<>();
+
         if (ctx.structureStatement() != null) {
             for (CALParser.StructureStatementContext structureCtx: ctx.structureStatement()) {
                 // TODO Change after implementing complex statements (if/foreach)
@@ -87,21 +93,49 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                     CALExpressionNode newFIFONode = ScopeEnvironment.getInstance().createNewVariableWriteNode(newFIFOName, newFIFOValueNode, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     headStatementNodes.add(newFIFONode);
 
+                    String fanoutNodeName;
+                    String portName = connection.source.entity + "." + connection.source.port;
+                    if(!outputPortToFanoutMapping.containsKey(portName)){
+                        // We are seeing the output port for the first time
+                        fanoutNodeName = ScopeEnvironment.generateFifoFanoutName();
+                        outputPortToFanoutMapping.put(portName, fanoutNodeName);
+                        headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fanoutNodeName, new CALFifoFanoutNode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                        entities.get(connection.source.entity).outputs.add(ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                    } else
+                        fanoutNodeName = outputPortToFanoutMapping.get(portName);
+                    // Add the fifo to the fanout
+                    headStatementNodes.add(new CALFifoFanoutAddFifo(ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()), ScopeEnvironment.getInstance().createReadNode(newFIFOName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
+                    
                     FIFONode = ScopeEnvironment.getInstance().createReadNode(newFIFOName, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
+                    entities.get(connection.destination.entity).inputs.add(FIFONode);
                 } else {
                     // Connect entity with network port = use network's existing FIFO to communicate with the entity
-                    if (connection.source.entity == null) {
-                        FIFONode = ScopeEnvironment.getInstance().createReadNode(connection.source.port, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
-                    } else {
-                        FIFONode = ScopeEnvironment.getInstance().createReadNode(connection.destination.port, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
-                    }
-                }
+                    if(connection.source.entity == null && connection.destination.entity == null) {
+                        // This is when both the source and destination are external ports of the network
+                        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Network Local Fifo's are not supported yet");
+                    } else if (connection.source.entity == null) {
+                        // This is when the source is an external port and destination is an entity within network
+                        String fifoName = ScopeEnvironment.generateFIFOName();
+                        headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fifoName, new CALCreateFIFONode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                        headStatementNodes.add(new CALFifoFanoutAddFifo(ScopeEnvironment.getInstance().createReadNode(connection.source.port, ScopeEnvironment.getInstance().getSource().createUnavailableSection()), ScopeEnvironment.getInstance().createReadNode(fifoName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
+                        entities.get(connection.destination.entity).inputs.add(ScopeEnvironment.getInstance().createReadNode(fifoName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                    } else if (connection.destination.entity == null) {
+                        // This is when the source is a port of an entity in the network and destination is an external port of the network
+                        String portName = connection.source.entity + "." + connection.source.port;
+                        String fanoutNodeName;
+                        if(!outputPortToFanoutMapping.containsKey(portName)){
+                            // We are seeing the output port for the first time
+                            fanoutNodeName = ScopeEnvironment.generateFifoFanoutName();
+                            outputPortToFanoutMapping.put(portName, fanoutNodeName);
+                            headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fanoutNodeName, new CALFifoFanoutNode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                            entities.get(connection.source.entity).outputs.add(ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                        } else
+                            fanoutNodeName = outputPortToFanoutMapping.get(portName);
 
-                if (connection.source.entity != null) {
-                    entities.get(connection.source.entity).outputs.add(FIFONode);
-                }
-                if (connection.destination.entity != null) {
-                    entities.get(connection.destination.entity).inputs.add(FIFONode);
+                        // Add the fifo to the fanout
+                        headStatementNodes.add(new CALFifoFanoutAddFifo(ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()), ScopeEnvironment.getInstance().createReadNode(connection.destination.port, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
+                    } else
+                        throw new RuntimeException("Unreachable code");
                 }
             }
         }
