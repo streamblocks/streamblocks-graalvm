@@ -134,7 +134,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
 
     @Test
     public void simpleNestedNetworkTest() throws IOException {
-        runTest(TestCase.newBuilder("network-input").setActorName("simple.dwf.SourceSink").build());
+        runTest(TestCase.newBuilder("network-input").setActorName("simple.dwf.SourceSink").setIterations(-1).build());
     }
 
     @Test
@@ -194,7 +194,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
 
     @Test
     public void whileLoopTest() throws IOException {
-        runTest(TestCase.newBuilder("while-loop").build());
+        runTest(TestCase.newBuilder("while-loop").setIterations(-1).build());
     }
 
     @Test
@@ -256,6 +256,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     @Ignore
     public void jpegSingleImageTest() throws IOException {
-        runTest(TestCase.newBuilder("jpeg/SingleImageTest").setActorName("jpeg.SingleImagePrinter").setDirLookup(true).build());
+        runTest(TestCase.newBuilder("jpeg/SingleImageTest").setIterations(-1).setActorName("jpeg.SingleImagePrinter").setDirLookup(true).build());
     }
 }

@@ -9,7 +9,7 @@ public class OptionsCatalog {
 
     public static final OptionKey<String> ENTITY_QID_KEY = new OptionKey<>("");
 
-    public static final OptionKey<Integer> ITERATIONS_KEY = new OptionKey<>(1);
+    public static final OptionKey<Integer> ITERATIONS_KEY = new OptionKey<>(-1);
 
     public static final OptionKey<Boolean> DIRECTORY_LOOKUP_KEY = new OptionKey<>(false);
 

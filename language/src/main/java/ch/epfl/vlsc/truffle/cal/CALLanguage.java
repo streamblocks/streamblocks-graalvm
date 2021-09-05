@@ -14,9 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
@@ -95,13 +98,27 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
 
         // Call actor instance
         final CALExpressionNode instance = existingSlot.createReadNode(0);
-        int iterations = getCurrentContext().getEnv().getOptions().get(OptionsCatalog.ITERATIONS_KEY);
-        CALExpressionNode[] bodyNodes = new CALExpressionNode[1 + iterations];
-        bodyNodes[0] = result;
-        for (int i = 0; i < iterations; i++) {
-            bodyNodes[i + 1] = new CALInvokeNode(instance, new CALExpressionNode[0]);
-        }
 
+        int iterations = getCurrentContext().getEnv().getOptions().get(OptionsCatalog.ITERATIONS_KEY);
+        CALStatementNode[] bodyNodes;
+        if(iterations >= 0){
+            bodyNodes = new CALStatementNode[1 + iterations];
+            bodyNodes[0] = result;
+            for (int i = 0; i < iterations; i++) {
+                bodyNodes[i + 1] = new CALInvokeNode(instance, new CALExpressionNode[0]);
+            }
+        } else {
+            bodyNodes = new CALStatementNode[3];
+            bodyNodes[0] = result;
+
+            // Assign
+            String executionStatusVarName = ScopeEnvironment.generateVariableName();
+            FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, FrameSlotKind.Boolean);
+            FrameSlotAndDepthRW executionStatusExistingSlot = new FrameSlotAndDepthRW(executionStatusFrameSlot, 0);
+            bodyNodes[1] = executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), true, 0);
+
+            bodyNodes[2] = new StmtWhileNode(executionStatusExistingSlot.createReadNode(0), executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), false, 0));
+        }
         CALStatementNode body = new StmtBlockNode(bodyNodes);
         RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body),
                 source.createUnavailableSection(), "program root");
