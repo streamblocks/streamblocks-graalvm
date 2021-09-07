@@ -40,7 +40,7 @@ public class ProcExprTransformer extends ScopedTransformer<ProcNode> {
         SourceSection procSrc = getSourceSection(proc);
 
         // FIXME name
-        CALRootNode bodyRootNode = new CALRootNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, procSrc, "proc-1");
+        CALRootNode bodyRootNode = new CALRootNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, procSrc, "$proc-" + proc.hashCode());
         return new ProcNode(bodyRootNode);
     }
 }
