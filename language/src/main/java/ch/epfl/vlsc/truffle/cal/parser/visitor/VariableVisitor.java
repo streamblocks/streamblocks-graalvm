@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -72,7 +73,7 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         ParserRuleContext parentCtx = ctx.getParent();
         if (parentCtx instanceof CALParser.PortDeclarationsContext) {
             // Note: Start index is currently used to account the total offset of a port declaration in an actor/network entity
-            int portDeclarationIndex = portDeclarationStartIndex + ((CALParser.PortDeclarationsContext) parentCtx).portDeclaration().indexOf(ctx);
+            int portDeclarationIndex = portDeclarationStartIndex + ((CALParser.PortDeclarationsContext) parentCtx).portDeclaration().stream().sorted(Comparator.comparing(o -> o.name.getText())).collect(Collectors.toList()).indexOf(ctx);
 
             InitializeArgNode portNode = new InitializeArgNode(ScopeEnvironment.getInstance().getCurrentScope().get(portName).getSlot(), portDeclarationIndex);
             portNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));

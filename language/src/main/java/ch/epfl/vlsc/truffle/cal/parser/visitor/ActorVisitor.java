@@ -72,23 +72,24 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         List<CALStatementNode> headStatementNodes = new ArrayList<>();
         int startIndex = 0;
         if (ctx.formalParameters() != null) {
+            VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
             headStatementNodes.addAll(formalParameterNodes);
             startIndex += ctx.formalParameters().formalParameter().size();
         }
+
         if (ctx.inputPorts != null) {
+            ctx.inputPorts.portDeclaration().forEach(inpPort -> inputPortNames.add(inpPort.name.getText()));
             VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<InitializeArgNode> inputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.inputPorts);
-            ctx.inputPorts.portDeclaration().forEach(inpPort -> inputPortNames.add(inpPort.name.getText()));
             headStatementNodes.addAll(inputPortNodes);
             startIndex += ctx.inputPorts.portDeclaration().size();
         }
         if (ctx.outputPorts != null) {
+            ctx.outputPorts.portDeclaration().forEach(outPort -> outputPortNames.add(outPort.name.getText()));
             VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<InitializeArgNode> outputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.outputPorts);
-            ctx.outputPorts.portDeclaration().forEach(outPort -> outputPortNames.add(outPort.name.getText()));
             headStatementNodes.addAll(outputPortNodes);
-            //startIndex += ctx.outputPorts.portDeclaration().size();
         }
         if (ctx.time != null) {
             // TODO Add support for actor time

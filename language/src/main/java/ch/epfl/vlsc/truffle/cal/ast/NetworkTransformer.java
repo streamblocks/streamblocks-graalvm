@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.ast;
 import java.net.PortUnreachableException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutAddFifo;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
@@ -18,6 +19,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
+import org.apache.commons.lang3.tuple.Pair;
 import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.ValueParameter;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
@@ -62,16 +64,21 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
             i++;
         }
 
-        for (PortDecl in : network.getInputPorts()) {
+        Comparator<PortDecl> portComparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
+
+        ;
+        for (PortDecl in : network.getInputPorts().stream().sorted(portComparator).collect(Collectors.toList())) {
             // Input ports are passed as arguments
             headStatements.add(transformPortDecl(in, i));
             i++;
         }
-        for (PortDecl out : network.getOutputPorts()) {
+
+        for (PortDecl out : network.getOutputPorts().stream().sorted(portComparator).collect(Collectors.toList())) {
             // Input ports are passed as arguments
             headStatements.add(transformPortDecl(out, i));
             i++;
         }
+
         for (LocalVarDecl varDecl : network.getVarDecls()) {
             headStatements.add(transformVarDecl(varDecl));
             i++;
@@ -125,7 +132,7 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                         headStatements.add(createAssignment(fanoutNodeName, new CALFifoFanoutNode()));
                         i++;
 
-                        actors.get(source.getEntityName()).outputs.add(getReadNode(fanoutNodeName));
+                        actors.get(source.getEntityName()).outputs.add(Pair.of(source.getPortName(), getReadNode(fanoutNodeName)));
                     } else
                         fanoutNodeName = outputPortToFanoutMapping.get(portName);
 
@@ -133,45 +140,45 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                     headStatements.add(new CALFifoFanoutAddFifo(getReadNode(fanoutNodeName), getReadNode(fifoName)));
                     i++;
 
-                    actors.get(destination.getEntityName()).inputs.add(getReadNode(fifoName));
+                    actors.get(destination.getEntityName()).inputs.add(Pair.of(destination.getPortName(), getReadNode(fifoName)));
                     j++;
                 } else {
                     // This happens when either the source of destination is one of the external ports of the network
 
-                if(source.getEntityName() == null && destination.getEntityName() == null) {
-                    // This is when both the source and destination are external ports of the network
-                    throw new TransformException("unsupported network local fifo", context.getSource(), connection);
-                } else if (source.getEntityName() == null) {
-                    // This is when the source is an external port and destination is an entity within network
-                    String fifoName = "$fifo-" + j;
-                    headStatements.add(createAssignment(fifoName, new CALCreateFIFONode()));
-                    ++i;
+                    if(source.getEntityName() == null && destination.getEntityName() == null) {
+                        // This is when both the source and destination are external ports of the network
+                        throw new TransformException("unsupported network local fifo", context.getSource(), connection);
+                    } else if (source.getEntityName() == null) {
+                        // This is when the source is an external port and destination is an entity within network
+                        String fifoName = "$fifo-" + j;
+                        headStatements.add(createAssignment(fifoName, new CALCreateFIFONode()));
+                        ++i;
 
-                    headStatements.add(new CALFifoFanoutAddFifo(getReadNode(source.getPortName()), getReadNode(fifoName)));
-                    ++i;
+                        headStatements.add(new CALFifoFanoutAddFifo(getReadNode(source.getPortName()), getReadNode(fifoName)));
+                        ++i;
 
-                    actors.get(destination.getEntityName()).inputs.add(getReadNode(fifoName));
-                } else if (destination.getEntityName() == null) {
-                    // This is when the source is a port of an entity in the network and destination is an external port of the network
+                        actors.get(destination.getEntityName()).inputs.add(Pair.of(destination.getPortName(), getReadNode(fifoName)));
+                    } else if (destination.getEntityName() == null) {
+                        // This is when the source is a port of an entity in the network and destination is an external port of the network
 
-                    String portName = source.getEntityName() + "." + source.getPortName();
-                    String fanoutNodeName;
-                    if(!outputPortToFanoutMapping.containsKey(portName)){
-                        // We are seeing the output port for the first time
-                        fanoutNodeName = "$fifoFanout" + j;
-                        outputPortToFanoutMapping.put(portName, fanoutNodeName);
-                        headStatements.add(createAssignment(fanoutNodeName, new CALFifoFanoutNode()));
+                        String portName = source.getEntityName() + "." + source.getPortName();
+                        String fanoutNodeName;
+                        if (!outputPortToFanoutMapping.containsKey(portName)) {
+                            // We are seeing the output port for the first time
+                            fanoutNodeName = "$fifoFanout" + j;
+                            outputPortToFanoutMapping.put(portName, fanoutNodeName);
+                            headStatements.add(createAssignment(fanoutNodeName, new CALFifoFanoutNode()));
+                            i++;
+
+                            actors.get(source.getEntityName()).outputs.add(Pair.of(source.getPortName(), getReadNode(fanoutNodeName)));
+                        } else
+                            fanoutNodeName = outputPortToFanoutMapping.get(portName);
+
+                        // Add the fifo to the fanout
+                        headStatements.add(new CALFifoFanoutAddFifo(getReadNode(fanoutNodeName), getReadNode(destination.getPortName())));
                         i++;
-
-                        actors.get(source.getEntityName()).outputs.add(getReadNode(fanoutNodeName));
                     } else
-                        fanoutNodeName = outputPortToFanoutMapping.get(portName);
-
-                    // Add the fifo to the fanout
-                    headStatements.add(new CALFifoFanoutAddFifo(getReadNode(fanoutNodeName), getReadNode(destination.getPortName())));
-                    i++;
-                } else
-                    throw new RuntimeException("Unreachable code");
+                        throw new RuntimeException("Unreachable code");
                 ++j;
                 }
             } else
@@ -185,8 +192,13 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
             CALExpressionNode[] arguments = new CALExpressionNode[args.arguments.length + args.inputs.size()
                     + args.outputs.size()];
             System.arraycopy(args.arguments, 0, arguments, 0, args.arguments.length);
-            System.arraycopy(args.inputs.toArray(), 0, arguments, args.arguments.length, args.inputs.size());
-            System.arraycopy(args.outputs.toArray(), 0, arguments, args.arguments.length + args.inputs.size(),
+
+            Comparator<Pair<String, CALExpressionNode>> portPairComparator = (o1, o2) -> o1.getLeft().compareTo(o2.getLeft());
+            args.inputs.sort(portPairComparator);
+            System.arraycopy(args.inputs.stream().map(p -> p.getRight()).toArray(), 0, arguments, args.arguments.length, args.inputs.size());
+
+            args.outputs.sort(portPairComparator);
+            System.arraycopy(args.outputs.stream().map(p -> p.getRight()).toArray(), 0, arguments, args.arguments.length + args.inputs.size(),
                     args.outputs.size());
 
             CALExpressionNode call = new CALInvokeNode(actor, arguments);

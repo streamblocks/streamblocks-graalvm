@@ -18,6 +18,7 @@ import org.jgrapht.alg.color.SaturationDegreeColoring;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -91,9 +92,9 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
      */
     @Override public Collection<InitializeArgNode> visitPortDeclarations(CALParser.PortDeclarationsContext ctx) {
         Collection<InitializeArgNode> ports = new ArrayList<>();
-        for (CALParser.PortDeclarationContext portCtx: ctx.portDeclaration()) {
+        ctx.portDeclaration().stream().sorted(Comparator.comparing(o -> o.name.getText())).forEach(portCtx -> {
             ports.add(VariableVisitor.getInstance().visitPortDeclaration(portCtx));
-        }
+        });
 
         return ports;
     }

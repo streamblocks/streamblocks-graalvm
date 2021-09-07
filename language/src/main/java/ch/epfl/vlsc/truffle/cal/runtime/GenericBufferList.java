@@ -3,6 +3,9 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 @ExportLibrary(ListLibrary.class)
 public final class GenericBufferList implements com.oracle.truffle.api.interop.TruffleObject {
     private int length;
@@ -34,5 +37,10 @@ public final class GenericBufferList implements com.oracle.truffle.api.interop.T
             buffer[index] = value;
         else
             throw new IndexOutOfBoundsException(); // TODO custom exception
+    }
+
+    @Override
+    public String toString() {
+        return "[" + String.join(", ", Arrays.asList(buffer).stream().map(x -> x.toString()).collect(Collectors.toList())) + "]";
     }
 }

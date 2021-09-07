@@ -18,6 +18,7 @@ import se.lth.cs.tycho.ir.util.ImmutableList;
 import se.lth.cs.tycho.transformation.regexp.RegExpConverter;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ActorTransformer extends ScopedTransformer<ActorNode> {
 
@@ -49,12 +50,15 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             i++;
         }
 
-        for (PortDecl in : actor.getInputPorts()) {
+        Comparator<PortDecl> portComparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
+
+        for (PortDecl in : actor.getInputPorts().stream().sorted(portComparator).collect(Collectors.toList())) {
             // Input ports are passed as arguments
             headStatements.add(transformPortDecl(in, i));
             i++;
         }
-        for (PortDecl out : actor.getOutputPorts()) {
+
+        for (PortDecl out : actor.getOutputPorts().stream().sorted(portComparator).collect(Collectors.toList())) {
             // Input ports are passed as arguments
             headStatements.add(transformPortDecl(out, i));
             i++;

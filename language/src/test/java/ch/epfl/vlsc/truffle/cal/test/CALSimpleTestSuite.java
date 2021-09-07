@@ -173,9 +173,14 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void networkMultipleConnectionsOrderingTest() throws IOException {
         runTest(TestCase.newBuilder("network-multiple-connections-actor").setActorName("test.NumPrinter").build());
+    }
+
+    @Test
+    @Ignore
+    public void networkReduntantConnectionTest() throws IOException {
+        runTest(TestCase.newBuilder("network-redundant-connection").setActorName("test.NumPrinter").build());
     }
 
     @Test

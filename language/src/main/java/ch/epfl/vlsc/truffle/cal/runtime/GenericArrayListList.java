@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -45,5 +46,10 @@ public final class GenericArrayListList {
             list.add(value);
         else
             throw new IndexOutOfBoundsException(); // TODO custom exception
+    }
+
+    @Override
+    public String toString() {
+        return "[" + String.join(", ", list.stream().map(x -> x.toString()).collect(Collectors.toList())) + "]";
     }
 }

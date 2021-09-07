@@ -13,6 +13,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,6 +46,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
         List<CALStatementNode> headStatementNodes = new ArrayList<>();
         int startIndex = 0;
         if (ctx.formalParameters() != null) {
+            VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
             headStatementNodes.addAll(formalParameterNodes);
             startIndex += ctx.formalParameters().formalParameter().size();
@@ -59,7 +61,6 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
             VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<InitializeArgNode> outputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.outputPorts);
             headStatementNodes.addAll(outputPortNodes);
-            //startIndex += ctx.outputPorts.portDeclaration().size();
         }
         if (ctx.localVariableDeclaration() != null) {
             for (CALParser.LocalVariableDeclarationContext localVariableCtx: ctx.localVariableDeclaration()) {
@@ -100,14 +101,14 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                         fanoutNodeName = ScopeEnvironment.generateFifoFanoutName();
                         outputPortToFanoutMapping.put(portName, fanoutNodeName);
                         headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fanoutNodeName, new CALFifoFanoutNode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
-                        entities.get(connection.source.entity).outputs.add(ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                        entities.get(connection.source.entity).outputs.add(Pair.of(connection.source.port, ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                     } else
                         fanoutNodeName = outputPortToFanoutMapping.get(portName);
                     // Add the fifo to the fanout
                     headStatementNodes.add(new CALFifoFanoutAddFifo(ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()), ScopeEnvironment.getInstance().createReadNode(newFIFOName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                     
                     FIFONode = ScopeEnvironment.getInstance().createReadNode(newFIFOName, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
-                    entities.get(connection.destination.entity).inputs.add(FIFONode);
+                    entities.get(connection.destination.entity).inputs.add(Pair.of(connection.destination.port, FIFONode));
                 } else {
                     // Connect entity with network port = use network's existing FIFO to communicate with the entity
                     if(connection.source.entity == null && connection.destination.entity == null) {
@@ -118,7 +119,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                         String fifoName = ScopeEnvironment.generateFIFOName();
                         headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fifoName, new CALCreateFIFONode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
                         headStatementNodes.add(new CALFifoFanoutAddFifo(ScopeEnvironment.getInstance().createReadNode(connection.source.port, ScopeEnvironment.getInstance().getSource().createUnavailableSection()), ScopeEnvironment.getInstance().createReadNode(fifoName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
-                        entities.get(connection.destination.entity).inputs.add(ScopeEnvironment.getInstance().createReadNode(fifoName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                        entities.get(connection.destination.entity).inputs.add(Pair.of(connection.destination.port, ScopeEnvironment.getInstance().createReadNode(fifoName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                     } else if (connection.destination.entity == null) {
                         // This is when the source is a port of an entity in the network and destination is an external port of the network
                         String portName = connection.source.entity + "." + connection.source.port;
@@ -128,7 +129,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                             fanoutNodeName = ScopeEnvironment.generateFifoFanoutName();
                             outputPortToFanoutMapping.put(portName, fanoutNodeName);
                             headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fanoutNodeName, new CALFifoFanoutNode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
-                            entities.get(connection.source.entity).outputs.add(ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                            entities.get(connection.source.entity).outputs.add(Pair.of(connection.source.port, ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                         } else
                             fanoutNodeName = outputPortToFanoutMapping.get(portName);
 
@@ -151,8 +152,8 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
             List<CALExpressionNode> argumentNodes = new ArrayList<>();
             // TODO Add support for named parameters
             argumentNodes.addAll(instance.parameters.stream().map(parameter -> parameter.valueNode).collect(Collectors.toList()));
-            argumentNodes.addAll(instance.inputs);
-            argumentNodes.addAll(instance.outputs);
+            argumentNodes.addAll(instance.inputs.stream().sorted((o1, o2) -> o1.getLeft().compareTo(o2.getLeft())).map(p -> p.getRight()).collect(Collectors.toList()));
+            argumentNodes.addAll(instance.outputs.stream().sorted((o1, o2) -> o1.getLeft().compareTo(o2.getLeft())).map(p -> p.getRight()).collect(Collectors.toList()));
 
             CALExpressionNode valueNode = new CALInvokeNode(actorLiteralNode, argumentNodes.toArray(new CALExpressionNode[0]));
             valueNode.setSourceSection(instance.sourceSection);
