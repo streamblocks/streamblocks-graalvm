@@ -111,12 +111,11 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
         List<CALStatementNode> inputTokenBindings = new LinkedList<>();
         List<CALFifoTransactionCommit> transactionCommits = new LinkedList<>();
         List<CALFifoTransactionRollback> transactionRollbacks = new LinkedList<>();
-        // Bind input tokens to input variables/expressions/patterns
-        if(action.getInputPatterns().size() == 1){
-            InputPattern input = action.getInputPatterns().get(0);
+
+        for(InputPattern input: action.getInputPatterns()) {
             inputTokenBindings.add(new CALFifoTransactionInit(getReadNode(input.getPort().getName())));
-            if(input.getRepeatExpr() == null){
-                for(int j = 0; j < input.getMatches().size(); ++j){
+            if (input.getRepeatExpr() == null) {
+                for (int j = 0; j < input.getMatches().size(); ++j) {
                     Pattern pat = input.getMatches().get(j).getExpression().getAlternatives().get(0).getPattern();
                     String name;
                     if (pat instanceof PatternBinding)
@@ -130,17 +129,17 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             } else {
                 ArrayList<String> inputExprNames = new ArrayList<String>();
                 inputExprNames.ensureCapacity(input.getMatches().size());
-                for(int j = 0; j < input.getMatches().size(); ++j){
+                for (int j = 0; j < input.getMatches().size(); ++j) {
                     Pattern pat = input.getMatches().get(j).getExpression().getAlternatives().get(0).getPattern();
                     String name;
-                    if (pat instanceof PatternBinding){
+                    if (pat instanceof PatternBinding) {
                         name = ((PatternBinding) pat).getDeclaration().getName();
                         inputExprNames.add(name);
                     } else
                         throw new TransformException("Pattern not implemented", context.getSource(), pat);
                 }
                 List<CALExpressionNode> listReadNodes = createRepeatBatchInput(inputTokenBindings, inputExprNames, input.getPort().getName(), transformExpr(input.getRepeatExpr()));
-                for(int j = 0; j < listReadNodes.size(); ++j){
+                for (int j = 0; j < listReadNodes.size(); ++j) {
                     inputTokenBindings.add(createAssignment(inputExprNames.get(j), listReadNodes.get(j)));
                 }
                 firingConditions.add(CALBinaryLessOrEqualNodeGen.create(CALBinaryMulNodeGen.create(transformExpr(input.getRepeatExpr()), new LongLiteralNode(input.getMatches().size())),
@@ -148,30 +147,6 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             }
             transactionCommits.add(new CALFifoTransactionCommit(getReadNode(input.getPort().getName())));
             transactionRollbacks.add(new CALFifoTransactionRollback(getReadNode(input.getPort().getName())));
-        }else{
-            for (InputPattern input : action.getInputPatterns()) {
-                inputTokenBindings.add(new CALFifoTransactionInit(getReadNode(input.getPort().getName())));
-                // TODO implement patterns
-                // FIXME
-                Pattern pat = input.getMatches().get(0).getExpression().getAlternatives().get(0).getPattern();
-                String name;
-                if (pat instanceof PatternBinding)
-                    name = ((PatternBinding) pat).getDeclaration().getName();
-                else
-                    throw new TransformException("Pattern not implemented", context.getSource(), pat);
-
-                if (input.getRepeatExpr() != null){
-                    inputTokenBindings.add(createAssignment(name, batchReadInput(input)));
-                    firingConditions.add(CALBinaryLessOrEqualNodeGen.create(transformExpr(input.getRepeatExpr()),
-                            new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
-                } else {
-                    inputTokenBindings.add(createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
-                    firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
-                            new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
-                }
-                transactionCommits.add(new CALFifoTransactionCommit(getReadNode(input.getPort().getName())));
-                transactionRollbacks.add(new CALFifoTransactionRollback(getReadNode(input.getPort().getName())));
-            }
         }
 
         CALExpressionNode guardCondition;

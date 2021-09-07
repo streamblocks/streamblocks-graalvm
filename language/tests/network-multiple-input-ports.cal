@@ -1,0 +1,39 @@
+namespace simple.dwf:
+    actor Source() ==> int OUT1, int OUT2, int OUT3:
+        int Counter := 0;
+        action ==> OUT1:[token, token+1, token+2, token+3], OUT2:[token, token*2, token*3], OUT3:[token, token+10]
+        guard
+            Counter < 16
+        var
+            int token = Counter
+        do
+            Counter := Counter + 1;
+        end
+    end
+
+    actor Print() int IN1, int IN2, int IN3 ==> :
+        action IN1:[input1] repeat 4, IN2:[input2] repeat 3, IN3:[input31, input32] ==>
+        var
+            int output1 = input1[0], int output2 = input2, int output3 = input3, int output4 = input1[1]
+        do
+            foreach int i1 in input1 do
+                println(i1);
+            end
+            foreach int i2 in input2 do
+                println(i2);
+            end
+            println(input31);
+            println(input32);
+        end
+    end
+
+    network SourceSink() ==> :
+        entities
+            source = Source();
+            sink = Print();
+        structure
+            source.OUT1 --> sink.IN1;
+            source.OUT2 --> sink.IN2;
+            source.OUT3 --> sink.IN3;
+        end
+end
