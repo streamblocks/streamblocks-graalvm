@@ -261,6 +261,12 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    @Ignore
+    public void typeChecksTest() throws IOException {
+        runTest(TestCase.newBuilder("typechecks").build());
+    }
+
+    @Test
     public void ProcedureTest() throws IOException {
         runTest(TestCase.newBuilder("procedure").setIterations(10).build());
     }
