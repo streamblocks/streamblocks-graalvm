@@ -11,6 +11,8 @@ public class OptionsCatalog {
 
     public static final OptionKey<Integer> ITERATIONS_KEY = new OptionKey<>(-1);
 
+    public static final OptionKey<Integer> BITLENGTH_KEY = new OptionKey<>(32);
+
     public static final OptionKey<Boolean> DIRECTORY_LOOKUP_KEY = new OptionKey<>(false);
 
     public static final OptionKey<String[]> IMPORT_PATHS_KEY = new OptionKey<>(StringArrayOptionType.EMPTY_STRING_ARRAY, StringArrayOptionType.INSTANCE);
@@ -45,6 +47,13 @@ public class OptionsCatalog {
             .help("Limit the number of iterations in action selection")
             .category(OptionCategory.USER)
             .stability(OptionStability.STABLE)
+            .build();
+
+    public static final OptionDescriptor BITLENGTH = OptionDescriptor
+            .newBuilder(BITLENGTH_KEY, "cal.bitlength")
+            .help("Sets the default bit length used for int/uint variables without size parameter specified. Default: 32")
+            .category(OptionCategory.EXPERT)
+            .stability(OptionStability.EXPERIMENTAL)
             .build();
 
     public static final OptionDescriptor DIRECTORY_LOOKUP = OptionDescriptor

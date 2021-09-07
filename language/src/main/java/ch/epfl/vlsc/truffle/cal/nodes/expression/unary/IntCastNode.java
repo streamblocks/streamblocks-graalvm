@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.unary;
 
+import ch.epfl.vlsc.truffle.cal.CALException;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -30,7 +31,8 @@ public class IntCastNode extends CALExpressionNode {
             intsizeVal = ((CALBigNumber) intsizevalobj).getValue().intValue();
         } else if (intsizevalobj instanceof Long){
             intsizeVal = ((Long) intsizevalobj).intValue();
-        }
+        } else
+            throw new CALException("Unexpected type: " + intsizevalobj.getClass().getName() + ", where number type expected", this);
 
 
         Object valueObj = valueNode.executeGeneric(frame);
@@ -39,6 +41,10 @@ public class IntCastNode extends CALExpressionNode {
             value = ((CALBigNumber) valueObj).getValue();
         } else if(valueObj instanceof Long) {
             value = new BigInteger(String.valueOf((Long) valueObj));
+        } else {
+            // TODO : Once lexical scoping is fixed, this should be unreachable code and should result in a runtime exception
+            // FIXME: The return of valueObj is a temporary fix to lack of proper lexical scoping
+            return valueObj;
         }
 
         if(intsizeVal <= 0) return new CALBigNumber(value);

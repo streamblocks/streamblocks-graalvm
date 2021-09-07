@@ -13,7 +13,7 @@ namespace simple.dwf:
         guard
             Counter < 4
         var
-            int token = l
+            List token = l
         do
             Counter := Counter + 1;
             l := [ 4 + i: for int i in token ];

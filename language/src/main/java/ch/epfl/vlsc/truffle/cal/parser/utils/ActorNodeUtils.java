@@ -75,16 +75,22 @@ public class ActorNodeUtils {
         // Permute the original array as per the ordering obtained by topological sorting
         // The array topologicallySorted is a permutation on the indices of the array actions
         // We use the permutation cycle algorithm to swap elements in succession to obtain the permuted array
-        for (int j = 0; j < actions.length; j++) {
-            int next = j;
-            while (topologicallySorted.get(next) >= 0) {
-                ActionNode t = actions[j];
-                actions[j] = actions[topologicallySorted.get(next)];
-                actions[topologicallySorted.get(next)] = t;
-                int temp = topologicallySorted.get(next);
-                topologicallySorted.set(next, temp - actions.length);
-                next = temp;
-            }
+        // TODO: Use the following O(1) space algorithm
+        // TODO: Use Huffmandecoder from singleimagetest jpeg example to create a testcase
+        //        for (int j = 0; j < actions.length; j++) {
+        //            int next = j;
+        //            while (topologicallySorted.get(next) >= 0) {
+        //                ActionNode t = actions[j];
+        //                actions[j] = actions[topologicallySorted.get(next)];
+        //                actions[topologicallySorted.get(next)] = t;
+        //                int temp = topologicallySorted.get(next);
+        //                topologicallySorted.set(next, temp - actions.length);
+        //                next = temp;
+        //            }
+        //        }
+        ActionNode[] actionsCopy = actions.clone();
+        for(int j = 0; j < topologicallySorted.size(); ++j){
+                actions[j] = actionsCopy[topologicallySorted.get(j)];
         }
         List<ActionNode> list = new ArrayList<>();
         for (ActionNode action : actions) {

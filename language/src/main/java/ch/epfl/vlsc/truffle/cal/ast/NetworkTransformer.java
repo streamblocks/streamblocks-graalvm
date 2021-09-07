@@ -1,13 +1,11 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import java.net.PortUnreachableException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutAddFifo;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoTransactionConclude;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;

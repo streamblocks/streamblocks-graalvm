@@ -7,6 +7,7 @@ public class IntCastNodeCreator extends ValueCastNodeCreator {
     private final CALExpressionNode intsize;
     private final boolean signed;
 
+    // TODO: Implement Singleton pattern
     public IntCastNodeCreator(CALExpressionNode intsize, boolean signed) {
         super();
         this.intsize = intsize;

@@ -4,6 +4,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.source.SourceSection;
 import se.lth.cs.tycho.ir.QID;
@@ -98,13 +99,13 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
             // Create Frameslot for storing actor index during processing checks
             // See the implementation of doIndirect in CALActorInstance for more details
             String actionIndexSlotName = String.valueOf("$" + actor.hashCode() + "#fsmActorIndex");
-            headStatements.add(createAssignment(actionIndexSlotName, new LongLiteralNode(0)));
+            headStatements.add(createAssignment(actionIndexSlotName, new DefaultValueCastNodeCreator(), new LongLiteralNode(0)));
             ++i;
 
             // Create Frameslot for storing the number of current state
             // See the implementation of doIndirect in CALActorInstance for more details
             String currStateSlotName = String.valueOf("$" + actor.hashCode()) + "#fsmCurrState";
-            headStatements.add(createAssignment(currStateSlotName, new LongLiteralNode(0)));
+            headStatements.add(createAssignment(currStateSlotName, new DefaultValueCastNodeCreator(), new LongLiteralNode(0)));
             ++i;
 
             actorIndSlot = context.getFrameDescriptor().findFrameSlot(actionIndexSlotName);
@@ -213,16 +214,22 @@ public class ActorTransformer extends ScopedTransformer<ActorNode> {
         // Permute the original array as per the ordering obtained by topological sorting
         // The array topologicallySorted is a permutation on the indices of the array actions
         // We use the permutation cycle algorithm to swap elements in succession to obtain the permuted array
-        for (int j = 0; j < actions.length; j++) {
-            int next = j;
-            while (topologicallySorted.get(next) >= 0) {
-                ActionNode t = actions[j];
-                actions[j] = actions[topologicallySorted.get(next)];
-                actions[topologicallySorted.get(next)] = t;
-                int temp = topologicallySorted.get(next);
-                topologicallySorted.set(next, temp - actions.length);
-                next = temp;
-            }
+        // TODO: Use the following O(1) space algorithm
+        // TODO: Use Huffmandecoder from singleimagetest jpeg example to create a testcase
+//        for (int j = 0; j < actions.length; j++) {
+//            int next = j;
+//            while (topologicallySorted.get(next) >= 0) {
+//                ActionNode t = actions[j];
+//                actions[j] = actions[topologicallySorted.get(next)];
+//                actions[topologicallySorted.get(next)] = t;
+//                int temp = topologicallySorted.get(next);
+//                topologicallySorted.set(next, temp - actions.length);
+//                next = temp;
+//            }
+//        }
+        ActionNode[] actionsCopy = actions.clone();
+        for(int j = 0; j < topologicallySorted.size(); ++j){
+            actions[j] = actionsCopy[topologicallySorted.get(j)];
         }
     }
 
