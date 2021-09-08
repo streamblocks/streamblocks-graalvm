@@ -3,8 +3,9 @@ package ch.epfl.vlsc.truffle.cal.parser.scope;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -162,26 +163,26 @@ public class ScopeEnvironment {
 		return variableExpression;
 	}
 
-	public void createFrameSlot(String name) {
+	public void createFrameSlot(String name, ValueCastNodeCreator valueCastNodeCreator) {
 		if (!currentScope.containsKey(name)) {
-			FrameSlot frameSlot = currentScope.getFrame().addFrameSlot(name, FrameSlotKind.Illegal);
+			FrameSlot frameSlot = currentScope.getFrame().addFrameSlot(name, valueCastNodeCreator, FrameSlotKind.Illegal);
 			DepthFrameSlot slot = new DepthFrameSlot(frameSlot, currentScope.getDepth());
 			currentScope.put(name, slot);
 		}
 	}
 
 	public void createReadOnlyFrameSlot(String name) {
-		createFrameSlot(name);
+		createFrameSlot(name, DefaultValueCastNodeCreator.getInstance());
 		DepthFrameSlot readOnlySlot = new DepthFrameSlot(currentScope.get(name));
 		currentScope.put(name, readOnlySlot);
 	}
 
-	public CALExpressionNode createNewVariableWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
+	public CALExpressionNode createNewVariableWriteNode(String name, CALExpressionNode valueNode, ValueCastNodeCreator valueCastNodeCreator, SourceSection sourceSection) {
 		if (currentScope.containsKey(name)) {
 			throw new CALParseError(source, sourceSection.getStartLine(), sourceSection.getStartColumn(), sourceSection.getCharLength(), "Variable " + name + " has already been defined");
 		}
 
-		return createWriteNode(name, valueNode, true, sourceSection);
+		return createWriteNode(name, valueNode, valueCastNodeCreator, true, sourceSection);
 	}
 
 	public CALExpressionNode createExistingVariableWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
@@ -189,11 +190,14 @@ public class ScopeEnvironment {
 			throw new CALParseError(source, sourceSection.getStartLine(), sourceSection.getStartColumn(), sourceSection.getCharLength(), "Cannot write to undefined variable " + name);
 		}
 
-		return createWriteNode(name, valueNode, false, sourceSection);
+		CALExpressionNode nameNode = new StringLiteralNode(name);
+		DepthFrameSlot slot = currentScope.get(name);
+
+		return slot.createWriteNode(nameNode, valueNode, false, currentScope.getDepth(), sourceSection);
 	}
 
-	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode, boolean isNewVariable, SourceSection sourceSection) {
-		createFrameSlot(name);
+	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode, ValueCastNodeCreator valueCastNodeCreator, boolean isNewVariable, SourceSection sourceSection) {
+		createFrameSlot(name, valueCastNodeCreator);
 
 		CALExpressionNode nameNode = new StringLiteralNode(name);
 		DepthFrameSlot slot = currentScope.get(name);

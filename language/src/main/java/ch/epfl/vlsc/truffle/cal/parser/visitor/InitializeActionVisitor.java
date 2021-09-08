@@ -15,6 +15,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
@@ -195,11 +196,13 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
             inputPatternStatementNodes[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                     listVariableName,
                     new UnknownSizeListInitNode(),
+                    DefaultValueCastNodeCreator.getInstance(),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
             ); // $list = [];
             inputPatternStatementNodes[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                     counterVariableName,
                     new LongLiteralNode(0),
+                    DefaultValueCastNodeCreator.getInstance(),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
             ); // $counter = 0;
 
@@ -257,7 +260,7 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
             valueNode.addExpressionTag();
         }
 
-        return ScopeEnvironment.getInstance().createNewVariableWriteNode(patternVariableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(patternVariableName, valueNode, DefaultValueCastNodeCreator.getInstance(), ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -358,6 +361,7 @@ public class InitializeActionVisitor extends CALParserBaseVisitor<Object> {
             outputExpressionStatementNodes[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                     counterVariableName,
                     new LongLiteralNode(0),
+                    DefaultValueCastNodeCreator.getInstance(),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
             ); // $counter = 0;
 

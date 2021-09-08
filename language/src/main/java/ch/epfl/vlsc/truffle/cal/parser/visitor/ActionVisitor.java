@@ -13,6 +13,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
@@ -212,7 +213,12 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                     CALExpressionNode valueNode = new CALReadFIFONode(portQueue);
                     valueNode.setUnavailableSourceSection();
                     valueNode.addExpressionTag();
-                    return ScopeEnvironment.getInstance().createNewVariableWriteNode(((CALParser.SimplePatternContext) x).variable().name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(x));
+                    return ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                            ((CALParser.SimplePatternContext) x).variable().name.getText(),
+                            valueNode,
+                            DefaultValueCastNodeCreator.getInstance(),
+                            ScopeEnvironment.getInstance().createSourceSection(x)
+                    );
                 }).toArray(CALStatementNode[]::new));
                 body = new ReturnsLastBodyNode(readBlock, new BooleanLiteralNode(true));
                 body.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
@@ -239,6 +245,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                     ScopeEnvironment.getInstance().createNewVariableWriteNode(
                             ((CALParser.SimplePatternContext) x).variable().name.getText(),
                             new UnknownSizeListInitNode(),
+                            DefaultValueCastNodeCreator.getInstance(),
                             ScopeEnvironment.getInstance().getSource().createUnavailableSection()
                     )
                 ).toArray(CALStatementNode[]::new));
@@ -247,6 +254,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 inputPatternStatementNodes[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                         counterVariableName,
                         new LongLiteralNode(0),
+                        DefaultValueCastNodeCreator.getInstance(),
                         ScopeEnvironment.getInstance().getSource().createUnavailableSection()
                 ); // $counter = 0;
 
@@ -409,6 +417,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             outputExpressionStatementNodes[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                     counterVariableName,
                     new LongLiteralNode(0),
+                    DefaultValueCastNodeCreator.getInstance(),
                     ScopeEnvironment.getInstance().getSource().createUnavailableSection()
             ); // $counter = 0;
 

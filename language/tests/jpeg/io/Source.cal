@@ -60,13 +60,13 @@ import all var std.io.source;
             source_rewind();
         end
         
-        sendData.launch: action ==> Out:[ Out ]
+        sendData.launch: action ==> Out:[ Out1 ]
         guard
             nbByteToSend > nbByteSent
         var
-            uint(size=8) Out
+            uint(size=8) Out1
         do
-            Out := bytesRead[nbByteSent];
+            Out1 := bytesRead[nbByteSent];
             nbByteSent := nbByteSent + 1;
         end
         

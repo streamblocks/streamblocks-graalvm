@@ -92,9 +92,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
                 default:
                     throw new TransformException("Unknown type: " + type, context.getSource(), type);
             }
-            return new DefaultValueCastNodeCreator();
+            return DefaultValueCastNodeCreator.getInstance();
         } else if (type == null)
-            return new DefaultValueCastNodeCreator();
+            return DefaultValueCastNodeCreator.getInstance();
         else
             throw new TransformException("Unknown type class: " + type, context.getSource(), type);
     }
@@ -191,7 +191,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     protected CALExpressionNode createAssignment(String name, CALExpressionNode value) {
-        return createAssignment(name, new DefaultValueCastNodeCreator(), value);
+        return createAssignment(name, DefaultValueCastNodeCreator.getInstance(), value);
     }
 
     protected CALExpressionNode createAssignment(String name, TypeExpr slotInfo, CALExpressionNode valueNode) {
@@ -309,11 +309,11 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         CALStatementNode[] init = new CALStatementNode[3];
         // tempList=[]
         String tempListName = "$tempList" + String.valueOf(comprehension.hashCode());
-        init[0] = createAssignment(tempListName, new DefaultValueCastNodeCreator(), new UnknownSizeListInitNode());
+        init[0] = createAssignment(tempListName, DefaultValueCastNodeCreator.getInstance(), new UnknownSizeListInitNode());
 
         // i=0
         String listIndexVarName = "$comprehensionCounter" + String.valueOf(comprehension.hashCode());
-        init[1] = createAssignment(listIndexVarName, new DefaultValueCastNodeCreator(), new BigIntegerLiteralNode(new BigInteger("0")));
+        init[1] = createAssignment(listIndexVarName, DefaultValueCastNodeCreator.getInstance(), new BigIntegerLiteralNode(new BigInteger("0")));
 
         // The Comprehension nodes will generate the content into the above list
         init[2] = (new ExprComprehensionTransformer(comprehension, tempListName, listIndexVarName, context)).transform();
@@ -579,7 +579,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             LValueVariable lvalue = (LValueVariable) stmtAssignment.getLValue();
             String name = lvalue.getVariable().getName();
 
-            return createAssignment(name, new DefaultValueCastNodeCreator(), stmtAssignment.getExpression());
+            return createAssignment(name, DefaultValueCastNodeCreator.getInstance(), stmtAssignment.getExpression());
         } else if (stmtAssignment.getLValue() instanceof LValueIndexer) {
             LValueIndexer lvalue = (LValueIndexer) stmtAssignment.getLValue();
             return ListWriteNodeGen.create(getReadNode(lvalue.getStructure()), transformExpr(lvalue.getIndex()),

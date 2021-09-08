@@ -89,14 +89,15 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generator.generatorBody(), "Support for multiple variables in Generators are not supported yet");
         }
 
-        NullLiteralNode nullLiteralNode = new NullLiteralNode();
-        nullLiteralNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(generator));
-        nullLiteralNode.addExpressionTag();
+        CALExpressionNode placeholderValue = generator.generatorBody().type() != null ? VariableVisitor.fetchDefaultValue(generator.generatorBody().type()) : new NullLiteralNode();
+        placeholderValue.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(generator));
+        placeholderValue.addExpressionTag();
 
         // Note: Custom source section to precisely specify a variable token
         CALExpressionNode write = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                 generator.generatorBody().variables.get(0).getText(),
-                nullLiteralNode,
+                placeholderValue,
+                TypeCastVisitor.getInstance().visitType(generator.generatorBody().type()),
                 ScopeEnvironment.getInstance().getSource().createSection(generator.generatorBody().variables.get(0).getLine(), generator.generatorBody().variables.get(0).getCharPositionInLine() + 1, generator.generatorBody().variables.get(0).getText().length())
         );
 

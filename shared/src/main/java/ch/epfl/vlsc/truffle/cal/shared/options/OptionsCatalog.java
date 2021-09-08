@@ -141,6 +141,8 @@ public class OptionsCatalog {
                 return ENTITY_QID;
             case "cal.iterations":
                 return ITERATIONS;
+            case "cal.bitlength":
+                return BITLENGTH;
             case "cal.directory-lookup":
                 return DIRECTORY_LOOKUP;
             case "cal.import-paths":
@@ -169,6 +171,7 @@ public class OptionsCatalog {
                 EMBEDDED,
                 ENTITY_QID,
                 ITERATIONS,
+                BITLENGTH,
                 DIRECTORY_LOOKUP,
                 IMPORT_PATHS,
                 LAUNCHER,

@@ -196,9 +196,12 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public Map<String, String> visitGroupImport(CALParser.GroupImportContext ctx) {
-        if (ctx.kind != null) {
-            // TODO Add support for explicit import kind
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Explicit import kind is not yet supported");
+        if (ctx.kind != null && !(ctx.kind.kind.getText().equals("entity"))) {
+//            // TODO Add support for explicit import kind
+//            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
+//                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Explicit import kind is not yet supported");
+//            }
+            return new HashMap<>();
         }
 
         QualifiedID globalName = CollectionVisitor.qualifiedIdCreator(CollectionVisitor.getInstance().visitQualifiedID(ctx.globalName));

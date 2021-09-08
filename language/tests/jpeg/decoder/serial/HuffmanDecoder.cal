@@ -1,11 +1,11 @@
 namespace jpeg.decoder:
 
 
-actor HuffmanDecoder() 
-	uint(size=8) Bit, 
-	uint(size=8) HT, uint(size=16) SOI
-		==> 
-			int(size=24) Block :
+actor HuffmanDecoder()
+       uint(size=8) Bit,
+       uint(size=8) HT, uint(size=16) SOI
+               ==>
+                       int(size=24) Block :
 
 	int v_read_HT := 0;
 	uint(size=16) cur_val := 0;
@@ -139,7 +139,7 @@ actor HuffmanDecoder()
 		end
 		to_read := sum;
 	end
-	
+
 	receive_code:action HT:[b] ==>
 	guard (to_read > 0)
 	do
@@ -214,8 +214,7 @@ actor HuffmanDecoder()
 	do
 		to_read := code & 15;
 		cur_len := to_read;
-		
-		v := cur_val >> (15 - to_read + 1);		
+		v := cur_val >> (15 - to_read + 1);
 		if v < (1 << (cur_len - 1)) then
 			v := v + (-1 << cur_len) + 1;
 		end

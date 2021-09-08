@@ -173,7 +173,46 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
      */
     @Override public CALStatementNode visitBlockStatement(CALParser.BlockStatementContext ctx) {
         // TODO First resolve ExpressionVisitor#visitProcExpression  => use unnamed proc closure as a block statement
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Block statement is not yet supported");
+        StmtBlockNode headNode;
+        CALExpressionNode bodyNode;
+
+        ScopeEnvironment.getInstance().pushScope(false);
+
+        if (ctx.localVariables != null) {
+            ScopeEnvironment.getInstance().pushScope(false, false);
+
+            Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
+            StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
+            letHeadNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.localVariables));
+            letHeadNode.addStatementTag();
+
+            CALExpressionNode letBodyNode = new StmtFunctionBodyNode(StatementVisitor.getInstance().visitStatements(ctx.statements()));
+
+            bodyNode = new LetExprNode(letHeadNode, letBodyNode);
+            bodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            bodyNode.addExpressionTag();
+
+            ScopeEnvironment.getInstance().popScope();
+        } else {
+            bodyNode = new StmtFunctionBodyNode(StatementVisitor.getInstance().visit(ctx.statements()));
+        }
+
+        CALRootNode procBodyRootNode = new CALRootNode(
+                ScopeEnvironment.getInstance().getLanguage(),
+                ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
+                bodyNode,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
+                ScopeEnvironment.generateLambdaName()
+        );
+        // TODO Add RootTag / CallTag for procBodyRootNode
+
+        ProcNode procNode = new ProcNode(procBodyRootNode);
+        procNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        procNode.addStatementTag();
+
+        ScopeEnvironment.getInstance().popScope();
+
+        return new CALInvokeNode(procNode, new CALExpressionNode[0]);
     }
 
     /**
@@ -270,14 +309,15 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 }
             }
             for (Token variable: generatorCtx.generatorBody().variables) {
-                NullLiteralNode nullLiteralNode = new NullLiteralNode();
-                nullLiteralNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-                nullLiteralNode.addExpressionTag();
+                CALExpressionNode placeholderValue = generatorCtx.generatorBody().type() != null ? VariableVisitor.fetchDefaultValue(generatorCtx.generatorBody().type()) : new NullLiteralNode();
+                placeholderValue.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+                placeholderValue.addExpressionTag();
 
                 // Note: Custom source section to precisely specify a variable token
                 variableNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                         variable.getText(),
-                        nullLiteralNode,
+                        placeholderValue,
+                        TypeCastVisitor.getInstance().visitType(generatorCtx.generatorBody().type()),
                         ScopeEnvironment.getInstance().getSource().createSection(variable.getLine(), variable.getCharPositionInLine() + 1, variable.getText().length())
                 );
 

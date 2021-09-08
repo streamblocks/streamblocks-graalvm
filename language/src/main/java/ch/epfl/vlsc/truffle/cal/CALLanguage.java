@@ -89,7 +89,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         // Assign
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         String actorInstanceName = "testActorInstance";
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, new DefaultValueCastNodeCreator(),FrameSlotKind.Illegal);
+        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, DefaultValueCastNodeCreator.getInstance(), FrameSlotKind.Illegal);
         FrameSlotAndDepthRW existingSlot = new FrameSlotAndDepthRW(frameSlot, 0);
         boolean newVariable = true;
         CALExpressionNode valueNode = call;
@@ -114,7 +114,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
 
             // Assign
             String executionStatusVarName = ScopeEnvironment.generateVariableName();
-            FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, new DefaultValueCastNodeCreator(), FrameSlotKind.Boolean);
+            FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, DefaultValueCastNodeCreator.getInstance(), FrameSlotKind.Boolean);
             FrameSlotAndDepthRW executionStatusExistingSlot = new FrameSlotAndDepthRW(executionStatusFrameSlot, 0);
             bodyNodes[1] = executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), true, 0);
 

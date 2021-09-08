@@ -14,6 +14,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -534,7 +535,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
         }
 
         if (ctx.localVariables != null) {
-            ScopeEnvironment.getInstance().pushScope(true, false);
+            ScopeEnvironment.getInstance().pushScope(false, false);
 
             Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
             StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
@@ -615,11 +616,11 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
         CALStatementNode[] init = new CALStatementNode[3];
         // tempList=[]
         String tempListName = ScopeEnvironment.generateVariableName();
-        init[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(tempListName, new UnknownSizeListInitNode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+        init[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(tempListName, new UnknownSizeListInitNode(), DefaultValueCastNodeCreator.getInstance(), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
 
         // i=0
         String listIndexVarName = ScopeEnvironment.generateVariableName();
-        init[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(listIndexVarName, new BigIntegerLiteralNode(new BigInteger("0")), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+        init[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(listIndexVarName, new BigIntegerLiteralNode(new BigInteger("0")), DefaultValueCastNodeCreator.getInstance(), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
 
         // The Comprehension nodes will generate the content into the above list
         init[2] = (new ListComprehensionVisitor(tempListName, listIndexVarName)).visitListComprehension(ctx);

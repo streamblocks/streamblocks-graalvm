@@ -5,6 +5,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
@@ -137,10 +138,11 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         FrameSlot currStateSlot = null;
         if (ctx.actionSchedule().size() == 1) {
             String actionIndexSlotName = "$" + actorName + "#fsmActorIndex";
-            headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(actionIndexSlotName, new LongLiteralNode(0), null));
+            headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    actionIndexSlotName, new LongLiteralNode(0), DefaultValueCastNodeCreator.getInstance(), null));
 
             String currStateSlotName = "$" + actorName + "#fsmCurrState";
-            headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(currStateSlotName, new LongLiteralNode(0), null));
+            headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(currStateSlotName, new LongLiteralNode(0), DefaultValueCastNodeCreator.getInstance(), null));
 
             actorIndSlot = ScopeEnvironment.getInstance().findFrameSlot(actionIndexSlotName);
             currStateSlot = ScopeEnvironment.getInstance().findFrameSlot(currStateSlotName);

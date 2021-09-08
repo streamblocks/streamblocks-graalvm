@@ -12,6 +12,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNodeSizeExpression;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -140,16 +141,16 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         }
     }
 
-    private CALExpressionNode fetchDefaultValue(CALParser.TypeContext varDeclType) {
-        if (varDeclType.name == null) {
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), varDeclType, "Types without name not yet supported");
+    public static CALExpressionNode fetchDefaultValue(CALParser.TypeContext ctx) {
+        if (ctx.name == null) {
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Types without name not yet supported");
         }
 
-        if (varDeclType.name.getText().equals("List")) {
+        if (ctx.name.getText().equals("List")) {
 
-            if (varDeclType.typeAttributes() != null) {
-                List<CALExpressionNode> sizeDecl =  varDeclType.typeAttributes().typeAttribute().stream().filter(x -> x.exprAttributeName != null && x.exprAttributeName.getText().equals("size")).map(x -> ExpressionVisitor.getInstance().visit(x.expression())).collect(Collectors.toList());
-                List<CALExpressionNode> typeDecl = varDeclType.typeAttributes().typeAttribute().stream().filter(x -> x.typeAttributeName != null && x.typeAttributeName.getText().equals("type")).map(x -> fetchDefaultValue(x.type())).collect(Collectors.toList());
+            if (ctx.typeAttributes() != null) {
+                List<CALExpressionNode> sizeDecl =  ctx.typeAttributes().typeAttribute().stream().filter(x -> x.exprAttributeName != null && x.exprAttributeName.getText().equals("size")).map(x -> ExpressionVisitor.getInstance().visit(x.expression())).collect(Collectors.toList());
+                List<CALExpressionNode> typeDecl = ctx.typeAttributes().typeAttribute().stream().filter(x -> x.typeAttributeName != null && x.typeAttributeName.getText().equals("type")).map(x -> fetchDefaultValue(x.type())).collect(Collectors.toList());
                 if (sizeDecl.size() > 0) {
                     if (typeDecl.size() > 0) {
                         return new ListInitNodeSizeExpression(sizeDecl.get(0), typeDecl.get(0));
@@ -159,12 +160,12 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
                     return new UnknownSizeListInitNode();
             } else
                 return new UnknownSizeListInitNode();
-        } else if (varDeclType.name.getText().equals("int")) {
+        } else if (ctx.name.getText().equals("int")) {
             return new BigIntegerLiteralNode(new BigInteger("0"));
-        } else if (varDeclType.name.getText().equals("uint")) {
+        } else if (ctx.name.getText().equals("uint")) {
             return new BigIntegerLiteralNode(new BigInteger("0"));
         } else
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), varDeclType, "No default value for type unknows type " + varDeclType.name.getText());
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for type unknows type " + ctx.name.getText());
     }
 
     /**
@@ -203,7 +204,11 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             valueNode.addExpressionTag();
         }
 
-        return ScopeEnvironment.getInstance().createNewVariableWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                ctx.name.getText(),
+                valueNode,
+                TypeCastVisitor.getInstance().visitType(ctx.type()),
+                ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -228,7 +233,7 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             headNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.formalParameters()));
             headNode.addStatementTag();
         } else {
-            headNode = null;
+            headNode = new StmtBlockNode(new CALStatementNode[0]);
         }
 
         if (ctx.localVariables != null) {
@@ -269,7 +274,11 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         ScopeEnvironment.getInstance().popScope();
 
-        return ScopeEnvironment.getInstance().createNewVariableWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                ctx.name.getText(),
+                valueNode,
+                DefaultValueCastNodeCreator.getInstance(),
+                ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -292,7 +301,7 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         }
 
         if (ctx.localVariables != null) {
-            ScopeEnvironment.getInstance().pushScope(true, false);
+            ScopeEnvironment.getInstance().pushScope(false, false);
 
             Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
             StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
@@ -329,7 +338,11 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         ScopeEnvironment.getInstance().popScope();
 
-        return ScopeEnvironment.getInstance().createNewVariableWriteNode(ctx.name.getText(), valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                ctx.name.getText(),
+                valueNode,
+                DefaultValueCastNodeCreator.getInstance(),
+                ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -337,7 +350,7 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
      */
     @Override public CALStatementNode visitFormalParameter(CALParser.FormalParameterContext ctx) {
         String variableName = ctx.explicitVariableDeclaration().name.getText();
-        ScopeEnvironment.getInstance().createFrameSlot(variableName);
+        ScopeEnvironment.getInstance().createFrameSlot(variableName, TypeCastVisitor.getInstance().visitType(ctx.explicitVariableDeclaration().type()));
 
         ParserRuleContext parentCtx = ctx.getParent();
         if (parentCtx instanceof CALParser.FormalParametersContext) {

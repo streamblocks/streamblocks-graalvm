@@ -9,6 +9,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutAddFifo;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
@@ -91,7 +92,11 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                     newFIFOValueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     newFIFOValueNode.addExpressionTag();
 
-                    CALExpressionNode newFIFONode = ScopeEnvironment.getInstance().createNewVariableWriteNode(newFIFOName, newFIFOValueNode, ScopeEnvironment.getInstance().createSourceSection(structureCtx));
+                    CALExpressionNode newFIFONode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                            newFIFOName,
+                            newFIFOValueNode,
+                            DefaultValueCastNodeCreator.getInstance(),
+                            ScopeEnvironment.getInstance().createSourceSection(structureCtx));
                     headStatementNodes.add(newFIFONode);
 
                     String fanoutNodeName;
@@ -100,7 +105,11 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                         // We are seeing the output port for the first time
                         fanoutNodeName = ScopeEnvironment.generateFifoFanoutName();
                         outputPortToFanoutMapping.put(portName, fanoutNodeName);
-                        headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fanoutNodeName, new CALFifoFanoutNode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                        headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                                fanoutNodeName,
+                                new CALFifoFanoutNode(),
+                                DefaultValueCastNodeCreator.getInstance(),
+                                ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
                         entities.get(connection.source.entity).outputs.add(Pair.of(connection.source.port, ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                     } else
                         fanoutNodeName = outputPortToFanoutMapping.get(portName);
@@ -117,7 +126,11 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                     } else if (connection.source.entity == null) {
                         // This is when the source is an external port and destination is an entity within network
                         String fifoName = ScopeEnvironment.generateFIFOName();
-                        headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fifoName, new CALCreateFIFONode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                        headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                                fifoName,
+                                new CALCreateFIFONode(),
+                                DefaultValueCastNodeCreator.getInstance(),
+                                ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
                         headStatementNodes.add(new CALFifoFanoutAddFifo(ScopeEnvironment.getInstance().createReadNode(connection.source.port, ScopeEnvironment.getInstance().getSource().createUnavailableSection()), ScopeEnvironment.getInstance().createReadNode(fifoName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                         entities.get(connection.destination.entity).inputs.add(Pair.of(connection.destination.port, ScopeEnvironment.getInstance().createReadNode(fifoName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                     } else if (connection.destination.entity == null) {
@@ -128,7 +141,11 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                             // We are seeing the output port for the first time
                             fanoutNodeName = ScopeEnvironment.generateFifoFanoutName();
                             outputPortToFanoutMapping.put(portName, fanoutNodeName);
-                            headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(fanoutNodeName, new CALFifoFanoutNode(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+                            headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                                    fanoutNodeName,
+                                    new CALFifoFanoutNode(),
+                                    DefaultValueCastNodeCreator.getInstance(),
+                                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
                             entities.get(connection.source.entity).outputs.add(Pair.of(connection.source.port, ScopeEnvironment.getInstance().createReadNode(fanoutNodeName, ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
                         } else
                             fanoutNodeName = outputPortToFanoutMapping.get(portName);
@@ -159,7 +176,11 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
             valueNode.setSourceSection(instance.sourceSection);
             valueNode.addExpressionTag();
 
-            CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(instance.name, valueNode, instance.sourceSection);
+            CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    instance.name,
+                    valueNode,
+                    DefaultValueCastNodeCreator.getInstance(),
+                    instance.sourceSection);
             headStatementNodes.add(instanceNode);
         }
 
