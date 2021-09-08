@@ -4,6 +4,7 @@ import ch.epfl.vlsc.truffle.cal.CALException;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives;
 
 import java.math.BigInteger;
 import java.rmi.UnexpectedException;
@@ -25,6 +26,7 @@ public class IntCastNode extends CALExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
+        CompilerDirectives.transferToInterpreter();
         Object intsizevalobj = intsizeNode.executeGeneric(frame);
         Integer intsizeVal = null;
         if(intsizevalobj instanceof  CALBigNumber){
@@ -32,7 +34,7 @@ public class IntCastNode extends CALExpressionNode {
         } else if (intsizevalobj instanceof Long){
             intsizeVal = ((Long) intsizevalobj).intValue();
         } else
-            throw new CALException("Unexpected type: " + intsizevalobj.getClass().getName() + ", where number type expected", this);
+            throw CALException.typeError(intsizeNode, intsizevalobj);
 
 
         Object valueObj = valueNode.executeGeneric(frame);

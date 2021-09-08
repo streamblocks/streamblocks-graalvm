@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives;
+
 // This node makes the transition from current state to next state depending on the executed action
 public class FsmStateTransitionNode extends CALExpressionNode{
     private final FrameSlot stateSlot;

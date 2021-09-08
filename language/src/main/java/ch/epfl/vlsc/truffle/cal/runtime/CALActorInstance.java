@@ -1,8 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
 import ch.epfl.vlsc.truffle.cal.nodes.FsmStateCheckNode;
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives;

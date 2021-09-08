@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives;
 
 import java.util.ArrayList;
 import java.util.HashMap;

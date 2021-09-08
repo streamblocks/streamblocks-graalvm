@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -18,7 +19,6 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.api.utilities.TriState;
-import com.oracle.truffle.api.CompilerDirectives;
 
 // A procedure
 @ExportLibrary(InteropLibrary.class)

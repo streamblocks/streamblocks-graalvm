@@ -28,6 +28,7 @@ class ActorInstantiateNode extends CALExpressionNode {
         // create a new frame with the actor's frame descriptor
         MaterializedFrame actorFrame = Truffle.getRuntime().createMaterializedFrame(frame.getArguments(), actor.getFrameDescriptor());
         head.executeVoid(actorFrame);
+
         // TODO: Perform fsm transition from initializer actions.
         for (ActionNode initializeraction : this.actor.getInitializerActions()) {
             CallTarget target = Truffle.getRuntime().createCallTarget(initializeraction);

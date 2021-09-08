@@ -3,13 +3,13 @@ package ch.epfl.vlsc.truffle.cal.nodes.fifo;
 import com.oracle.truffle.api.CompilerDirectives;
 import ch.epfl.vlsc.truffle.cal.runtime.CALFifoFanout;
 import ch.epfl.vlsc.truffle.cal.runtime.FifoConsumer;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALFifo;
 
-import com.oracle.truffle.api.CompilerDirectives;
 
 public class CALWriteFIFONode extends CALStatementNode {
 
