@@ -79,6 +79,11 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
 
         Map<String, String> outputPortToFanoutMapping = new HashMap<>();
 
+        // In CAL, the output from one entity can be input for multiple entities,
+        // in which case the output token is copied to all the entities input ports.
+        // This behaviour is simulated by creating a node which holds references to multiple FIFOs
+        // and add then on receiving a token, pushes the token to all the FIFOs
+        // TODO: The current Fanout implementation may not work appropriately when the root level network has input ports
         if (ctx.structureStatement() != null) {
             for (CALParser.StructureStatementContext structureCtx: ctx.structureStatement()) {
                 // TODO Change after implementing complex statements (if/foreach)

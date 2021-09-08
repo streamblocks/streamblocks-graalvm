@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// This node makes the transition from current state to next state depending on the executed action
 public class FsmStateTransitionNode extends CALExpressionNode{
     private final FrameSlot stateSlot;
     private final FrameSlot actorIndexSlot;

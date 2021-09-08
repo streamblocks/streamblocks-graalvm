@@ -61,6 +61,12 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
      * {@inheritDoc}
      */
     @Override public ActorNode visitActorDeclaration(CALParser.ActorDeclarationContext ctx) {
+        // TODO We make the following assumptions regarding the way arguments are passed to the actors:
+        // 1. The arguments contain the list of actor parameters, input ports, output ports and variable declarations sequentially
+        // 2. The list of input ports passed in the arguments is arranged lexicographically with respect to port name
+        // 3. Each input port(even if redundant) specified in the actor definition is passed in the argument
+        // TODO: Come up with a better method for passing of arguments, and handling cases where redundant actor ports are not passed
+
         ScopeEnvironment.getInstance().pushScope();
 
         String actorName = ctx.name.getText();

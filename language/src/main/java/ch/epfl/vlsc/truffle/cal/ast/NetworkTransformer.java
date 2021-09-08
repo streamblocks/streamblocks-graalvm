@@ -62,9 +62,14 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
             i++;
         }
 
+        // We make the following assumptions regarding the way arguments are passed to the actors:
+        // 1. The arguments contain the list of actor parameters, input ports, output ports and variable declarations sequentially
+        // 2. The list of input ports passed in the arguments is arranged lexicographically with respect to port name
+        // 3. Each input port(even if redundant) specified in the actor definition is passed in the argument
+
+
         Comparator<PortDecl> portComparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
-        ;
         for (PortDecl in : network.getInputPorts().stream().sorted(portComparator).collect(Collectors.toList())) {
             // Input ports are passed as arguments
             headStatements.add(transformPortDecl(in, i));
@@ -90,8 +95,6 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                 EntityInstanceExpr entity = (EntityInstanceExpr) instanceDecl.getEntityExpr();
                 if (entity.getEntityName() instanceof EntityReferenceLocal) {
                     String actorName = ((EntityReferenceLocal) entity.getEntityName()).getName();
-                    // FIXME here we assume that the parameters are passed in the same order as in the declaration
-                    // it however does not need to be the case, so this has to be changed
                     List<CALExpressionNode> arguments = new ArrayList<>(entity.getValueParameters().size());
                     for (ValueParameter parameter: entity.getValueParameters())
                         arguments.add(transformExpr(parameter.getValue()));
@@ -103,9 +106,14 @@ public class NetworkTransformer extends ScopedTransformer<NetworkNode> {
                 throw new UnsupportedOperationException("Unknown entity in network");
             }
         }
+
+        // create the fifos and add them to the actors
         int j = 0;
         Map<String, String> outputPortToFanoutMapping = new HashMap<String, String>();
-        // create the fifos and add them to the actors
+        // In CAL, the output from one entity can be input for multiple entities,
+        // in which case the output token is copied to all the entities input ports.
+        // This behaviour is simulated by creating a node which holds references to multiple FIFOs
+        // and on receiving a token, pushes the token to all the FIFOs
         // TODO: The current Fanout implementation may not work appropriately when the root level network has input ports
         for(StructureStatement struct: network.getStructure()){
             if(struct instanceof StructureConnectionStmt) {

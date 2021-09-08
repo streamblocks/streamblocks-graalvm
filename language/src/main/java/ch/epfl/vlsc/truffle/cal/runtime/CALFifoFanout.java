@@ -3,6 +3,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 import java.util.LinkedList;
 import java.util.List;
 
+// TODO : Change list to array and other optimizations
 public class CALFifoFanout implements com.oracle.truffle.api.interop.TruffleObject, FifoConsumer{
     private List<FifoConsumer> connectedFifos;
     private CALFifoFanout fanout;

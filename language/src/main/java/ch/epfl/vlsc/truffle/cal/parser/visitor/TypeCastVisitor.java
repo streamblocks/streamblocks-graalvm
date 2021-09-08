@@ -35,8 +35,15 @@ public class TypeCastVisitor extends CALParserBaseVisitor<ValueCastNodeCreator> 
         return instance;
     }
 
+    /*
+     * Truffle Frameslots offer the facility to store an object(called info) with each slot to store metadata.
+     * We use the info slot to store a casting node, which can coerce/trim values to fit in the slot datatype.
+     * For example, if an assignment of a 16-bit integer is made to a 8-bit slot, the value should be trimmed
+     * to fit the slot, which can be achieved using the subclass IntCastNode of ValueCastNode.
+     */
     @Override
     public ValueCastNodeCreator visitType(CALParser.TypeContext ctx) {
+
         if (ctx == null) return DefaultValueCastNodeCreator.getInstance();
 
         if (ctx.name == null) {

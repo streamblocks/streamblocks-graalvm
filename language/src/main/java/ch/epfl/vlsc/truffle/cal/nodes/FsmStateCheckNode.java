@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// This node returns boolean indicating whether the queried action can follow from the current FSM state
 public class FsmStateCheckNode extends CALExpressionNode{
     private final List<Map<Integer, Integer>> transitions;
     private final FrameSlot stateSlot;

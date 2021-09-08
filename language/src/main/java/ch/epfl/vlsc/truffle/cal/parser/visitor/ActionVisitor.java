@@ -80,6 +80,12 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
         List<CALStatementNode> actionStatements = new ArrayList<>();
         List<CALExpressionNode> inputTokenBindings = new LinkedList<>();
+
+        // The fifos provide a mechanism similar to databases transaction-rollback-commit API
+        // The guards first ensure the number of required tokens are available in the FIFO
+        // And after that initiate a transaction and pop the tokens from the FIFO
+        // The guard condition is then evaluated. If it fails, the transaction is
+        // rolled-back(tokens popped are put back to the fifo) otherwise they are committed.
         List<CALFifoTransactionCommit> transactionCommits = new LinkedList<>();
         List<CALFifoTransactionRollback> transactionRollbacks = new LinkedList<>();
         if (ctx.inputPatterns() != null) {
@@ -205,6 +211,8 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext)) {
             CALFifoTransactionCommit commit = new CALFifoTransactionCommit(portQueue);
             CALFifoTransactionRollback rollback = new CALFifoTransactionRollback(portQueue);
+
+            // Initiate a transaction before popping values from the fifos
             CALFifoTransactionInit transactionInit = new CALFifoTransactionInit(portQueue);
             CALExpressionNode body;
             if (ctx.repeat == null) {

@@ -43,6 +43,7 @@ public class ExprComprehensionTransformer extends ScopedTransformer<CALComprehen
         if (generator.getVarDecls().size() != 1) {
             throw new TransformException("Exactly 1 variable declaration in comprehension loops generator supported", context.getSource(), generator);
         }
+
         // x = originalList[i]
         // CALExpressionNode[] write = (CALExpressionNode[]) generator.getVarDecls().map(varDecl -> transformVarDecl(varDecl)).toArray();
         CALExpressionNode write = transformShadowVarDecl(generator.getVarDecls().get(0));
@@ -51,9 +52,9 @@ public class ExprComprehensionTransformer extends ScopedTransformer<CALComprehen
         CALExpressionNode filter;
         if(filters.size() == 0){
             filter = new BooleanLiteralNode(true);
-        }else if(filters.size() == 1){
+        } else if (filters.size() == 1){
             filter = transformExpr(filters.get(0));
-        }else{
+        } else {
             filter = transformExpr(filters.get(0));
             for(int i = 1; i < filters.size(); ++i){
                 filter = new CALBinaryLogicalAndNode(filter, transformExpr(filters.get(i)));
@@ -74,10 +75,10 @@ public class ExprComprehensionTransformer extends ScopedTransformer<CALComprehen
                         .create(getReadNode(listIndexVarName), new BigIntegerLiteralNode(new BigInteger("1")))));
             }
             bodyNodes = (CALStatementNode[]) stmts.toArray(new CALStatementNode[stmts.size()]);
-        }else if(collection instanceof ExprComprehension){
+        } else if (collection instanceof ExprComprehension){
             lexScope = true;
             bodyNodes = new CALStatementNode[]{(new ExprComprehensionTransformer((ExprComprehension) collection, tempListName, listIndexVarName, context.deeper(false))).transform()};
-        }else{
+        } else {
             throw new TransformException("Unexpected collection type in for-comprehension", context.getSource(), comprehension);
         }
         CALStatementNode bodyStatement = new StmtIfNode(filter, new StmtBlockNode(bodyNodes),null);

@@ -50,7 +50,6 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
-import org.graalvm.polyglot.Value;
 import se.lth.cs.tycho.ir.Generator;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
@@ -73,6 +72,12 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         this.context = context;
     }
 
+    /*
+    * Truffle Frameslots offer the facility to store an object(called info) with each slot to store metadata.
+    * We use the info slot to store a casting node, which can coerce/trim values to fit in the slot datatype.
+    * For example, if an assignment of a 16-bit integer is made to a 8-bit slot, the value should be trimmed
+    * to fit the slot, which can be achieved using the subclass IntCastNode of ValueCastNode.
+    */
     protected ValueCastNodeCreator getTypeInfo(TypeExpr type) {
         if(type instanceof NominalTypeExpr){
             NominalTypeExpr nomType = (NominalTypeExpr) type;
@@ -99,6 +104,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             throw new TransformException("Unknown type class: " + type, context.getSource(), type);
     }
 
+    // TODO: This will be used when implementing types for optimizations
     private FrameSlotKind getFrameSlotKind(TypeExpr type) {
         if(type instanceof NominalTypeExpr){
             NominalTypeExpr nomType = (NominalTypeExpr) type;

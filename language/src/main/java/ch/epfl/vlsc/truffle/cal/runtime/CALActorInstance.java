@@ -222,11 +222,16 @@ public class CALActorInstance extends CALValue {
         @Specialization
         protected static Object doIndirect(CALActorInstance function, Object[] arguments,
                                            @Cached IndirectCallNode callNode) {
+            // Return true if any action was executed, otherwise false
+
+            // Loop over all actions till one of the actions is executed.
+            // The order of actions in the array is based on decreasing order of priorities
             for(int i = 0; i < function.actorDecl.getActions().length; ++i){
                 FsmStateCheckNode fsmTarget = function.actorDecl.getFsmStateCheckNode();
                 ActionNode action = function.actorDecl.getActions()[i];
                 Boolean actionFsmFireable = true;
                 if(function.actorDecl.getFsmStateCheckNode() != null) {
+                    // FSM present
                     function.frameDecl.setLong(function.actorDecl.getActorIndexSlot(), i);
                     try {
                         actionFsmFireable = !action.isQidTagged() || ((Boolean) fsmTarget.executeBoolean(function.frameDecl));
@@ -234,15 +239,19 @@ public class CALActorInstance extends CALValue {
                         e.printStackTrace();
                     }
                 }
+
+                // Action is fireable if there is no action with higher priority that is fireable and if the current action tag follows from the current FSM state
                 if (!actionFsmFireable) continue;
                 CompilerDirectives.transferToInterpreter();
                 CallTarget target = Truffle.getRuntime().createCallTarget(action);
+                // Attempt to execute the action: Guard expressions and token bindings are checked by the action and returns true if it fires, otherwise false
                 Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
                 if (executed) {
                     if(function.actorDecl.getFsmStateCheckNode() != null) function.actorDecl.getFsmStateTransitionNode().executeVoid(function.frameDecl);
                     return true;
                 }
             }
+            // No action was fired, hence the actor did not execute. Return false.
             return false;
         }
     }
