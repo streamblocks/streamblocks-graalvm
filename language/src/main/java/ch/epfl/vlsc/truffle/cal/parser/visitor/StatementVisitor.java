@@ -298,7 +298,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALStatementNode visitForeachStatement(CALParser.ForeachStatementContext ctx) {
-        CALExpressionNode variableNode = null;
+        CALWriteVariableNode variableNode = null;
         CALExpressionNode collectionNode = null;
 
         if (ctx.foreachGenerators().foreachGenerator().size() > 1) {
@@ -326,6 +326,8 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                         TypeCastVisitor.getInstance().visitType(generatorCtx.generatorBody().type()),
                         ScopeEnvironment.getInstance().getSource().createSection(variable.getLine(), variable.getCharPositionInLine() + 1, variable.getText().length())
                 );
+                variableNode.addStatementTag();
+                variableNode.setHasWriteVarTag();
 
                 if (!(variableNode instanceof CALWriteLocalVariableNode)) {
                     throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Variable name re-use in a foreach generator is not yet supported");

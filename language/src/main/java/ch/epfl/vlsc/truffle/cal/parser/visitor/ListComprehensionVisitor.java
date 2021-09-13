@@ -13,6 +13,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALScopedNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
@@ -38,20 +39,14 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
     @Override public CALStatementNode visitListComprehension(CALParser.ListComprehensionContext ctx) {
         ScopeEnvironment.getInstance().pushScope(false, true);
         CALStatementNode nestedComprehensions = createNestedComprehensions(ctx, 0);
-        nestedComprehensions.addRootBodyTag();
-//        nestedComprehensions.setSourceSection(
-//                ScopeEnvironment.getInstance().getSource().createSection(ctx.generators().start.getLine(), ctx.generators().start.getCharPositionInLine() + 1, ctx.generators().stop.getLine(), ctx.generators().stop.getCharPositionInLine()+1)
-//        );
-//        nestedComprehensions.addStatementTag();
 
         CALRootNode root = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 new ReturnsLastBodyNode(nestedComprehensions),
-                ScopeEnvironment.getInstance().createSourceSection(ctx),
+                ScopeEnvironment.getInstance().getSource().createUnavailableSection(),
                 ScopeEnvironment.generateVariableName()
         );
-        root.setNodeInstrumental();
         ScopeEnvironment.getInstance().popScope();
         CALComprehensionContinueNode calComprehensionContinueNode = CALComprehensionContinueNodeGen.create(null, root, new ListInitNode(new CALExpressionNode[]{new BigIntegerLiteralNode(new BigInteger("0"))}));
         return calComprehensionContinueNode;
@@ -80,7 +75,6 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
             }
 
             CALStatementNode currBody = new StmtBlockNode(listWrites.toArray(new CALStatementNode[0]));
-            currBody.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.computations));
 
             return currBody;
         }
@@ -92,22 +86,15 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
         }
 
         CALExpressionNode placeholderValue = generator.generatorBody().type() != null ? VariableVisitor.fetchDefaultValue(generator.generatorBody().type()) : new NullLiteralNode();
-        // placeholderValue.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(generator));
-        // placeholderValue.addExpressionTag();
 
         // Note: Custom source section to precisely specify a variable token
-        CALExpressionNode write = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+        CALWriteVariableNode write = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                 generator.generatorBody().variables.get(0).getText(),
                 placeholderValue,
                 TypeCastVisitor.getInstance().visitType(generator.generatorBody().type()),
                 ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-//                ScopeEnvironment.getInstance().getSource().createSection(generator.generatorBody().variables.get(0).getLine(), generator.generatorBody().variables.get(0).getCharPositionInLine() + 1, generator.generatorBody().variables.get(0).getText().length())
         );
-
-//        write.setSourceSection(ScopeEnvironment.getInstance().getSource().createSection(
-//                generator.generatorBody().variables.get(0).getLine(),
-//                generator.generatorBody().variables.get(0).getCharPositionInLine(),
-//                generator.generatorBody().variables.get(0).getText().length()));
+        write.setHasWriteVarTag();
 
         CALExpressionNode collection = ExpressionVisitor.getInstance().visit(generator.generatorBody().generatorExpressions().collection);
         collection.addExpressionTag();
@@ -120,6 +107,8 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
 
         if(filters.size() == 0){
             filter = new BooleanLiteralNode(true);
+            filter.setUnavailableSourceSection();
+            filter.addExpressionTag();
         }else if(filters.size() == 1){
             filter = filters.get(0);
             filter.addExpressionTag();
@@ -133,20 +122,19 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
                 filter.addExpressionTag();
                 filter.setSourceSection(ScopeEnvironment.getInstance().getSource().createSection(
                         generator.generatorBody().generatorExpressions().filters.get(0).start.getLine(),
-                        generator.generatorBody().generatorExpressions().filters.get(0).start.getCharPositionInLine(),
+                        generator.generatorBody().generatorExpressions().filters.get(0).start.getCharPositionInLine()+1,
                         generator.generatorBody().generatorExpressions().filters.get(j).stop.getLine(),
-                        generator.generatorBody().generatorExpressions().filters.get(j).stop.getCharPositionInLine()
+                        generator.generatorBody().generatorExpressions().filters.get(j).stop.getCharPositionInLine()+1
                 ));
             }
         }
 
         CALStatementNode ifBody = createNestedComprehensions(ctx, i + 1);
-        ifBody.addRootBodyTag();
         CALRootNode forBody = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
                 new ReturnsLastBodyNode(new StmtIfNode(filter, ifBody, null)),
-                ifBody.getSourceSection(),
+                ScopeEnvironment.getInstance().getSource().createUnavailableSection(),
                 ScopeEnvironment.generateVariableName()
         );
         ScopeEnvironment.getInstance().popScope();
@@ -155,7 +143,6 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
                 (CALWriteLocalVariableNode) write,
                 forBody,
                 collection);
-//        currBody.addStatementTag();
         return currBody;
     }
 }

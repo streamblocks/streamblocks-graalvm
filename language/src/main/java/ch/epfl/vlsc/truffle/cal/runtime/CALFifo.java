@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.runtime;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 
@@ -51,6 +52,11 @@ public class CALFifo implements TruffleObject, FifoConsumer {
 
     public CALFifoFanout getFanout() {
         return fanout;
+    }
+
+    @Override
+    public String toString() {
+        return "[" + String.join(", ", content.stream().map(x -> x.toString()).collect(Collectors.toList())) + "]";
     }
 }
 
