@@ -9,6 +9,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
@@ -53,6 +54,8 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
         List<CALStatementNode> statementNodes = new ArrayList<>();
         for (CALParser.StatementContext statementCtx: ctx.statement()) {
             CALStatementNode statementNode = visitStatement(statementCtx);
+            statementNode.addStatementTag();
+            statementNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(statementCtx));
             statementNodes.add(statementNode);
         }
 
@@ -144,7 +147,10 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unrecognized lvalue accessor type"); // Note: Unreachable case
             }
         } else {
-            return ScopeEnvironment.getInstance().createExistingVariableWriteNode(variableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+            CALWriteVariableNode existingVariableWriteNode = ScopeEnvironment.getInstance().createExistingVariableWriteNode(variableName, valueNode, ScopeEnvironment.getInstance().createSourceSection(ctx));
+            existingVariableWriteNode.addStatementTag();
+            existingVariableWriteNode.setHasWriteVarTag();
+            return existingVariableWriteNode;
         }
     }
 
@@ -336,8 +342,9 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
             }
         }
 
-
-        ForeacheNode foreachNode = ForeacheNodeGen.create(visitStatements(ctx.body), (CALWriteLocalVariableNode) variableNode, collectionNode);
+        StmtBlockNode stmtBlockNode = visitStatements(ctx.body);
+        stmtBlockNode.addStatementTag();
+        ForeacheNode foreachNode = ForeacheNodeGen.create(stmtBlockNode, (CALWriteLocalVariableNode) variableNode, collectionNode);
         foreachNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
         foreachNode.addStatementTag();
 

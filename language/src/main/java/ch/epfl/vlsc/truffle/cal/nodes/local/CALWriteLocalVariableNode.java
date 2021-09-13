@@ -9,9 +9,9 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 
-@NodeChild("valueNode")
+@NodeChild(type = CALExpressionNode.class, value="valueNode")
 @GenerateWrapper
-public abstract class CALWriteLocalVariableNode extends CALExpressionNode implements FrameSlotNode {
+public abstract class CALWriteLocalVariableNode extends CALWriteVariableNode {
 
 	@Child CALWriteFrameSlotNode writeFrameSlotNode;
 

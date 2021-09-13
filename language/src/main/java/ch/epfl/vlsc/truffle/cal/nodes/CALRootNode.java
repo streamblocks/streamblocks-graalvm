@@ -33,6 +33,13 @@ public class CALRootNode extends RootNode {
     private final SourceSection sourceSection;
     
     @CompilerDirectives.CompilationFinal(dimensions = 1) private volatile CALWriteFrameSlotNode[] argumentNodesCache;
+
+    public void setNodeInstrumental() {
+        isNodeInstrumental = true;
+    }
+
+    private boolean isNodeInstrumental;
+
     public CALRootNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode bodyNode, SourceSection sourceSection, String name) {
         super(language, frameDescriptor);
         this.bodyNode = bodyNode;
@@ -45,6 +52,10 @@ public class CALRootNode extends RootNode {
         return sourceSection;
     }
 
+    @Override
+    protected boolean isInstrumentable() {
+        return isNodeInstrumental;
+    }
 
     @Override
     public Object execute(VirtualFrame frame) {

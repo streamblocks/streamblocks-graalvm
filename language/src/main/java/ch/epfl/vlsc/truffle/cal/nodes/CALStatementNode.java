@@ -25,6 +25,7 @@ public abstract class CALStatementNode extends CALScopedNode implements Instrume
 
     private boolean hasStatementTag;
     private boolean hasRootTag;
+    private boolean hasRootBodyTag;
 
     /*
      * The creation of source section can be implemented lazily by looking up the root node source
@@ -43,9 +44,9 @@ public abstract class CALStatementNode extends CALScopedNode implements Instrume
     }
 
     public final boolean hasSource() {
-        return sourceSection != null;
+        return sourceSection != null && sourceSection.isAvailable();
     }
-    
+
     @Override
     public final boolean isInstrumentable() {
         return hasSource();
@@ -63,10 +64,12 @@ public abstract class CALStatementNode extends CALScopedNode implements Instrume
     public boolean hasTag(Class<? extends Tag> tag) {
         if (tag == StandardTags.StatementTag.class) {
             return hasStatementTag;
-        } else if (tag == StandardTags.RootTag.class || tag == StandardTags.RootBodyTag.class) {
+        } else if (tag == StandardTags.RootTag.class) {
             return hasRootTag;
-        }
-        return false;
+        } else if (tag == StandardTags.RootBodyTag.class) {
+            return hasRootBodyTag;
+        } else
+            return false;
     }
 
     public WrapperNode createWrapper(ProbeNode probe) {
@@ -124,5 +127,9 @@ public abstract class CALStatementNode extends CALScopedNode implements Instrume
             int startLine = section.getStartLine();
             return String.format("%s:%d%s", sourceName, startLine, estimated ? "~" : "");
         }
+    }
+
+    public void addRootBodyTag() {
+        this.hasRootBodyTag = true;
     }
 }

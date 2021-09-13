@@ -4,6 +4,8 @@ import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
@@ -177,7 +179,7 @@ public class ScopeEnvironment {
 		currentScope.put(name, readOnlySlot);
 	}
 
-	public CALExpressionNode createNewVariableWriteNode(String name, CALExpressionNode valueNode, ValueCastNodeCreator valueCastNodeCreator, SourceSection sourceSection) {
+	public CALWriteVariableNode createNewVariableWriteNode(String name, CALExpressionNode valueNode, ValueCastNodeCreator valueCastNodeCreator, SourceSection sourceSection) {
 		if (currentScope.containsKey(name)) {
 			throw new CALParseError(source, sourceSection.getStartLine(), sourceSection.getStartColumn(), sourceSection.getCharLength(), "Variable " + name + " has already been defined");
 		}
@@ -185,7 +187,7 @@ public class ScopeEnvironment {
 		return createWriteNode(name, valueNode, valueCastNodeCreator, true, sourceSection);
 	}
 
-	public CALExpressionNode createExistingVariableWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
+	public CALWriteVariableNode createExistingVariableWriteNode(String name, CALExpressionNode valueNode, SourceSection sourceSection) {
 		if (!currentScope.containsKey(name)) {
 			throw new CALParseError(source, sourceSection.getStartLine(), sourceSection.getStartColumn(), sourceSection.getCharLength(), "Cannot write to undefined variable " + name);
 		}
@@ -196,7 +198,7 @@ public class ScopeEnvironment {
 		return slot.createWriteNode(nameNode, valueNode, false, currentScope.getDepth(), sourceSection);
 	}
 
-	public CALExpressionNode createWriteNode(String name, CALExpressionNode valueNode, ValueCastNodeCreator valueCastNodeCreator, boolean isNewVariable, SourceSection sourceSection) {
+	public CALWriteVariableNode createWriteNode(String name, CALExpressionNode valueNode, ValueCastNodeCreator valueCastNodeCreator, boolean isNewVariable, SourceSection sourceSection) {
 		createFrameSlot(name, valueCastNodeCreator);
 
 		CALExpressionNode nameNode = new StringLiteralNode(name);

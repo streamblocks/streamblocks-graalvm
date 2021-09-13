@@ -31,7 +31,7 @@ public abstract class CALComprehensionContinueNode extends CALComprehensionNode 
 
     @Specialization(guards = "lists.isList(list)", limit = "2")
     public void execute(VirtualFrame frame, Object list, @CachedLibrary("list") ListLibrary lists) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
+        CompilerDirectives.transferToInterpreter();
         // This method can be optimized by the use of loopnode with profiling information
         // loopNode.execute(frame);
 
@@ -41,8 +41,8 @@ public abstract class CALComprehensionContinueNode extends CALComprehensionNode 
             if(genVarWriter != null)
                 genVarWriter.executeWrite(frame, next);
             Truffle.getRuntime().createIndirectCallNode().call(
-                    Truffle.getRuntime().createCallTarget(body),
-                    CALArguments.pack(frame.materialize(), new Object[0])
+                    Truffle.getRuntime().createCallTarget(body), frame.materialize()
+//                    CALArguments.pack(frame.materialize(), new Object[0])
             );
         }
     }

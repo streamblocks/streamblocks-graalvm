@@ -38,10 +38,11 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
     @Override public CALStatementNode visitListComprehension(CALParser.ListComprehensionContext ctx) {
         ScopeEnvironment.getInstance().pushScope(false, true);
         CALStatementNode nestedComprehensions = createNestedComprehensions(ctx, 0);
-
-        nestedComprehensions.setSourceSection(
-                ScopeEnvironment.getInstance().getSource().createSection(ctx.generators().start.getLine(), ctx.generators().start.getCharPositionInLine() + 1, ctx.generators().getText().length())
-        );
+        nestedComprehensions.addRootBodyTag();
+//        nestedComprehensions.setSourceSection(
+//                ScopeEnvironment.getInstance().getSource().createSection(ctx.generators().start.getLine(), ctx.generators().start.getCharPositionInLine() + 1, ctx.generators().stop.getLine(), ctx.generators().stop.getCharPositionInLine()+1)
+//        );
+//        nestedComprehensions.addStatementTag();
 
         CALRootNode root = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
@@ -50,8 +51,9 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
                 ScopeEnvironment.getInstance().createSourceSection(ctx),
                 ScopeEnvironment.generateVariableName()
         );
+        root.setNodeInstrumental();
         ScopeEnvironment.getInstance().popScope();
-        final CALComprehensionContinueNode calComprehensionContinueNode = CALComprehensionContinueNodeGen.create(null, root, new ListInitNode(new CALExpressionNode[]{new BigIntegerLiteralNode(new BigInteger("0"))}));
+        CALComprehensionContinueNode calComprehensionContinueNode = CALComprehensionContinueNodeGen.create(null, root, new ListInitNode(new CALExpressionNode[]{new BigIntegerLiteralNode(new BigInteger("0"))}));
         return calComprehensionContinueNode;
     }
 
@@ -90,21 +92,22 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
         }
 
         CALExpressionNode placeholderValue = generator.generatorBody().type() != null ? VariableVisitor.fetchDefaultValue(generator.generatorBody().type()) : new NullLiteralNode();
-        placeholderValue.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(generator));
-        placeholderValue.addExpressionTag();
+        // placeholderValue.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(generator));
+        // placeholderValue.addExpressionTag();
 
         // Note: Custom source section to precisely specify a variable token
         CALExpressionNode write = ScopeEnvironment.getInstance().createNewVariableWriteNode(
                 generator.generatorBody().variables.get(0).getText(),
                 placeholderValue,
                 TypeCastVisitor.getInstance().visitType(generator.generatorBody().type()),
-                ScopeEnvironment.getInstance().getSource().createSection(generator.generatorBody().variables.get(0).getLine(), generator.generatorBody().variables.get(0).getCharPositionInLine() + 1, generator.generatorBody().variables.get(0).getText().length())
+                ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+//                ScopeEnvironment.getInstance().getSource().createSection(generator.generatorBody().variables.get(0).getLine(), generator.generatorBody().variables.get(0).getCharPositionInLine() + 1, generator.generatorBody().variables.get(0).getText().length())
         );
 
-        write.setSourceSection(ScopeEnvironment.getInstance().getSource().createSection(
-                generator.generatorBody().variables.get(0).getLine(),
-                generator.generatorBody().variables.get(0).getCharPositionInLine(),
-                generator.generatorBody().variables.get(0).getText().length()));
+//        write.setSourceSection(ScopeEnvironment.getInstance().getSource().createSection(
+//                generator.generatorBody().variables.get(0).getLine(),
+//                generator.generatorBody().variables.get(0).getCharPositionInLine(),
+//                generator.generatorBody().variables.get(0).getText().length()));
 
         CALExpressionNode collection = ExpressionVisitor.getInstance().visit(generator.generatorBody().generatorExpressions().collection);
         collection.addExpressionTag();
@@ -138,6 +141,7 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
         }
 
         CALStatementNode ifBody = createNestedComprehensions(ctx, i + 1);
+        ifBody.addRootBodyTag();
         CALRootNode forBody = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
@@ -151,6 +155,7 @@ public class ListComprehensionVisitor extends CALParserBaseVisitor {
                 (CALWriteLocalVariableNode) write,
                 forBody,
                 collection);
+//        currBody.addStatementTag();
         return currBody;
     }
 }

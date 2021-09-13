@@ -67,7 +67,7 @@ public class DepthFrameSlot implements Cloneable {
         }
     }
 
-    public CALExpressionNode createWriteNode(CALExpressionNode nameNode, CALExpressionNode valueNode, boolean isNewVariable, int currentDepth, SourceSection sourceSection) {
+    public CALWriteVariableNode createWriteNode(CALExpressionNode nameNode, CALExpressionNode valueNode, boolean isNewVariable, int currentDepth, SourceSection sourceSection) {
         if (kind == SlotKind.RO) {
             // Only outer scope variables that are read-only
             throw new Error("Writing to a read-only variable is not allowed");
