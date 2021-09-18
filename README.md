@@ -1,10 +1,16 @@
 # StreamBlock graalvm
 
 ## Usage
+Set JAVA_HOME to graalvm 21.2.0 version root and add graalvm-21.2.0/bin subfolder to PATH.
 ```
-./cal <path> --cal.actor=<actor to run> --cal.iterations=<number of iterations> --cal.directory-lookup=<true to recursively load and parse all the files in the directory> --cal.show-warnings=<true to show compilation warnings>
+mvn package
+./cal <path> --cal.actor=<actor to run> --cal.iterations=<number of iterations> --cal.directory-lookup=<true to recursively load and parse all the files in the directory>
 ```
-
+### Example Usage
+To execute the test program ```language/tests/println.cal```:
+```bash
+./cal language/tests/println.cal --cal.actor=test.test --cal.iterations=1
+```
 ## Project Status
 
 ### Namespace

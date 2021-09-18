@@ -8,8 +8,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.IntCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
@@ -22,6 +33,14 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryDivNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryEqualNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryMulNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.FunctionLiteralNode;
@@ -31,34 +50,18 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import se.lth.cs.tycho.ir.Generator;
+import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.decl.VarDecl;
 import se.lth.cs.tycho.ir.entity.PortDecl;
-import se.lth.cs.tycho.ir.expr.ExprApplication;
-import se.lth.cs.tycho.ir.expr.ExprBinaryOp;
-import se.lth.cs.tycho.ir.expr.ExprComprehension;
-import se.lth.cs.tycho.ir.expr.ExprIf;
-import se.lth.cs.tycho.ir.expr.ExprIndexer;
-import se.lth.cs.tycho.ir.expr.ExprLambda;
-import se.lth.cs.tycho.ir.expr.ExprLet;
-import se.lth.cs.tycho.ir.expr.ExprList;
-import se.lth.cs.tycho.ir.expr.ExprLiteral;
+import se.lth.cs.tycho.ir.expr.*;
 import se.lth.cs.tycho.ir.expr.ExprLiteral.Kind;
-import se.lth.cs.tycho.ir.expr.ExprUnaryOp;
-import se.lth.cs.tycho.ir.expr.ExprVariable;
-import se.lth.cs.tycho.ir.expr.Expression;
-import se.lth.cs.tycho.ir.stmt.Statement;
-import se.lth.cs.tycho.ir.stmt.StmtAssignment;
-import se.lth.cs.tycho.ir.stmt.StmtCall;
-import se.lth.cs.tycho.ir.stmt.StmtForeach;
-import se.lth.cs.tycho.ir.stmt.StmtIf;
+import se.lth.cs.tycho.ir.stmt.*;
+import se.lth.cs.tycho.ir.stmt.lvalue.LValue;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueIndexer;
 import se.lth.cs.tycho.ir.stmt.lvalue.LValueVariable;
+import se.lth.cs.tycho.ir.type.NominalTypeExpr;
+import se.lth.cs.tycho.ir.type.TypeExpr;
 import se.lth.cs.tycho.ir.util.ImmutableList;
 
 public abstract class ScopedTransformer<T> extends Transformer<T> {
@@ -69,6 +72,62 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         this.context = context;
     }
 
+    /*
+    * Truffle Frameslots offer the facility to store an object(called info) with each slot to store metadata.
+    * We use the info slot to store a casting node, which can coerce/trim values to fit in the slot datatype.
+    * For example, if an assignment of a 16-bit integer is made to a 8-bit slot, the value should be trimmed
+    * to fit the slot, which can be achieved using the subclass IntCastNode of ValueCastNode.
+    */
+    protected ValueCastNodeCreator getTypeInfo(TypeExpr type) {
+        if(type instanceof NominalTypeExpr){
+            NominalTypeExpr nomType = (NominalTypeExpr) type;
+            List<Expression> s = nomType.getValueParameters().stream().filter(x -> x.getName().equals("size")).map(x -> x.getValue()).collect(Collectors.toList());
+            CALExpressionNode intsize = s.size() > 0 ? transformExpr(s.get(0)) : new LongLiteralNode(CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.BITLENGTH_KEY));
+            switch (nomType.getName()){
+                case "int":
+                    return new IntCastNodeCreator(intsize, true);
+                case "uint":
+                    return new IntCastNodeCreator(intsize, false);
+                case "List":
+                    // TODO: handleList();
+                    break;
+                case "bool":
+                    // TODO: handleBool();
+                    break;
+                default:
+                    throw new TransformException("Unknown type: " + type, context.getSource(), type);
+            }
+            return DefaultValueCastNodeCreator.getInstance();
+        } else if (type == null)
+            return DefaultValueCastNodeCreator.getInstance();
+        else
+            throw new TransformException("Unknown type class: " + type, context.getSource(), type);
+    }
+
+    // TODO: This will be used when implementing types for optimizations
+    private FrameSlotKind getFrameSlotKind(TypeExpr type) {
+        if(type instanceof NominalTypeExpr){
+            NominalTypeExpr nomType = (NominalTypeExpr) type;
+            switch (nomType.getName()){
+                case "int":
+                    break;
+                case "uint":
+                    // handleUint();
+                    break;
+                case "List":
+                    // handleList();
+                    break;
+                case "bool":
+                    // handleBool();
+                    break;
+                default:
+                    throw new TransformException("Unknown type: " + type, context.getSource(), type);
+            }
+            return FrameSlotKind.Illegal;
+        } else
+            return FrameSlotKind.Illegal;
+    }
+
     // TODO move in a new EntityTransformer
     // TODO merge with transformVarDecl
     protected CALStatementNode transformPortDecl(PortDecl port, Integer position) {
@@ -76,7 +135,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // give the rw verion to the assigning node
         // and keep the ro view for the context.getLexicalScope() as arguments can't
         // be modified
-        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(port.getName(), FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(port.getName(), getTypeInfo(port.getType()), getFrameSlotKind(port.getType()));
         FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
         context.getLexicalScope().put(port.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
         return new InitializeArgNode(frameSlot, position);
@@ -89,7 +148,7 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // give the rw verion to the assigning node
         // and keep the ro view for the context.getLexicalScope() as arguments can't
         // be modified
-        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(varDecl.getName(), FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(varDecl.getName(), getTypeInfo(varDecl.getType()), getFrameSlotKind(varDecl.getType()));
         FrameSlotAndDepthRW frameSlotAndDepthRW = new FrameSlotAndDepthRW(frameSlot, context.getDepth());
         context.getLexicalScope().put(varDecl.getName(), new FrameSlotAndDepthRO(frameSlotAndDepthRW));
         return new InitializeArgNode(frameSlot, position);
@@ -100,19 +159,55 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // TODO handle type with varDecl.getType
         String name = varDecl.getName();
         Expression value = varDecl.getValue();
-
-        return createAssignment(name, value);
+        if(value == null && varDecl.getType() instanceof NominalTypeExpr){
+            NominalTypeExpr varDeclType = (NominalTypeExpr) varDecl.getType();
+            return createAssignment(name, getTypeInfo(varDecl.getType()), fetchDefaultValue(varDeclType));
+        } else
+            return createAssignment(name, varDecl.getType(), value);
     }
 
-    protected CALExpressionNode createAssignment(String name, Expression value) {
+    private CALExpressionNode fetchDefaultValue(NominalTypeExpr varDeclType) {
+        if(varDeclType.getName().equals("List")){
+            List<Expression> l = varDeclType.getValueParameters().stream().filter(x -> x.getName().equals("size")).map(x -> x.getValue()).collect(Collectors.toList());
+            List<NominalTypeExpr> t = varDeclType.getTypeParameters().stream().filter(x -> x.getName().equals("type")).map(x -> (NominalTypeExpr) x.getValue()).collect(Collectors.toList());
+            if(l.size() > 0){
+                if(t.size() > 0){
+                    return new ListInitNodeSizeExpression(transformExpr(l.get(0)), fetchDefaultValue(t.get(0)));
+                }else
+                    return new ListInitNodeSizeExpression(transformExpr(l.get(0)), new NullLiteralNode());
+            }else{
+                return new UnknownSizeListInitNode();
+            }
+        } else if (varDeclType.getName().equals("int")){
+            return new LongLiteralNode(0);
+        } else if (varDeclType.getName().equals("uint")) {
+            return new LongLiteralNode(0);
+        } else
+            throw new TransformException("No default value for type " + varDeclType.getName(), context.getSource(), varDeclType);
+    }
+
+    protected CALExpressionNode createAssignment(String name, TypeExpr type, Expression value) {
         CALExpressionNode valueNode = transformExpr(value);
-        return createAssignment(name, valueNode);
+        return createAssignment(name, getTypeInfo(type), valueNode);
     }
 
-    protected CALExpressionNode createAssignment(String name, CALExpressionNode valueNode) {
+    protected CALExpressionNode createAssignment(String name, ValueCastNodeCreator caster, Expression value) {
+        CALExpressionNode valueNode = transformExpr(value);
+        return createAssignment(name, caster, valueNode);
+    }
+
+    protected CALExpressionNode createAssignment(String name, CALExpressionNode value) {
+        return createAssignment(name, DefaultValueCastNodeCreator.getInstance(), value);
+    }
+
+    protected CALExpressionNode createAssignment(String name, TypeExpr slotInfo, CALExpressionNode valueNode) {
+        return createAssignment(name, getTypeInfo(slotInfo), valueNode);
+    }
+
+    protected CALExpressionNode createAssignment(String name, ValueCastNodeCreator slotInfo, CALExpressionNode valueNode) {
         // FIXME we have to handle the case where actor declare a state and an action
         // redaclare a variable with the same name
-        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, FrameSlotKind.Illegal);
+        FrameSlot frameSlot = context.getFrameDescriptor().findOrAddFrameSlot(name, slotInfo, FrameSlotKind.Illegal);
         boolean newVariable = false;
         FrameSlotAndDepth slot;
         if (!context.getLexicalScope().containsKey(name)) {
@@ -129,7 +224,6 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         // result.addExpressionTag();
 
         return result;
-
     }
 
     public CALExpressionNode getReadNode(String name) {
@@ -179,11 +273,17 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         	output = transformExprComprehension((ExprComprehension) expr);
         } else if (expr instanceof ExprIf) {
         	output = transformExprIf((ExprIf) expr);
+        } else if (expr instanceof ExprProc) {
+            output = transformExprProc(((ExprProc) expr));
         } else {
             throw new TransformException("unknown expr " + expr.getClass().getName(), context.getSource(), expr);
         }
         return withSourceSection(output, expr);
-    } 
+    }
+
+    private CALExpressionNode transformExprProc(ExprProc expr) {
+        return (new ProcExprTransformer((ExprProc) expr, context.deeper(false))).transform();
+    }
 
     private CALExpressionNode transformExprVariable(ExprVariable expr) {
             ExprVariable v = (ExprVariable) expr;
@@ -212,50 +312,19 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
     }
 
     private CALExpressionNode transformExprComprehension(ExprComprehension comprehension) {
-        if (comprehension.getFilters().size() > 0)
-            throw new TransformException("filters not implemented", context.getSource(), comprehension);
-        Generator generator = comprehension.getGenerator();
-        // FIXME filters
-        ImmutableList<Expression> filters = comprehension.getFilters();
-        if (filters.size() > 0)
-            throw new TransformException("Filters not supported", context.getSource(), comprehension);
-        if (!(comprehension.getCollection() instanceof ExprList))
-            throw new TransformException("for comp should have a collection", context.getSource(), comprehension);
-        // [ f(x) : for x in originalList ] 
-        ExprList collection = (ExprList) comprehension.getCollection();
-
         CALStatementNode[] init = new CALStatementNode[3];
         // tempList=[]
-        init[0] = createAssignment("$tempList", new UnknownSizeListInitNode());
+        String tempListName = "$tempList" + String.valueOf(comprehension.hashCode());
+        init[0] = createAssignment(tempListName, DefaultValueCastNodeCreator.getInstance(), new UnknownSizeListInitNode());
+
         // i=0
-        init[1] = createAssignment("$comprehensionCounter", new BigIntegerLiteralNode(new BigInteger("0")));
+        String listIndexVarName = "$comprehensionCounter" + String.valueOf(comprehension.hashCode());
+        init[1] = createAssignment(listIndexVarName, DefaultValueCastNodeCreator.getInstance(), new BigIntegerLiteralNode(new BigInteger("0")));
 
-        // resolve originalList
-        CALExpressionNode list = transformExpr(generator.getCollection());
-        if (generator.getVarDecls().size() != 1) {
-            throw new TransformException("unsupported multiple var decls in for loop", context.getSource(), generator);
-        }
-        // x = originalList[i]
-        CALExpressionNode write = transformVarDecl(generator.getVarDecls().get(0));
-        if (collection.getElements().size() > 1)
-            throw new TransformException("unsupported more than 1 element for for-comp", context.getSource(), generator);
-        CALStatementNode[] bodyNodes = new CALStatementNode[2];
-        // tempList[i] = f(x)
-        bodyNodes[0] = ListWriteNodeGen.create(getReadNode("$tempList"), getReadNode("$comprehensionCounter"),
-                transformExpr(collection.getElements().get(0)));
-        // i= i + 1
-        bodyNodes[1] = createAssignment("$comprehensionCounter", CALBinaryAddNodeGen
-                .create(getReadNode("$comprehensionCounter"), new BigIntegerLiteralNode(new BigInteger("1"))));
+        // The Comprehension nodes will generate the content into the above list
+        init[2] = (new ExprComprehensionTransformer(comprehension, tempListName, listIndexVarName, context)).transform();
 
-        CALStatementNode body = new StmtBlockNode(bodyNodes);
-
-        if (write instanceof CALWriteLocalVariableNode) {
-            init[2] = ForeacheNodeGen.create(body, (CALWriteLocalVariableNode) write, list);
-            return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode("$tempList"));
-        } else {
-            throw new TransformException("Node write error", context.getSource(), comprehension);
-        }
-        // Transform the for loop and return the temporary list
+        return new ReturnsLastBodyNode(new StmtBlockNode(init), getReadNode(tempListName));
     }
 
     private CALExpressionNode transformExprIndexer(ExprIndexer exprIndexer) {
@@ -291,6 +360,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "not":
             result = CALUnaryLogicalNotNodeGen.create(valueNode);
             break;
+        case "#":
+            result = CALUnaryListSizeNodeGen.create(valueNode);
+            break;
         default:
             throw new Error("unimplemented unary op " + expr.getOperation());
         }
@@ -303,26 +375,37 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         if (operations.size() < 2)
             return expr;
 
+        // TODO: Get the precendence corrected
         Map<String, Integer> precedence = Map.ofEntries(
-                entry("and", 1),
-                entry("or", 1),
-                entry("=", 2),
-                entry("!=", 2),
-                entry("<", 2),
-                entry("<=", 2),
-                entry(">", 2),
-                entry(">=", 2),
-                entry("in", 3),
-                entry("+", 4),
-                entry("-", 4),
-                entry("div", 5),
-                entry("mod", 5),
-                entry("*", 5),
-                entry("/", 5),
-                entry("^", 6)
-                );
+                entry("..", 1),
+                entry("||", 7),
+                entry("or", 7),
+                entry("&&", 8),
+                entry("and", 8),
+                entry("|", 9),
+                entry("^", 10),
+                entry("&", 11),
+                entry("==", 12),
+                entry("=", 12),
+                entry("!=", 12),
+                entry(">=", 13),
+                entry(">", 13),
+                entry("<=", 13),
+                entry("<", 13),
+                entry("<<", 14),
+                entry(">>", 14),
+                entry("in", 14),
+                entry("-", 15),
+                entry("+", 15),
+                entry("/", 16),
+                entry("*", 16),
+                entry("div", 16),
+                entry("%", 16),
+                entry("mod", 16),
+                entry("**", 18)
+        );
 
-        int lower = 7;
+        int lower = Integer.MAX_VALUE;
         int operationIndex = 0;
         int i = 0;
         List<String> reverseOperations = new ArrayList<>(operations);
@@ -371,6 +454,9 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case "/":
             result = CALBinaryDivNodeGen.create(left, right);
             break;
+        case "mod":
+            result = CALBinaryModNodeGen.create(left, right);
+            break;
         case "<=":
             result = CALBinaryLessOrEqualNodeGen.create(left, right);
             break;
@@ -383,11 +469,32 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         case ">":
             result = CALBinaryGreaterThanNodeGen.create(left, right);
             break;
+        case "=":
+            result = CALBinaryEqualNodeGen.create(left, right);
+            break;
+        case "!=":
+            result = CALBinaryNotEqualNodeGen.create(left, right);
+            break;
         case "..":
             result = ListRangeInitNodeGen.create(left, right);
             break;
         case "and":
             result = new CALBinaryLogicalAndNode(left, right);
+            break;
+        case "or":
+            result = new CALBinaryLogicalOrNode(left, right);
+            break;
+        case ">>":
+            result = CALBinaryShiftRightNodeGen.create(left, right);
+            break;
+        case "<<":
+            result = CALBinaryShiftLeftNodeGen.create(left, right);
+            break;
+        case "&":
+            result = CALBinaryBitAndNodeGen.create(left, right);
+            break;
+        case "|":
+            result = CALBinaryBitOrNodeGen.create(left, right);
             break;
         default:
             throw new Error("unimplemented bin op " + opeString);
@@ -404,10 +511,33 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
         	output = transformStmtForeach((StmtForeach) statement);
         } else if (statement instanceof StmtIf) {
         	output = transformStmtIf((StmtIf) statement);
+        } else if (statement instanceof StmtBlock) {
+            output = transformStmtBlock((StmtBlock) statement);
+        } else if (statement instanceof StmtWhile) {
+            output = transformStmtWhile((StmtWhile) statement);
         } else {
             throw new Error("unknown statement " + statement.getClass().getName());
         }
         return withSourceSection(output, statement);
+    }
+
+    private StmtWhileNode transformStmtWhile(StmtWhile statement) {
+        return new StmtWhileNode(transformExpr(statement.getCondition()), transformStatementsList(statement.getBody()));
+    }
+
+    private StmtBlockNode transformStmtBlock(StmtBlock statement) {
+        CALStatementNode[] body = new CALStatementNode[statement.getVarDecls().size() + statement.getStatements().size()];
+        int i = 0;
+
+        for (LocalVarDecl varDecl : statement.getVarDecls()) {
+            body[i] = transformVarDecl(varDecl);
+            i++;
+        }
+        for(Statement stmt: statement.getStatements()){
+            body[i] = transformStatement(stmt);
+            i++;
+        }
+        return new StmtBlockNode(body);
     }
 
     private CALStatementNode transformStatementsList(List<Statement> statements) {
@@ -455,14 +585,23 @@ public abstract class ScopedTransformer<T> extends Transformer<T> {
             LValueVariable lvalue = (LValueVariable) stmtAssignment.getLValue();
             String name = lvalue.getVariable().getName();
 
-            return createAssignment(name, stmtAssignment.getExpression());
+            return createAssignment(name, DefaultValueCastNodeCreator.getInstance(), stmtAssignment.getExpression());
         } else if (stmtAssignment.getLValue() instanceof LValueIndexer) {
             LValueIndexer lvalue = (LValueIndexer) stmtAssignment.getLValue();
-            String name = ((LValueVariable) lvalue.getStructure()).getVariable().getName();
-            return ListWriteNodeGen.create(getReadNode(name), transformExpr(lvalue.getIndex()),
+            return ListWriteNodeGen.create(getReadNode(lvalue.getStructure()), transformExpr(lvalue.getIndex()),
                     transformExpr(stmtAssignment.getExpression()));
         } else {
             throw new Error("unknown lvalue " + stmtAssignment.getLValue().getClass().getName());
+        }
+    }
+
+    private CALExpressionNode getReadNode(LValue structure) {
+        if(structure instanceof LValueVariable){
+            return getReadNode(((LValueVariable) structure).getVariable().getName());
+        }else if(structure instanceof  LValueIndexer){
+            return ListReadNodeGen.create(getReadNode(((LValueIndexer) structure).getStructure()), transformExpr(((LValueIndexer) structure).getIndex()));
+        }else{
+            throw new TransformException("Unknown LValue structure for ReadNode: " + structure.toString(), context.getSource());
         }
     }
 

@@ -1,28 +1,24 @@
 package ch.epfl.vlsc.truffle.cal;
 
-import java.io.File;
-import java.io.FileReader;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
+import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepthRW;
+import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
+import ch.epfl.vlsc.truffle.cal.nodes.*;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
-import org.graalvm.options.OptionCategory;
-import org.graalvm.options.OptionDescriptors;
-import org.graalvm.options.OptionKey;
-import org.graalvm.options.OptionStability;
-
-import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.Option;
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -33,20 +29,19 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.graalvm.options.OptionCategory;
+import org.graalvm.options.OptionDescriptors;
+import org.graalvm.options.OptionKey;
+import org.graalvm.options.OptionStability;
 
-import ch.epfl.vlsc.truffle.cal.ast.FrameSlotAndDepthRW;
-import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALEvalRootNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
-import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
-import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.local.CALReadArgumentNode;
-import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
+import java.io.File;
+import java.io.FileReader;
+import java.math.BigInteger;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @TruffleLanguage.Registration(id = CALLanguage.ID, name = "CAL", defaultMimeType = CALLanguage.MIME_TYPE, characterMimeTypes = CALLanguage.MIME_TYPE, contextPolicy = TruffleLanguage.ContextPolicy.SHARED, fileTypeDetectors = CALFileDetector.class)
 @ProvidedTags({ StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class,
@@ -66,25 +61,13 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         counter++;
     }
 
-    @Option(help = "Actor to run", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "actor")
-    public static final OptionKey<String> ActorToRun = new OptionKey<>("main");
-
-    @Option(help = "Number of iterations", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "iterations")
-    public static final OptionKey<Integer> Iterations = new OptionKey<>(1);
-
-    @Option(help = "Includes all files of directory", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "directory-lookup")
-    public static final OptionKey<Boolean> dirLookup = new OptionKey<>(false);
-
-    @Option(help = "Show compilation warnings", category = OptionCategory.USER, stability = OptionStability.STABLE, name = "show-warnings")
-    public static final OptionKey<Boolean> showWarnings = new OptionKey<>(false);
-
     @Override
     protected CALContext createContext(Env env) {
         return new CALContext(this, env, new ArrayList<>(EXTERNAL_BUILTINS));
     }
 
     private RootCallTarget getRootCall(Map<String, RootCallTarget> actors, Source source) {
-        String actorName = getCurrentContext().getEnv().getOptions().get(CALLanguage.ActorToRun);
+        String actorName = getCurrentContext().getEnv().getOptions().get(OptionsCatalog.ENTITY_QID_KEY);
         //RootCallTarget startNode = actors.get(QID.parse(actorName));
         RootCallTarget startNode = actors.get(actorName);
         assert startNode != null;
@@ -93,7 +76,11 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         // Assign
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         String actorInstanceName = "testActorInstance";
-        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, FrameSlotKind.Illegal);
+
+        // The second argument, slotInfo is used here to store a factory of type cast/coerce nodes.
+        // This is used, for example, to trim a 16-bit number to fit in 8-bit slot, in order to simulate
+        // overflow/underflow of types.
+        FrameSlot frameSlot = frameDescriptor.findOrAddFrameSlot(actorInstanceName, DefaultValueCastNodeCreator.getInstance(), FrameSlotKind.Illegal);
         FrameSlotAndDepthRW existingSlot = new FrameSlotAndDepthRW(frameSlot, 0);
         boolean newVariable = true;
         CALExpressionNode valueNode = call;
@@ -103,13 +90,39 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
 
         // Call actor instance
         final CALExpressionNode instance = existingSlot.createReadNode(0);
-        int iterations = getCurrentContext().getEnv().getOptions().get(CALLanguage.Iterations);
-        CALExpressionNode[] bodyNodes = new CALExpressionNode[1 + iterations];
-        bodyNodes[0] = result;
-        for (int i = 0; i < iterations; i++) {
-            bodyNodes[i + 1] = new CALInvokeNode(instance, new CALExpressionNode[0]);
-        }
 
+        int iterations = getCurrentContext().getEnv().getOptions().get(OptionsCatalog.ITERATIONS_KEY);
+        CALStatementNode[] bodyNodes;
+        if(iterations >= 0) {
+            bodyNodes = new CALStatementNode[3];
+            bodyNodes[0] = result;
+            String iterationNumVarName = "$" + actorInstanceName + "iterationNum" + String.valueOf(source.hashCode());
+            FrameSlot iterationNumFrameSlot = frameDescriptor.findOrAddFrameSlot(iterationNumVarName, DefaultValueCastNodeCreator.getInstance(), FrameSlotKind.Object);
+            FrameSlotAndDepthRW iterationNumExistingSlot = new FrameSlotAndDepthRW(iterationNumFrameSlot, 0);
+            // Create variable to store number of iterations done
+            bodyNodes[1] = iterationNumExistingSlot.createWriteNode(new BigIntegerLiteralNode(new BigInteger("0")), new StringLiteralNode(iterationNumVarName), true, 0);
+            // Loop until the number of iterations done is less than number of targetted iterations
+            bodyNodes[2] = new StmtWhileNode(
+                    CALBinaryLessThanNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(new BigInteger(String.valueOf(iterations)))),
+                    new StmtBlockNode(new CALStatementNode[]{
+                        new CALInvokeNode(instance, new CALExpressionNode[0]),
+                        iterationNumExistingSlot.createWriteNode(CALBinaryAddNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(BigInteger.ONE)), new StringLiteralNode(iterationNumVarName), false, 0)
+                    }));
+        } else {
+            bodyNodes = new CALStatementNode[3];
+            bodyNodes[0] = result;
+
+            // The network/actor returns a boolean indicating whether it executed or not.
+            // Through the following, we loop till the network/actor executes at least 1 action.
+            // If during an iteration, there is no progress, then we stop.
+            String executionStatusVarName = ScopeEnvironment.generateVariableName();
+            FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, DefaultValueCastNodeCreator.getInstance(), FrameSlotKind.Boolean);
+            FrameSlotAndDepthRW executionStatusExistingSlot = new FrameSlotAndDepthRW(executionStatusFrameSlot, 0);
+            // Execute once and store execution result to a variable
+            bodyNodes[1] = executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), true, 0);
+            // Loop until the execution status variable is true
+            bodyNodes[2] = new StmtWhileNode(executionStatusExistingSlot.createReadNode(0), executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), false, 0));
+        }
         CALStatementNode body = new StmtBlockNode(bodyNodes);
         RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body),
                 source.createUnavailableSection(), "program root");
@@ -137,15 +150,27 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         Source source = request.getSource();
         File entry = Paths.get(source.getURI()).toFile();
         List<File> allFiles;
-        if (getCurrentContext().getEnv().getOptions().get(CALLanguage.dirLookup))
+
+        if (getCurrentContext().getEnv().getOptions().get(OptionsCatalog.DIRECTORY_LOOKUP_KEY))
             allFiles = getFilesRecursively(entry.getParentFile());
         else
             allFiles = Arrays.asList(entry);
 
         Map<String, RootCallTarget> entities = new HashMap<>();
+        Map<List<String>, List<QualifiedID>> namespaceEntities = new HashMap<>();
+        List<ImmutablePair<Source, CALParser.CompilationUnitContext>> sourceParsers = new LinkedList<>();
         for (File file : allFiles) {
             Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
-            entities.putAll(CALParser.parseCAL(this, iSource));
+            Pair<Map<List<String>, List<QualifiedID>>, CALParser.CompilationUnitContext> namespaceEntitiesAndParser = CALParser.getNamespaceEntitiesAndParser(iSource);
+            for (List<String> namespaceParts : namespaceEntitiesAndParser.getLeft().keySet()) {
+                if(!namespaceEntities.containsKey(namespaceParts)) namespaceEntities.put(namespaceParts, new LinkedList<>());
+                namespaceEntities.get(namespaceParts).addAll(namespaceEntitiesAndParser.getLeft().get(namespaceParts));
+            }
+            sourceParsers.add(new ImmutablePair<>(iSource, namespaceEntitiesAndParser.getRight()));
+        }
+
+        for(ImmutablePair<Source, CALParser.CompilationUnitContext> p : sourceParsers){
+            entities.putAll(CALParser.parseCAL(this, p.getRight(), p.getLeft(), namespaceEntities));
         }
 
         return Truffle.getRuntime().createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), entities));
@@ -251,7 +276,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
     @Override
     protected OptionDescriptors getOptionDescriptors() {
         // this class is generated by the annotation processor
-        return new CALLanguageOptionDescriptors();
+        return OptionDescriptors.create(Arrays.asList(OptionsCatalog.allDescriptors()));
     }
 
 }

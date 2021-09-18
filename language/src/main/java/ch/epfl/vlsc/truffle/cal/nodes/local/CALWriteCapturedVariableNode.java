@@ -10,19 +10,20 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.runtime.CALArguments;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
-@NodeChild("valueNode")
+@NodeChild(type=CALExpressionNode.class, value="valueNode")
 @NodeField(name = "depth", type = int.class)
-public abstract class CALWriteCapturedVariableNode extends CALExpressionNode implements FrameSlotNode {
+public abstract class CALWriteCapturedVariableNode extends CALWriteVariableNode {
 
 	@Child CALWriteFrameSlotNode writeFrameSlotNode;
-	
+
 	public CALWriteCapturedVariableNode(FrameSlot slot, CALExpressionNode name, boolean newVariable) {
 		this.writeFrameSlotNode = CALWriteFrameSlotNodeGen.create(slot, name, newVariable);
 	}
 
-	
-    protected abstract int getDepth();
+	protected abstract int getDepth();
 
 
 	public FrameSlot getSlot() {

@@ -1,0 +1,18 @@
+namespace jpeg:
+
+	import entity jpeg.io.Source;
+	import entity jpeg.io.Display;
+	import entity jpeg.decoder.JpegDecoder;
+
+	network Top_JPEG_Decoder() ==> :
+	entities 
+		source = Source();
+		decoder = JpegDecoder() {partition = "hw";};
+		display = Display();
+	structure
+		source.Out --> decoder.BYTE; 
+		decoder.YCbCr --> display.In;
+		decoder.SOI --> display.SOI;
+	end	
+
+end

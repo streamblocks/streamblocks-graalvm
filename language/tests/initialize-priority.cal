@@ -1,0 +1,43 @@
+namespace test:
+    actor test () ==> :
+        state := 3;
+
+        action ==>
+        guard state = 0
+        do
+                state := 1;
+                println(0);
+        end
+
+        action ==>
+        guard state = 1
+        do
+                state := 0;
+                println(1);
+        end
+
+        A: initialize ==>
+        guard state = 1
+        do
+                state := 0;
+                println(3);
+        end
+
+        B: initialize ==>
+        guard state = 3
+        do
+                state := 0;
+                println(4);
+        end
+
+        C: initialize ==>
+        guard state = 3
+        do
+                state := 0;
+                println(2);
+        end
+
+        priority C > B; end
+    end
+end
+

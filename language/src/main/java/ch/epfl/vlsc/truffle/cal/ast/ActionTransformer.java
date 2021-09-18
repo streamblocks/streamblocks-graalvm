@@ -1,9 +1,15 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
@@ -13,31 +19,26 @@ import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.ActionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessOrEqualNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinarySubNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFIFOSizeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALReadFIFONode;
-import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALWriteFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListRangeInitNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListReadNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListWriteNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
+import se.lth.cs.tycho.ir.QID;
 import se.lth.cs.tycho.ir.decl.LocalVarDecl;
 import se.lth.cs.tycho.ir.entity.cal.Action;
 import se.lth.cs.tycho.ir.entity.cal.InputPattern;
 import se.lth.cs.tycho.ir.entity.cal.OutputExpression;
-import se.lth.cs.tycho.ir.expr.Expression;
 import se.lth.cs.tycho.ir.expr.pattern.Pattern;
 import se.lth.cs.tycho.ir.expr.pattern.PatternBinding;
 import se.lth.cs.tycho.ir.stmt.Statement;
+import se.lth.cs.tycho.ir.type.TypeExpr;
 
 public class ActionTransformer extends ScopedTransformer<ActionNode> {
 
+    public static final String UNNAMED_ACTION = "unnammed action";
     Action action;
 
     // FIXME we should use different frameDescriptor as the one used in actor is
@@ -100,74 +101,79 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
     }
 
     public ActionNode transform() {
-        CALStatementNode[] body = new CALStatementNode[action.getInputPatterns().size()
-                + action.getOutputExpressions().size() + action.getBody().size() + action.getVarDecls().size()];
-        int i = 0;
-
-        for (InputPattern input : action.getInputPatterns()) {
-            // TODO implement patterns
-            // FIXME
-            Pattern pat = input.getMatches().get(0).getExpression().getAlternatives().get(0).getPattern();
-            String name;
-            if (pat instanceof PatternBinding)
-                name = ((PatternBinding) pat).getDeclaration().getName();
-            else
-                throw new TransformException("Pattern not implemented", context.getSource(), pat);
-
-            if (input.getRepeatExpr() != null)
-                body[i] = createAssignment(name, batchReadInput(input));
-            else
-                body[i] = createAssignment(name, new CALReadFIFONode(getReadNode(input.getPort().getName())));
-            i++;
-        }
-        // Prepend local variable declarations to the body nodes
-        for (LocalVarDecl varDecl : action.getVarDecls()) {
-            body[i] = transformVarDecl(varDecl);
-            i++;
-        }
-        for (Statement statement : action.getBody()) {
-            body[i] = transformStatement(statement);
-            i++;
-        }
-        // get the variables name linked to the output and add a write to the FIFO
-        // in the tail of the action
-        for (OutputExpression output : action.getOutputExpressions()) {
-            CALExpressionNode fifo = getReadNode(output.getPort().getName());
-            if (output.getExpressions().size() > 1)
-                throw new TransformException("More than one output expr not supported", context.getSource(), output);
-            if (output.getRepeatExpr() == null) {
-                CALExpressionNode value = transformExpr(output.getExpressions().get(0));
-                body[i] = new CALWriteFIFONode(fifo, value);
-            } else {
-                body[i] = batchWriteOutput(output);
-            }
-            i++;
-        }
+        ArrayList<CALStatementNode> bodyArr = new ArrayList<CALStatementNode>();
+        bodyArr.ensureCapacity(action.getInputPatterns().size() + action.getOutputExpressions().size() + action.getBody().size() + action.getVarDecls().size());
 
         // Firing conditions
         List<CALExpressionNode> firingConditions = new LinkedList<>();
-        // check there is enough tokens to bind
-        for (InputPattern input : action.getInputPatterns()) {
-            // TODO implement patterns
-            Pattern pat = input.getMatches().get(0).getExpression().getAlternatives().get(0).getPattern();
-            String name;
-            if (pat instanceof PatternBinding)
-                name = ((PatternBinding) pat).getDeclaration().getName();
-            else
-                throw new TransformException("Pattern not implemented", context.getSource(), pat);
-            if (input.getRepeatExpr() == null)
-                firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(1),
-                        new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
-            else
-                firingConditions.add(CALBinaryLessOrEqualNodeGen.create(transformExpr(input.getRepeatExpr()),
-                        new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
+        List<CALStatementNode> inputTokenBindings = new LinkedList<>();
 
-                
+        // The fifos provide a mechanism similar to databases transaction-rollback-commit API
+        // The guards first ensure the number of required tokens are available in the FIFO
+        // And after that initiate a transaction and pop the tokens from the FIFO
+        // The guard condition is then evaluated. If it fails, the transaction is
+        // rolled-back(tokens popped are put back to the fifo) otherwise they are committed.
+        List<CALFifoTransactionCommit> transactionCommits = new LinkedList<>();
+        List<CALFifoTransactionRollback> transactionRollbacks = new LinkedList<>();
+
+        // Each Input pattern refers to one input port.
+        for(InputPattern input: action.getInputPatterns()) {
+            // Initiate a transaction before popping values from the fifos
+            inputTokenBindings.add(new CALFifoTransactionInit(getReadNode(input.getPort().getName())));
+            if (input.getRepeatExpr() == null) {
+                for (int j = 0; j < input.getMatches().size(); ++j) {
+                    Pattern pat = input.getMatches().get(j).getExpression().getAlternatives().get(0).getPattern();
+                    String name;
+                    TypeExpr type;
+                    if (pat instanceof PatternBinding){
+                        name = ((PatternBinding) pat).getDeclaration().getName();
+                        type = ((PatternBinding) pat).getDeclaration().getType();
+                    }
+                    else
+                        throw new TransformException("Pattern not implemented", context.getSource(), pat);
+                    inputTokenBindings.add(createAssignment(name, type, new CALReadFIFONode(getReadNode(input.getPort().getName()))));
+                }
+                firingConditions.add(CALBinaryLessOrEqualNodeGen.create(new LongLiteralNode(input.getMatches().size()),
+                        new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
+            } else {
+                ArrayList<String> inputExprNames = new ArrayList<String>();
+                ArrayList<TypeExpr> types = new ArrayList<TypeExpr>();
+                inputExprNames.ensureCapacity(input.getMatches().size());
+                for (int j = 0; j < input.getMatches().size(); ++j) {
+                    Pattern pat = input.getMatches().get(j).getExpression().getAlternatives().get(0).getPattern();
+                    String name;
+                    if (pat instanceof PatternBinding) {
+                        name = ((PatternBinding) pat).getDeclaration().getName();
+                        inputExprNames.add(name);
+                        types.add(((PatternBinding) pat).getDeclaration().getType());
+                    } else
+                        throw new TransformException("Pattern not implemented", context.getSource(), pat);
+                }
+                List<CALExpressionNode> listReadNodes = createRepeatBatchInput(inputTokenBindings, inputExprNames, types, input.getPort().getName(), transformExpr(input.getRepeatExpr()));
+                for (int j = 0; j < listReadNodes.size(); ++j) {
+                    inputTokenBindings.add(createAssignment(inputExprNames.get(j), types.get(j), listReadNodes.get(j)));
+                }
+                firingConditions.add(CALBinaryLessOrEqualNodeGen.create(CALBinaryMulNodeGen.create(transformExpr(input.getRepeatExpr()), new LongLiteralNode(input.getMatches().size())),
+                        new CALFIFOSizeNode(getReadNode(input.getPort().getName()))));
+            }
+            transactionCommits.add(new CALFifoTransactionCommit(getReadNode(input.getPort().getName())));
+            transactionRollbacks.add(new CALFifoTransactionRollback(getReadNode(input.getPort().getName())));
         }
+
+        CALExpressionNode guardCondition;
         // Parse guards
-        for (Expression guard : action.getGuards()) {
-            firingConditions.add(transformExpr(guard));
+        if(action.getGuards().size() > 0){
+            int i = 0;
+            guardCondition = transformExpr(action.getGuards().get(i++));
+            while(i < action.getGuards().size()){
+                guardCondition = new CALBinaryLogicalAndNode(guardCondition, transformExpr(action.getGuards().get(i++)));
+            }
+        } else {
+            guardCondition = new BooleanLiteralNode(true);
         }
+
+        firingConditions.add(new ReturnsLastBodyNode(new StmtBlockNode(inputTokenBindings.toArray(new CALStatementNode[inputTokenBindings.size()])), guardCondition));
+
         // Build the boolean expression to determine whether an action is fireable
         CALExpressionNode firingCondition;
         if (firingConditions.size() > 0) {
@@ -178,14 +184,79 @@ public class ActionTransformer extends ScopedTransformer<ActionNode> {
             firingCondition = new BooleanLiteralNode(true);
         }
 
+        // Prepend local variable declarations to the body nodes
+        for (LocalVarDecl varDecl : action.getVarDecls()) {
+            bodyArr.add(transformVarDecl(varDecl));
+        }
+        for (Statement statement : action.getBody()) {
+            bodyArr.add(transformStatement(statement));
+        }
+
+        // get the variables name linked to the output and add a write to the FIFO
+        // in the tail of the action
+        for (OutputExpression output : action.getOutputExpressions()) {
+            CALExpressionNode fifo = getReadNode(output.getPort().getName());
+            if (output.getRepeatExpr() == null) {
+                bodyArr.addAll(output.getExpressions()
+                        .map(
+                            expr -> transformExpr(expr)
+                        ).map(
+                            value -> new CALWriteFIFONode(fifo, value)
+                        ));
+            } else {
+                if (output.getExpressions().size() > 1)
+                    throw new TransformException("More than one output expr not supported", context.getSource(), output);
+                bodyArr.add(batchWriteOutput(output));
+            }
+        }
+
+        CALStatementNode[] body = bodyArr.toArray(new CALStatementNode[bodyArr.size()]);
+
         StmtBlockNode block = new StmtBlockNode(body);
         ActionBodyNode bodyNode = new ActionBodyNode(block);
         SourceSection actionSrc = getSourceSection(action);
-        String name;
-        if (action.getTag() != null)
-        	name = action.getTag().toString();
-        else
-        	name = "unnammed action";
-        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name);
+
+        QualifiedID name;
+        boolean isQidTagged;
+        if (action.getTag() != null) {
+            name = new QualifiedID(action.getTag().parts());
+            isQidTagged = true;
+        }else {
+            name = QualifiedID.of(UNNAMED_ACTION);
+            isQidTagged = false;
+        }
+        return new ActionNode(context.getLanguage(), context.getFrameDescriptor(), bodyNode, firingCondition, actionSrc, name, isQidTagged, transactionCommits.toArray(new CALStatementNode[transactionCommits.size()]), transactionRollbacks.toArray(new CALStatementNode[transactionRollbacks.size()]));
+    }
+
+    private List<CALExpressionNode> createRepeatBatchInput(List<CALStatementNode> bodyArr, ArrayList<String> inputExprNames, ArrayList<TypeExpr> types, String portName, CALExpressionNode repeatExpr) {
+        LinkedList<CALStatementNode> init = new LinkedList<CALStatementNode>();
+        List<String> tempListNames = inputExprNames.stream().map(exprName -> "$tempList" + exprName.hashCode()).collect(Collectors.toList());
+        List<String> comprehensionCounterVarNames = inputExprNames.stream().map(exprName -> "$comprehensionCounter" + exprName.hashCode()).collect(Collectors.toList());
+
+        // Create assignments for new lists to hold the read inputs and their sizes
+        for(int i = 0; i < inputExprNames.size(); ++i){
+            init.add(createAssignment(tempListNames.get(i), new UnknownSizeListInitNode()));
+            init.add(createAssignment(comprehensionCounterVarNames.get(i), new BigIntegerLiteralNode(new BigInteger("0"))));
+        }
+
+        // List of range 0..(numRepetitions - 1)
+        CALExpressionNode list = ListRangeInitNodeGen.create(new BigIntegerLiteralNode(new BigInteger("0")),
+                CALBinarySubNodeGen.create(repeatExpr, new LongLiteralNode(1)));
+        ArrayList<CALStatementNode> bodyNodes = new ArrayList<CALStatementNode>();
+
+        // We create a for loop iterating over the list 0..(numRepetitions - 1)
+        // In each iteration, number of tokens equal to number of expressions are
+        // popped and added to the list corresponding to the expression name
+        for(int i = 0; i < inputExprNames.size(); ++i){
+            bodyNodes.add(ListWriteNodeGen.create(getReadNode(tempListNames.get(i)), getReadNode(comprehensionCounterVarNames.get(i)),
+                    getTypeInfo(types.get(i)).create(new CALReadFIFONode(getReadNode(portName)))));
+            bodyNodes.add(createAssignment(comprehensionCounterVarNames.get(i), CALBinaryAddNodeGen
+                    .create(getReadNode(comprehensionCounterVarNames.get(i)), new BigIntegerLiteralNode(new BigInteger("1")))));
+        }
+        CALStatementNode body = new StmtBlockNode(bodyNodes.toArray(new CALStatementNode[bodyNodes.size()]));
+
+        init.add(ForeacheNodeGen.create(body, null, list));
+        bodyArr.addAll(init);
+        return tempListNames.stream().map(listName -> getReadNode(listName)).collect(Collectors.toList());
     }
 }

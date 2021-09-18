@@ -6,6 +6,7 @@ import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 
 /**
  * Singleton class that provides an implementation for a structure sub-tree.
@@ -83,7 +84,7 @@ public class StructureVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.attributeSection() != null) {
             // TODO Add support for attribute section
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Structure attributes are not yet supported");
             }
         }

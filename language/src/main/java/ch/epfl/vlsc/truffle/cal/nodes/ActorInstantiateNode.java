@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -27,6 +28,16 @@ class ActorInstantiateNode extends CALExpressionNode {
         // create a new frame with the actor's frame descriptor
         MaterializedFrame actorFrame = Truffle.getRuntime().createMaterializedFrame(frame.getArguments(), actor.getFrameDescriptor());
         head.executeVoid(actorFrame);
-        return new CALActorInstance(actor, actorFrame);
+
+        // TODO: Perform fsm transition from initializer actions.
+        for (ActionNode initializeraction : this.actor.getInitializerActions()) {
+            CallTarget target = Truffle.getRuntime().createCallTarget(initializeraction);
+            Boolean executed = (Boolean) Truffle.getRuntime().createIndirectCallNode().call(target, actorFrame);
+            if (executed)
+                break;
+        }
+        if(actor.getCurrStateSlot() != null) actorFrame.setLong(actor.getCurrStateSlot(), 0);
+        CALActorInstance actorInstance = new CALActorInstance(actor, actorFrame);
+        return actorInstance;
     }
 }

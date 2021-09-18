@@ -11,7 +11,7 @@ import ch.epfl.vlsc.truffle.cal.runtime.CALBigNumber;
 @NodeInfo(shortName = "%")
 public abstract class CALBinaryModNode extends CALBinaryNode {
     @Specialization(rewriteOn = ArithmeticException.class)
-    protected long div(long left, long right) throws ArithmeticException {
+    protected long mod(long left, long right) throws ArithmeticException {
         long result = left % right;
         /*
          * The division overflows if left is Long.MIN_VALUE and right is -1.
@@ -24,8 +24,8 @@ public abstract class CALBinaryModNode extends CALBinaryNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected CALBigNumber div(CALBigNumber left, CALBigNumber right) {
-        return new CALBigNumber(left.getValue().divide(right.getValue()));
+    protected CALBigNumber mod(CALBigNumber left, CALBigNumber right) {
+        return new CALBigNumber(left.getValue().mod(right.getValue()));
     }
 
     @Fallback

@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -8,21 +9,26 @@ import com.oracle.truffle.api.source.SourceSection;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 public final class ActionNode extends CALRootNode {
-    @Child
-    private CALExpressionNode body;
-    @Child
-    private CALExpressionNode firingCondition;
-    private final String name;
+    @Children private CALStatementNode[] transactionCommits;
+    @Children private CALStatementNode[] transactionRollbacks;
+    @Child private CALExpressionNode body;
+    @Child private CALExpressionNode firingCondition;
+    private final QualifiedID name;
     private boolean isCloningAllowed;
+    private final boolean isQIDTagged; // TODO Tag as compile time constant
     private final SourceSection sourceSection;
 
     public ActionNode(CALLanguage language, FrameDescriptor frameDescriptor, CALExpressionNode body,
-            CALExpressionNode firingCondition, SourceSection sourceSection, String name) {
-        super(language, frameDescriptor, body, sourceSection, name);
+                      CALExpressionNode firingCondition, SourceSection sourceSection, QualifiedID name, boolean isQidTagged,
+                      CALStatementNode[] transactionCommits, CALStatementNode[] transactionRollbacks) {
+        super(language, frameDescriptor, body, sourceSection, name.toString());
         this.body = body;
         this.firingCondition = firingCondition;
         this.sourceSection = sourceSection;
         this.name = name;
+        this.isQIDTagged = isQidTagged;
+        this.transactionCommits = transactionCommits;
+        this.transactionRollbacks = transactionRollbacks;
     }
 
     @Override
@@ -38,8 +44,14 @@ public final class ActionNode extends CALRootNode {
             boolean fireable = (Boolean) firingCondition.executeBoolean(frame);
             if (fireable) {
                 body.executeGeneric(frame);
+                for(int i = 0; i < transactionCommits.length; ++i){
+                    transactionCommits[i].executeVoid(frame);
+                }
                 return true;
             } else {
+                for(int i = 0; i < transactionRollbacks.length; ++i){
+                    transactionRollbacks[i].executeVoid(frame);
+                }
                 return false;
             }
         } catch (UnexpectedResultException e) {
@@ -55,7 +67,15 @@ public final class ActionNode extends CALRootNode {
 
     @Override
     public String getName() {
+        return name.toString();
+    }
+
+    public QualifiedID getQID() {
         return name;
+    }
+
+    public boolean isQidTagged(){
+        return this.isQIDTagged;
     }
 
     public void setCloningAllowed(boolean isCloningAllowed) {

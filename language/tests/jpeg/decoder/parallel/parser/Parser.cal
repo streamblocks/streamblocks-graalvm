@@ -1,0 +1,29 @@
+namespace jpeg.decoder.parallel.parser:
+
+import entity jpeg.decoder.parallel.parser.ParseJPEG;
+import entity jpeg.decoder.parallel.parser.SplitQT;
+
+	network Parser() 
+		uint(size=8) Byte
+		==> 
+		uint(size=8) Data, 
+		uint(size=8) QT_Y, 
+		uint(size=8) QT_UV, 
+		uint(size=8) HT, 
+		uint(size=16) SOI:
+		
+	entities
+		parse = ParseJPEG();
+		splitQT = SplitQT();
+	structure
+		Byte --> parse.Byte;
+		parse.Data --> Data;
+		parse.QT --> splitQT.QT;
+		parse.HT --> HT;
+		parse.SOI --> SOI;
+		
+		splitQT.QT_Y --> QT_Y;
+		splitQT.QT_UV --> QT_UV;
+	end
+
+end

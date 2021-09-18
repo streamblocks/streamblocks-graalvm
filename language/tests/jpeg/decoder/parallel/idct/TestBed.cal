@@ -1,0 +1,49 @@
+namespace jpeg.decoder.parallel.idct:
+
+    actor Generator() ==> int(size=13) OUT:
+
+        List(type:int(size=13), size= 64) values = [
+            1458, -289, -249, -149, -169, -89, -49, 0,
+            49, 69, 0, 0, -29, -29, -49, 0,
+            89, -69, -29, -29, 49, 0, 0, 0,
+            69, -69, 0, 0, 0, 0, 0, 0,
+            69, 0, 0, -29, -29, 0, 0, 0,
+            0, 0, 0, -29, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0];
+        int i := 0;
+        do
+           while(i < 64) do
+                OUT <-- values[i];
+                println(""+values[i]);
+                i := i + 1;
+           end
+           println("");
+        end
+
+    end
+
+    actor Sink() uint(size=8) IN ==> :
+    
+        int Counter := 0;
+
+        action IN:[token] ==>
+        do
+            println(""+token);
+            Counter := Counter + 1;
+        end
+
+    end
+
+    network TestIDCT() ==> :
+        entities
+            source = Generator();
+            idct2d = IDCT2D();
+            sink  = Sink();
+        structure
+            source.OUT --> idct2d.IN;
+            idct2d.OUT --> sink.IN;
+    end
+
+
+end

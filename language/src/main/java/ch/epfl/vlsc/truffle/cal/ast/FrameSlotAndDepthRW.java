@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
+import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
 import com.oracle.truffle.api.frame.FrameSlot;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
@@ -43,9 +44,9 @@ public class FrameSlotAndDepthRW implements FrameSlotAndDepth{
 		int rewindDepth = currentDepth - declarationDepth;
         assert rewindDepth >= 0;
 		if (rewindDepth == 0) {
-			return CALWriteLocalVariableNodeGen.create(slot, nameNode, newVariable, value);
+			return CALWriteLocalVariableNodeGen.create(slot, nameNode, newVariable, ((ValueCastNodeCreator) slot.getInfo()).create(value));
 		} else {
-			return CALWriteCapturedVariableNodeGen.create(slot, nameNode, newVariable, value, rewindDepth);
+			return CALWriteCapturedVariableNodeGen.create(slot, nameNode, newVariable, ((ValueCastNodeCreator) slot.getInfo()).create(value), rewindDepth);
 		}
 	}
 

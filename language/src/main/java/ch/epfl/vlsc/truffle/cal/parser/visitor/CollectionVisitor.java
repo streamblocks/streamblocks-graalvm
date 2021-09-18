@@ -1,14 +1,25 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.nodes.*;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoTransactionCommit;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoTransactionRollback;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import ch.epfl.vlsc.truffle.cal.parser.CALLexer;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.commons.lang3.tuple.Triple;
+import org.jgrapht.alg.color.SaturationDegreeColoring;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +37,10 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
         }
 
         return instance;
+    }
+
+    public static QualifiedID qualifiedIdCreator(Collection<Token> visitActionTag) {
+        return new QualifiedID(visitActionTag.stream().map(token -> token.getText()).collect(Collectors.toList()));
     }
 
     /**
@@ -77,9 +92,9 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
      */
     @Override public Collection<InitializeArgNode> visitPortDeclarations(CALParser.PortDeclarationsContext ctx) {
         Collection<InitializeArgNode> ports = new ArrayList<>();
-        for (CALParser.PortDeclarationContext portCtx: ctx.portDeclaration()) {
+        ctx.portDeclaration().stream().sorted(Comparator.comparing(o -> o.name.getText())).forEach(portCtx -> {
             ports.add(VariableVisitor.getInstance().visitPortDeclaration(portCtx));
-        }
+        });
 
         return ports;
     }
@@ -87,11 +102,24 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
     /**
      * {@inheritDoc}
      */
-    @Override public Collection<CALExpressionNode> visitInputPatterns(CALParser.InputPatternsContext ctx) {
-        Collection<CALExpressionNode> patterns = new ArrayList<>();
-        for (CALParser.InputPatternContext patternCtx: ctx.inputPattern()) {
-            patterns.add(ActionVisitor.getInstance().visitInputPattern(patternCtx));
-        }
+    @Override public Collection<Triple<CALExpressionNode, CALFifoTransactionCommit, CALFifoTransactionRollback>> visitInputPatterns(CALParser.InputPatternsContext ctx) {
+        Collection<Triple<CALExpressionNode, CALFifoTransactionCommit, CALFifoTransactionRollback>> patterns = new ArrayList<>();
+
+        if (ctx.inputPattern().stream().allMatch(inpExp -> inpExp.port == null)) {
+            List<String> inputPorts = ActorVisitor.getActorInputPorts(ActorVisitor.getCurrentlyProcessingActor());
+            if (ctx.inputPattern().size() != inputPorts.size()) {
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit port mapping in action input does not have same number of output ports as actor");
+            }
+            for(int i = 0; i < ctx.inputPattern().size(); ++i) {
+                ActionVisitor.setPortName(inputPorts.get(i));
+                patterns.add(ActionVisitor.getInstance().visitInputPattern(ctx.inputPattern(i)));
+            }
+        } else if (ctx.inputPattern().stream().allMatch(inpExp -> inpExp.port != null)) {
+            for (CALParser.InputPatternContext patternCtx: ctx.inputPattern()) {
+                patterns.add(ActionVisitor.getInstance().visitInputPattern(patternCtx));
+            }
+        } else
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Either all input expression ports must be named or none");
 
         return patterns;
     }
@@ -118,10 +146,21 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
      */
     @Override public Collection<CALStatementNode> visitOutputExpressions(CALParser.OutputExpressionsContext ctx) {
         Collection<CALStatementNode> expressions = new ArrayList<>();
-        for (CALParser.OutputExpressionContext expressionCtx: ctx.outputExpression()) {
-            expressions.add(ActionVisitor.getInstance().visitOutputExpression(expressionCtx));
-        }
-
+        if (ctx.outputExpression().stream().allMatch(outExp -> outExp.port == null)) {
+            List<String> outputPorts = ActorVisitor.getActorOutputPorts(ActorVisitor.getCurrentlyProcessingActor());
+            if (ctx.outputExpression().size() != outputPorts.size()) {
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit port mapping in action output does not have same number of output ports as actor");
+            }
+            for(int i = 0; i < ctx.outputExpression().size(); ++i) {
+                ActionVisitor.setPortName(outputPorts.get(i));
+                expressions.add(ActionVisitor.getInstance().visitOutputExpression(ctx.outputExpression(i)));
+            }
+        } else if (ctx.outputExpression().stream().allMatch(outExp -> outExp.port != null)) {
+            for (CALParser.OutputExpressionContext expressionCtx: ctx.outputExpression()) {
+                expressions.add(ActionVisitor.getInstance().visitOutputExpression(expressionCtx));
+            }
+        } else
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Either all output expression ports must be named or none");
         return expressions;
     }
 

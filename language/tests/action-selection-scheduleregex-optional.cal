@@ -1,0 +1,10 @@
+namespace test:
+	actor test () ==>:
+        A: action ==> do println(1); end
+        B: action ==> do println(2); end
+        C: action ==> do println(3); end
+        schedule regexp
+            ((A B [C]) | ([A] B C) | (A [B] C))*
+        end
+	end
+end

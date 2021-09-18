@@ -26,6 +26,9 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.runner.Description;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
 abstract class CALTestSuite {
@@ -117,7 +120,7 @@ abstract class CALTestSuite {
 
 			public TestCase build() throws FileNotFoundException, IOException {
 				Map<String, String> options = new HashMap<>();
-				options.put("cal.actor", actorName);
+				options.put("cal.entity-qid", actorName);
 				options.put("cal.iterations", iterations.toString());
 				options.put("cal.directory-lookup", dirLookup.toString());
 				options.put("cal.show-warnings", showWarnings.toString());
@@ -167,6 +170,37 @@ abstract class CALTestSuite {
 
 			String actualOutput = new String(out.toByteArray());
 			Assert.assertEquals(testCase.name.toString(), testCase.expectedOutput, actualOutput);
+		} finally {
+			if (context != null) {
+				context.close();
+			}
+		}
+	}
+
+	protected void runTestRegexPartial(TestCase testCase) throws IOException {
+		Context context = null;
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			/*
+			 * for (NodeFactory<? extends CALBuiltinNode> builtin : builtins) {
+			 * CALLanguage.installBuiltin(builtin); }
+			 */
+
+			Context.Builder builder = Context.newBuilder().allowExperimentalOptions(true)
+					.in(new ByteArrayInputStream(testCase.testInput.getBytes("UTF-8"))).out(out);
+			for (Map.Entry<String, String> e : testCase.options.entrySet()) {
+				builder.option(e.getKey(), e.getValue());
+			}
+			context = builder.build();
+			PrintWriter printer = new PrintWriter(out);
+			run(context, testCase.path, printer);
+			printer.flush();
+
+			String actualOutput = new String(out.toByteArray());
+
+			Pattern pattern = Pattern.compile(testCase.expectedOutput);
+			Matcher matcher = pattern.matcher(actualOutput);
+			Assert.assertTrue("Actual output:::" + actualOutput + "::: does not match expected pattern " + testCase.expectedOutput, matcher.find());
 		} finally {
 			if (context != null) {
 				context.close();

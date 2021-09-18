@@ -1,0 +1,31 @@
+namespace jpeg.decoder.test.idct:
+
+  import entity jpeg.decoder.parallel.idct.IDCT2D;
+  import entity jpeg.decoder.IDCT;
+  import var system.io.dprint3;
+
+  actor Comparator() int(size = 8) IN1, int(size = 8) IN2 ==> int(size = 8) OUT:
+    uint counter := 0;
+    compare:action IN1:[t1], IN2:[t2] ==> OUT:[t1 - t2]
+    do
+      counter := counter + 1;
+    end
+  end
+
+
+  network RegressionIDCT() int(size=13) IN ==> int(size=8) OUT:
+
+    entities
+      idct_small = IDCT2D();
+      idct_big = IDCT();
+      comp = Comparator();
+
+    structure
+      IN --> idct_small.IN;
+      IN --> idct_big.IN;
+      idct_big.OUT --> comp.IN1;
+      idct_small.OUT --> comp.IN2;
+      comp.OUT --> OUT;
+
+  end
+end

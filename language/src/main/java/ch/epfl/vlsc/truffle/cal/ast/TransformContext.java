@@ -1,7 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.ast;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.source.Source;
@@ -9,8 +8,10 @@ import com.oracle.truffle.api.source.Source;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import se.lth.cs.tycho.ir.NamespaceDecl;
 import se.lth.cs.tycho.ir.QID;
+import se.lth.cs.tycho.ir.decl.GroupImport;
 import se.lth.cs.tycho.ir.decl.Import;
 import se.lth.cs.tycho.ir.decl.SingleImport;
+import se.lth.cs.tycho.ir.entity.Entity;
 
 public class TransformContext implements Cloneable {
     private QID namespace;
@@ -22,11 +23,21 @@ public class TransformContext implements Cloneable {
     private Source source;
 
     
-    public TransformContext(CALLanguage language, Source source, NamespaceDecl namespace) {
+    public TransformContext(CALLanguage language, Source source, NamespaceDecl namespace, HashMap<List<String>, LinkedList<String>> namespaceEntities) {
         Map<String, QID> globalContext = new HashMap<>();
+        LinkedList<String> emptyList = new LinkedList<String>();
         for (Import imp : namespace.getImports()) {
-            if (imp instanceof SingleImport)
+            if (imp instanceof SingleImport) {
+                QID importGlobalName = ((SingleImport) imp).getGlobalName();
+                // TODO: Throw error if the file having missing imports is a dependency for actor under execution
+//                if(!namespaceEntities.getOrDefault(importGlobalName.getButLast().parts(), emptyList).contains(importGlobalName.getLast().toString()))
+//                    throw new Error("import Identitifier: " + importGlobalName.toString() + " not found in global context");
                 globalContext.put(((SingleImport) imp).getLocalName(), ((SingleImport) imp).getGlobalName());
+            }else if(imp instanceof GroupImport) {
+                for(String entity: namespaceEntities.getOrDefault(((GroupImport) imp).getGlobalName().parts(), emptyList)){
+                    globalContext.put(entity, ((GroupImport) imp).getGlobalName().concat(QID.of(entity)));
+                }
+            }
             else
                 throw new Error("Unsupported import type");
         }

@@ -1,0 +1,25 @@
+namespace test:
+    actor test () ==>:
+        A1: action ==>
+        do
+            println(0);
+        end
+
+        A2: action ==>
+        do
+            println(1);
+        end
+
+        A3: action ==>
+        do
+            println(2);
+        end
+
+        schedule fsm s0:
+            s0 (A1) --> s1;
+            s1 (A2) --> s2;
+            s2 (A3) --> s0;
+        end
+    end
+end
+

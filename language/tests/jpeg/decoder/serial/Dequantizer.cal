@@ -1,0 +1,57 @@
+namespace jpeg.decoder:
+
+actor Dequantizer() 
+	int(size=24) Block, uint(size=8) QT, uint(size=16) SOI ==> int(size=13) Out:
+
+	List(type:uint(size=6), size=64) inv_zigzag = [
+		 0, 1, 8,16, 9, 2, 3,10,
+		17,24,32,25,18,11, 4, 5,
+		12,19,26,33,40,48,41,34,
+		27,20,13, 6, 7,14,21,28,
+		35,42,49,56,57,50,43,36,
+		29,22,15,23,30,37,44,51,
+		58,59,52,45,38,31,39,46,
+		53,60,61,54,47,55,62,63
+	];
+
+	List(type:List(type:uint(size=8), size=64), size=2) quant;
+	
+	int count := 0;
+	int comp;
+
+	receive_QT:action QT:[q] repeat 130, SOI:[w, h] ==>
+	guard 
+		count = 0
+	do
+		foreach int i in 0 .. 63 do
+			quant[0][i] := q[i + 1];
+			quant[1][i] := q[i + 66];
+		end
+		comp := 0;
+		count := 6 * (w) * (h);
+	end
+	
+	// Dequant and unzigzag.
+	receive_block:action Block:[b] repeat 64 ==> Out:[out] repeat 64
+	guard 
+		count != 0
+	var 
+		int compType,
+		List(type:int(size=13), size=64) out 
+	do
+		compType := comp >> 2;
+		foreach int i in 0 .. 63 do 
+			out[inv_zigzag[i]] := b[i] * quant[compType][i];
+		end
+		
+		count := count - 1;
+	
+		comp := (comp + 1) mod 6;
+	end
+	
+	priority
+		receive_QT > receive_block;
+	end
+end
+
+end

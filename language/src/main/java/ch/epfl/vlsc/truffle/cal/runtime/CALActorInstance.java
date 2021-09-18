@@ -1,7 +1,7 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CallTarget;
+import ch.epfl.vlsc.truffle.cal.nodes.FsmStateCheckNode;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -17,6 +17,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.api.utilities.TriState;
@@ -220,19 +221,37 @@ public class CALActorInstance extends CALValue {
         @Specialization
         protected static Object doIndirect(CALActorInstance function, Object[] arguments,
                                            @Cached IndirectCallNode callNode) {
-            // TODO
-            // Sort actions by priority and filter fireable actions
-            for (ActionNode action : function.actorDecl.getActions()) {
+            // Return true if any action was executed, otherwise false
+
+            // Loop over all actions till one of the actions is executed.
+            // The order of actions in the array is based on decreasing order of priorities
+            for(int i = 0; i < function.actorDecl.getActions().length; ++i){
+                FsmStateCheckNode fsmTarget = function.actorDecl.getFsmStateCheckNode();
+                ActionNode action = function.actorDecl.getActions()[i];
+                Boolean actionFsmFireable = true;
+                if(function.actorDecl.getFsmStateCheckNode() != null) {
+                    // FSM present
+                    function.frameDecl.setLong(function.actorDecl.getActorIndexSlot(), i);
+                    try {
+                        actionFsmFireable = !action.isQidTagged() || ((Boolean) fsmTarget.executeBoolean(function.frameDecl));
+                    } catch (UnexpectedResultException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                // Action is fireable if there is no action with higher priority that is fireable and if the current action tag follows from the current FSM state
+                if (!actionFsmFireable) continue;
                 CompilerDirectives.transferToInterpreter();
                 CallTarget target = Truffle.getRuntime().createCallTarget(action);
+                // Attempt to execute the action: Guard expressions and token bindings are checked by the action and returns true if it fires, otherwise false
                 Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
-                if (executed)
+                if (executed) {
+                    if(function.actorDecl.getFsmStateCheckNode() != null) function.actorDecl.getFsmStateTransitionNode().executeVoid(function.frameDecl);
                     return true;
+                }
             }
+            // No action was fired, hence the actor did not execute. Return false.
             return false;
         }
     }
-
-
-   
 }

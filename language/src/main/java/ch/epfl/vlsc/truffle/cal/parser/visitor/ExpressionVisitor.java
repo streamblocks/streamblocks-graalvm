@@ -1,23 +1,26 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
+import ch.epfl.vlsc.truffle.cal.ast.ExprComprehensionTransformer;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.ForeacheNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.CALWriteLocalVariableNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import org.antlr.v4.runtime.Token;
 
 import java.math.BigInteger;
@@ -100,7 +103,8 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             case "dom":
                 // TODO: Create CALUnaryMapDomainNode
             case "#":
-                // TODO: Create CALUnaryCollectionSizeNode
+                unaryOperationNode = CALUnaryListSizeNodeGen.create(operand);
+                break;
             default:
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unary operator \"" + operator + "\" is not yet supported");
         }
@@ -359,7 +363,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
     @Override public CALExpressionNode visitVariableExpression(CALParser.VariableExpressionContext ctx) {
         if (ctx.isOld != null) {
             // TODO Add support for old variable
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Old variable expression is not yet supported");
             }
         }
@@ -448,13 +452,13 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
         if (ctx.isConst != null) {
             // TODO Add support for constant lambda
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Constant lambda expression is not yet supported");
             }
         }
         if (ctx.type() != null) {
             // TODO Add support for lambda return type
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Lambda expression return type is not yet supported");
             }
         }
@@ -515,8 +519,60 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitProcExpression(CALParser.ProcExpressionContext ctx) {
-        // TODO Create Proc expression node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Proc expression is not yet supported");
+        // FIXME: Copied over from visitLambdaExpression
+        StmtBlockNode headNode;
+        CALExpressionNode bodyNode;
+
+        ScopeEnvironment.getInstance().pushScope(false);
+
+        if (ctx.formalParameters() != null) {
+            Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
+            headNode = new StmtBlockNode(formalParameterNodes.toArray(new CALStatementNode[0]));
+            headNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.formalParameters()));
+            headNode.addStatementTag();
+        } else {
+            headNode = new StmtBlockNode(new CALStatementNode[0]);
+        }
+
+        if (ctx.localVariables != null) {
+            ScopeEnvironment.getInstance().pushScope(false, false);
+
+            Collection<CALExpressionNode> localVariableNodes = CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables);
+            StmtBlockNode letHeadNode = new StmtBlockNode(localVariableNodes.toArray(new CALStatementNode[0]));
+            letHeadNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx.localVariables));
+            letHeadNode.addStatementTag();
+
+            CALExpressionNode letBodyNode = new StmtFunctionBodyNode(StatementVisitor.getInstance().visitStatements(ctx.statements()));
+
+            bodyNode = new LetExprNode(letHeadNode, letBodyNode);
+            bodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+            bodyNode.addExpressionTag();
+
+            ScopeEnvironment.getInstance().popScope();
+        } else {
+            bodyNode = new StmtFunctionBodyNode(StatementVisitor.getInstance().visit(ctx.statements()));
+        }
+
+        ReturnsLastBodyNode procBodyNode = new ReturnsLastBodyNode(headNode, bodyNode);
+        procBodyNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        procBodyNode.addStatementTag();
+
+        CALRootNode procBodyRootNode = new CALRootNode(
+                ScopeEnvironment.getInstance().getLanguage(),
+                ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
+                procBodyNode,
+                ScopeEnvironment.getInstance().createSourceSection(ctx),
+                ScopeEnvironment.generateLambdaName()
+        );
+        // TODO Add RootTag / CallTag for procBodyRootNode
+
+        ProcNode procNode = new ProcNode(procBodyRootNode);
+        procNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        procNode.addStatementTag();
+
+        ScopeEnvironment.getInstance().popScope();
+
+        return procNode;
     }
 
     /**
@@ -531,145 +587,51 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitListComprehension(CALParser.ListComprehensionContext ctx) {
-        if (ctx.generators() == null) {
-            // Simple list collection expression
-            CALExpressionNode[] valueNodes;
-            if (ctx.computations != null) {
-                valueNodes = CollectionVisitor.getInstance().visitExpressions(ctx.computations).toArray(new CALExpressionNode[0]);
-            } else {
-                valueNodes = new CALExpressionNode[0];
-            }
-
-            ListInitNode simpleComprehensionNode = new ListInitNode(valueNodes);
-            simpleComprehensionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-            simpleComprehensionNode.addExpressionTag();
-
-            return simpleComprehensionNode;
-        } else {
-            // Comprehensions w/ generators
-            CALExpressionNode variableNode = null;
-            CALExpressionNode collectionNode = null;
-
-            if (ctx.generators().generator().size() > 1) {
-                // TODO Add support for multiple generators
-                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
-                    throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx.generators(), "Multiple comprehension generators are not yet supported");
-                }
-            }
-            for (CALParser.GeneratorContext generatorCtx: ctx.generators().generator()) {
-                if (generatorCtx.generatorBody().variables.size() > 1) {
-                    // TODO Add support for multiple variables in a generator
-                    if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
-                        throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Multiple variables in a comprehension generator are not yet supported");
-                    }
-                }
-                for (Token variable: generatorCtx.generatorBody().variables) {
-                    NullLiteralNode nullLiteralNode = new NullLiteralNode();
-                    nullLiteralNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-                    nullLiteralNode.addExpressionTag();
-
-                    // Note: Custom source section to precisely specify a variable token
-                    variableNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
-                            variable.getText(),
-                            nullLiteralNode,
-                            ScopeEnvironment.getInstance().getSource().createSection(variable.getLine(), variable.getCharPositionInLine() + 1, variable.getText().length())
-                    );
-
-                    if (!(variableNode instanceof CALWriteLocalVariableNode)) {
-                        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Variable name re-use in a comprehension generator is not yet supported");
-                    }
-                }
-                List<CALExpressionNode> expressionNodes = ((ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(generatorCtx.generatorBody().expressions()));
-                collectionNode = expressionNodes.get(0);
-
-                if (expressionNodes.size() > 1) {
-                    // TODO Add support for generator filters
-                    if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
-                        throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), generatorCtx.generatorBody(), "Comprehension generator filters are not yet supported");
-                    }
-                }
-            }
-
-            List<CALExpressionNode> computationExpressions = (ArrayList<CALExpressionNode>) CollectionVisitor.getInstance().visitExpressions(ctx.computations);
-            if (computationExpressions.size() > 1) {
-                // TODO Add support for multiple computation expressions
-                if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
-                    throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx.computations, "Multiple comprehension computation expressions are not yet supported");
-                }
-            }
-            CALExpressionNode computationExpression = computationExpressions.get(0);
-
-            /**
-             * Comprehension expression is translated into a block of statements:
-             *      $list = [];
-             *      $counter = 0;
-             *      foreach (<Variable> in <Collection>) {
-             *          $list[$counter] = <Computation Expression>; // Note: Computation Expression use Variable
-             *          $counter++;
-             *      }
-             *      return $list;
-             */
-            String listVariableName = ScopeEnvironment.generateVariableName();
-            String counterVariableName = ScopeEnvironment.generateVariableName();
-
-            CALStatementNode[] comprehensionStatementNodes = new CALStatementNode[3];
-            comprehensionStatementNodes[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
-                    listVariableName,
-                    new UnknownSizeListInitNode(),
-                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $list = [];
-            comprehensionStatementNodes[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(
-                    counterVariableName,
-                    new LongLiteralNode(0),
-                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $counter = 0;
-
-            CALStatementNode[] loopStatementNodes = new CALStatementNode[2];
-            loopStatementNodes[0] = ListWriteNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode(listVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
-                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
-                    computationExpression
-            ); // $list[$counter] = <Computation Expression>;
-            loopStatementNodes[0].setUnavailableSourceSection();
-            loopStatementNodes[0].addStatementTag();
-
-            LongLiteralNode oneLiteralNode = new LongLiteralNode(1);
-            oneLiteralNode.setUnavailableSourceSection();
-            oneLiteralNode.addExpressionTag();
-
-            CALBinaryAddNode incrementCounterNode = CALBinaryAddNodeGen.create(
-                    ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
-                    oneLiteralNode
-            );
-            incrementCounterNode.setUnavailableSourceSection();
-            incrementCounterNode.addExpressionTag();
-
-            loopStatementNodes[1] = ScopeEnvironment.getInstance().createExistingVariableWriteNode(
-                    counterVariableName,
-                    incrementCounterNode,
-                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
-            ); // $counter++;
-
-            CALStatementNode loopBodyNode = new StmtBlockNode(loopStatementNodes);
-            loopBodyNode.setUnavailableSourceSection();
-            loopBodyNode.addStatementTag();
-
-            comprehensionStatementNodes[2] = ForeacheNodeGen.create(loopBodyNode, (CALWriteLocalVariableNode) variableNode, collectionNode); // foreach (<Variable> in <Collection>) { ... }
-            comprehensionStatementNodes[2].setUnavailableSourceSection();
-            comprehensionStatementNodes[2].addStatementTag();
-
-            CALStatementNode comprehensionBodyNode = new StmtBlockNode(comprehensionStatementNodes);
-            comprehensionBodyNode.setUnavailableSourceSection();
-            comprehensionBodyNode.addStatementTag();
-
-            CALExpressionNode comprehensionReturnNode = ScopeEnvironment.getInstance().createReadNode(listVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection());
-
-            ReturnsLastBodyNode generatorsComprehensionNode = new ReturnsLastBodyNode(comprehensionBodyNode, comprehensionReturnNode); // ... return $list;
-            generatorsComprehensionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-            generatorsComprehensionNode.addExpressionTag();
-
-            return generatorsComprehensionNode;
+        if (ctx.tail != null) {
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.tail, "List Comprehension tails are not supported yet");
         }
+        if (ctx.generators() == null)
+            return visitSimpleListComprehension(ctx);
+        else
+            return visitListComprehensionWithGenerators(ctx);
+    }
+
+    private CALExpressionNode visitSimpleListComprehension(CALParser.ListComprehensionContext ctx) {
+        // Simple list collection expression
+        CALExpressionNode[] valueNodes;
+        if (ctx.computations != null) {
+            valueNodes = CollectionVisitor.getInstance().visitExpressions(ctx.computations).toArray(new CALExpressionNode[0]);
+        } else {
+            valueNodes = new CALExpressionNode[0];
+        }
+
+        ListInitNode simpleComprehensionNode = new ListInitNode(valueNodes);
+        simpleComprehensionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        simpleComprehensionNode.addExpressionTag();
+
+        return simpleComprehensionNode;
+    }
+
+    private CALExpressionNode visitListComprehensionWithGenerators(CALParser.ListComprehensionContext ctx) {
+        CALStatementNode[] init = new CALStatementNode[3];
+        // tempList=[]
+        String tempListName = ScopeEnvironment.generateVariableName();
+        init[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(tempListName, new UnknownSizeListInitNode(), DefaultValueCastNodeCreator.getInstance(), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+
+        // i=0
+        String listIndexVarName = ScopeEnvironment.generateVariableName();
+        init[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(listIndexVarName, new BigIntegerLiteralNode(new BigInteger("0")), DefaultValueCastNodeCreator.getInstance(), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+
+        // The Comprehension nodes will generate the content into the above list
+        init[2] = (new ListComprehensionVisitor(tempListName, listIndexVarName)).visitListComprehension(ctx);
+        ReturnsLastBodyNode list = new ReturnsLastBodyNode(
+                new StmtBlockNode(init),
+                ScopeEnvironment.getInstance().createReadNode(tempListName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+
+        list.addExpressionTag();
+        list.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+
+        return list;
     }
 
     /**

@@ -11,9 +11,9 @@ graalvm/
 .project
 /bin/
 /Coco.jar
-component/sl-component.jar
+component/cal-component.jar
 language/dependency-reduced-pom.xml
-native/slnative
+native/calnative
 
 # Vim 
 # Swap
@@ -40,7 +40,16 @@ tags
 .vim
 
 .vimspector.json
-
 # Antlr
 *.interp
 *.tokens
+native/calnative
+native/calnative.build_artifacts.txt
+language/src/main/java/ch/epfl/vlsc/truffle/cal/nodes/util/IRNodeTreePrinterConsumer.java
+commits_to_merge
+.gitignore
+merge_tools.bash
+processed
+.PROCESSING
+.PROCESSED
+language/src/main/java/ch/epfl/vlsc/truffle/cal/nodes/util/IRNodeTreePrinterConsumer.java

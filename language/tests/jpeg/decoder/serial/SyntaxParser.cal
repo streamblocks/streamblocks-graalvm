@@ -1,0 +1,160 @@
+namespace jpeg.decoder:
+
+actor SyntaxParser() 
+	uint(size=8) Byte
+		==> 
+		uint(size=8) Bits, 
+		uint(size=8) QT, 
+		uint(size=8) HT, 
+		uint(size=16) SOI:
+
+	// current offset in file
+	int offset;
+	int to_read := -1;
+	uint sent := 0;
+	uint(size=8) cur_marker := 0;
+		
+	// Actions
+	aSOI:action Byte:[b] repeat 2 ==>
+	do
+		to_read := -1;
+		sent := 0;
+		cur_marker := 0;
+		offset := 2;
+	end
+	
+
+	// Format is 255 marker_code length_high length_low : 4 bytes
+	receive_marker:action Byte:[b] repeat 4 ==>
+	//guard (b[0] = 255)
+	do
+	    to_read := (b[2] << 8) + b[3] - 2;
+	    cur_marker := b[1];
+		offset := offset + 4;
+	end
+	
+	skip:action Byte:[b] ==>
+	guard (to_read != 0)
+	do
+		to_read := to_read - 1;
+		offset := offset + 1;
+	end
+	
+	done:action ==>
+	guard (to_read = 0)
+	do
+		to_read := -1;
+	end
+	
+	APPn:action ==>
+	guard (cur_marker >= 224 and cur_marker <= 239)
+	end
+	
+	COMM:action ==>
+	guard (cur_marker = 254)
+	end
+	
+	DQT:action ==>
+	guard (cur_marker = 219)
+	do
+		offset := offset + to_read;
+	end
+	
+	send_DQT:action Byte:[b] ==> QT:[b]
+	guard (to_read != 0)
+	do
+		to_read := to_read - 1;
+	end
+	
+	SOF0:action Byte:[b] repeat 15 ==> SOI:[w >> 4, h >> 4]
+	guard (cur_marker = 192)
+	var
+		int(size=16) w, int(size=16) h
+	do
+		h := (b[1] << 8) + b[2];
+		w := (b[3] << 8) + b[4];
+	end
+	
+	DHT:action ==> 
+	guard (cur_marker = 196)
+	end
+	
+	send_DHT:action Byte:[b] ==> HT:[b]
+	guard (to_read != 0)
+	do
+		to_read := to_read - 1;
+		offset := offset + 1;
+	end
+	
+	SOS:action ==> 
+	guard (cur_marker = 218)
+	end
+	
+	scan_data:action Byte:[b] ==> Bits:[b]
+	guard (b != 255)
+	do
+		offset := offset + 1;
+		sent := sent + 1;
+	end
+	
+	receive_FF:action Byte:[b] ==>
+	guard (b = 255)
+	do
+		offset := offset + 1;
+	end
+	
+	// In the entropy-coded data, 0 is inserted after 255 as a stuffing byte.
+	// Therefore if 0 is encountered after 255, output 255
+	stuffing:action Byte:[b] ==> Bits:[255]
+	guard (b = 0)
+	do
+		sent := sent + 1;
+		offset := offset + 1;
+	end
+	
+	EOI:action Byte:[b] ==>
+	guard (b = 217)
+	do
+		offset := offset + 1;
+	end
+	
+	padding16:action ==> Bits:[0]
+	end
+		
+	// Schedule FSM
+	schedule fsm wait_SOI:
+		wait_SOI(aSOI)-->wait_marker;
+		
+		wait_marker(receive_marker)-->handle_marker;
+		
+		skip_bytes(skip)-->skip_bytes;
+		skip_bytes(done)-->wait_marker;
+		
+		handle_marker(APPn)-->skip_bytes;
+		handle_marker(COMM)-->skip_bytes;
+		
+		handle_marker(DQT)-->wait_DQT;
+		wait_DQT(send_DQT)-->wait_DQT;
+		wait_DQT(done)-->wait_marker;
+		
+		handle_marker(SOF0)-->wait_marker;
+		
+		handle_marker(DHT)-->wait_DHT;
+		wait_DHT(send_DHT)-->wait_DHT;
+		wait_DHT(done)-->wait_marker;
+		
+		handle_marker(SOS)-->wait_scan_header;
+		
+		wait_scan_header(skip)-->wait_scan_header;
+		wait_scan_header(done)-->wait_scan_data;
+		wait_scan_data(scan_data)-->wait_scan_data;
+		wait_scan_data(receive_FF)-->is_stuffing;
+		is_stuffing(stuffing)-->wait_scan_data;
+		is_stuffing(EOI)-->finish;
+		finish(padding16)-->padding;
+		padding(padding16)-->wait_SOI;
+	end
+
+end
+
+end

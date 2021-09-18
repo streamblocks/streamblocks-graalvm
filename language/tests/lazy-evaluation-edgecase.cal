@@ -1,0 +1,15 @@
+namespace test:
+	actor test() ==> :
+		action ==>
+		var
+		    a, b, f, g
+		do
+			g := lambda (x) : lambda (y) : x + y end end;
+            a := 11;
+            f := g (a * a);
+            a := 7;
+            b := f(1);
+            println(b);
+		end
+	end
+end

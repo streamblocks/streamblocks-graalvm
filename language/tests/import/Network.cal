@@ -1,6 +1,6 @@
 namespace test:
     import test.a.Sink;
-    import test.b.Source;
+    import all test.b;
     /*
      * SourceSink network
      * Instatiates Source and Sink actors and interconnects them.

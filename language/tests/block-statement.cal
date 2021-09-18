@@ -1,0 +1,12 @@
+namespace test:
+
+	actor test() ==> :
+		action ==>
+		var
+			int a := 0
+		do
+			begin var b = 0 do a := a + b; end
+			println(a);
+		end
+	end
+end

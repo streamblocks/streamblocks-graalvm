@@ -1,0 +1,26 @@
+namespace test:
+	actor test() ==> :
+		action ==>
+		do
+            println(8&12);
+            println(15&12&8);
+            println(8 >> 1);
+            println(15 >> 2);
+            println(8 mod 3);
+            println(8 mod 5);
+            println(1 != 1);
+            // println([1,2] != [1,2]);
+            println("12" != "12");
+            println(1 != 2);
+            // println([1,2] != [2,2]);
+            println("12" != "32");
+            println(8 | 4 | 2 | 1);
+            println(4 | 1);
+            println(1 << 2);
+            println(2 << 3);
+            println(true or false);
+            println(false or false);
+            println(15 - 5 + 10);
+		end
+	end
+end

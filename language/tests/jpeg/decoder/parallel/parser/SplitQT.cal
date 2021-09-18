@@ -1,0 +1,31 @@
+namespace jpeg.decoder.parallel.parser:
+	
+	@pipeline(flushing=true)
+	actor SplitQT() uint(size=8) QT ==> uint(size=8) QT_Y, uint(size=8) QT_UV:
+	
+		// The dispatch is made depending on the value of the first byte.
+		Luminance:action QT:[b] ==>
+		guard (b = 0)
+		end
+		
+		Chrominance:action QT:[b] ==>
+		guard (b = 1)
+		end
+		
+		receive_Luminance:action QT:[b] repeat 64 ==> QT_Y:[b] repeat 64
+		end
+		
+		receive_Chrominance:action QT:[b] repeat 64 ==> QT_UV:[b] repeat 64
+		end
+		
+		// Schedule FSM
+		schedule fsm wait_dest_ID:
+			wait_dest_ID(Luminance)-->wait_Luminance;
+			wait_Luminance(receive_Luminance)-->wait_dest_ID;
+			
+			wait_dest_ID(Chrominance)-->wait_Chrominance;
+			wait_Chrominance(receive_Chrominance)-->wait_dest_ID;
+		end
+	end
+
+end

@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.parser.scope;
 
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.*;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.source.SourceSection;
@@ -66,7 +67,7 @@ public class DepthFrameSlot implements Cloneable {
         }
     }
 
-    public CALExpressionNode createWriteNode(CALExpressionNode nameNode, CALExpressionNode valueNode, boolean isNewVariable, int currentDepth, SourceSection sourceSection) {
+    public CALWriteVariableNode createWriteNode(CALExpressionNode nameNode, CALExpressionNode valueNode, boolean isNewVariable, int currentDepth, SourceSection sourceSection) {
         if (kind == SlotKind.RO) {
             // Only outer scope variables that are read-only
             throw new Error("Writing to a read-only variable is not allowed");
@@ -76,7 +77,7 @@ public class DepthFrameSlot implements Cloneable {
         assert outerScopeDepth >= 0;
         if (outerScopeDepth == 0) {
             // Write to a local variable
-            CALWriteLocalVariableNode variableNode = CALWriteLocalVariableNodeGen.create(slot, nameNode, isNewVariable, valueNode);
+            CALWriteLocalVariableNode variableNode = CALWriteLocalVariableNodeGen.create(slot, nameNode, isNewVariable, ((ValueCastNodeCreator) slot.getInfo()).create(valueNode));
             variableNode.setSourceSection(sourceSection);
             // TODO Change to WriteVariableTag
             variableNode.addStatementTag();
@@ -84,7 +85,7 @@ public class DepthFrameSlot implements Cloneable {
             return variableNode;
         } else {
             // Write to a variable from <outerScopeDepth>th outer scope
-            CALWriteCapturedVariableNode variableNode = CALWriteCapturedVariableNodeGen.create(slot, nameNode, isNewVariable, valueNode, outerScopeDepth);
+            CALWriteCapturedVariableNode variableNode = CALWriteCapturedVariableNodeGen.create(slot, nameNode, isNewVariable, ((ValueCastNodeCreator) slot.getInfo()).create(valueNode), outerScopeDepth);
             variableNode.setSourceSection(sourceSection);
             // TODO Change to WriteVariableTag
             variableNode.addStatementTag();

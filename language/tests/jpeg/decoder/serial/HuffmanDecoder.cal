@@ -1,0 +1,303 @@
+namespace jpeg.decoder:
+
+
+actor HuffmanDecoder()
+       uint(size=8) Bit,
+       uint(size=8) HT, uint(size=16) SOI
+               ==>
+                       int(size=24) Block :
+
+	int v_read_HT := 0;
+	uint(size=16) cur_val := 0;
+	int cur_len := 0;
+	uint to_read := 0;
+	uint(size=8) cur_HT :=0;
+	int idx :=0;
+	uint code := 0;
+	int count := 0;
+	int mbcount :=0;
+	int bit_pos := 0;
+	uint(size=8) bits := 0;
+	
+	// The indexes of each HT.
+	List(type:uint(size=8), size=3) dctab = [0, 1, 1];
+	List(type:uint(size=8), size=3) actab = [2, 3, 3];
+	
+	List(type:List(type:uint ,size=256),size=4) ht_lookup_codelen;
+	// Values have to be adjusted!!!
+	int GUESSEDSIZE = 256;
+	
+	List(type:List(type:int,size=GUESSEDSIZE),size=4) ht_lookup_code_index;
+	List(type:List(type:int,size=GUESSEDSIZE),size=4) ht_lookup_code_value;
+	
+	
+	List(type:uint(size=8), size=16) ht_codes_len;
+	List(type:uint(size=8), size=256) ht_codes_list;
+	
+	uint cur_count := 0;
+	int(size=32) comp := 0;
+	List(type:int, size=3) subsampling = [4, 1, 1];
+	
+	List(type:int, size=3) lastDC;
+	List(type:int(size=24), size=64) block;
+
+	function get_bit() --> uint(size=1) :
+		((bits >> 7 - bit_pos) & 1)
+	end
+	
+	procedure inc_bit_pos() begin
+		bit_pos := (bit_pos + 1) & 7;
+	end
+	
+	getbit.read: action Bit:[b] ==>
+	guard 
+		to_read != 0, bit_pos = 0
+	do
+		bits := b;
+		cur_val := 2 * cur_val + get_bit();
+		to_read := to_read - 1;
+		cur_len := cur_len + 1;
+		inc_bit_pos();
+	end
+
+	
+	getbit.noread:action ==>
+	guard 
+		to_read != 0, bit_pos != 0
+	do
+		cur_val := 2 * cur_val + get_bit();
+		to_read := to_read - 1;
+		cur_len := cur_len + 1;
+		inc_bit_pos();
+	end
+	
+	// Procedures
+	procedure get_HT_val(uint(size=32) i, uint(size=16) j)
+	var
+		int b := 0
+	begin
+		while (j >= ht_lookup_code_index[i][b])
+		do
+			b := b + 1;
+		end
+		code := ht_lookup_code_value[i][b - 1];
+	end
+	
+	procedure generate_HT()
+	var
+		int v,
+		uint len,
+		int code_idx,
+		int spread,
+		int u
+	begin
+		u := 0;
+		v := 0;
+		code_idx := 0;
+		spread := 32768;
+		// Depending on the size of the code, we "spread" the bit sequence on the array so that every value 
+		// prefixed by this sequence refers to the same code.
+		// For example if the code 23 is encoded by 1111110111 (10 bits), in the array all values ranging from
+		// 1111110111000000 (16 bits) to 1111110111111111 (16 bits) refers to code 23.
+		foreach uint i in 0 .. 15
+		do
+			len := i + 1;
+			foreach uint(size=8) j in 0 .. ht_codes_len[i] - 1
+			do
+				ht_lookup_codelen[cur_HT][ht_codes_list[code_idx]] := len;
+				ht_lookup_code_index[cur_HT][u] := v;
+				ht_lookup_code_value[cur_HT][u] := ht_codes_list[code_idx];
+				u := u + 1;
+				v := v + spread;
+				code_idx := code_idx + 1;
+			end
+			spread := spread >> 1;
+		end
+		ht_lookup_code_index[cur_HT][u] := 1000000000;
+	end
+		
+	getSOI: action SOI:[w, h] ==>
+	do
+		mbcount := 6 * w * h;
+		foreach int i in 0 .. 2 do
+			lastDC[i] := 0;
+		end
+	end
+	
+	receive_HT_len:action HT:[b] repeat 17 ==>
+	var
+		uint sum := 0
+	do
+		idx := 0;
+		// HT selection
+		cur_HT := (b[0] | (b[0] >> 3)) & 3;
+	
+		foreach int i in 0 .. 15
+		do
+			ht_codes_len[i] := b[i + 1];
+			sum := sum + ht_codes_len[i];
+		end
+		to_read := sum;
+	end
+
+	receive_code:action HT:[b] ==>
+	guard (to_read > 0)
+	do
+		ht_codes_list[idx] := b;
+		idx := idx + 1;
+		to_read := to_read - 1;
+	end
+	
+	build_HT:action ==>
+	guard (to_read = 0)
+	do
+		generate_HT();
+		v_read_HT := v_read_HT + 1;
+	end
+	
+	done_HT:action ==>
+	guard (v_read_HT = 4)
+	do
+		code := 65535;
+		comp := 0;
+		cur_HT := dctab[comp];
+		cur_val := 0;
+		cur_len := 0;
+		to_read := 16;
+	end
+	
+	DC.done_len:action ==>
+	guard (to_read = 0)
+	do
+		get_HT_val(cur_HT, cur_val);
+		to_read := ht_lookup_codelen[cur_HT][code];
+	    cur_len := to_read;
+	end
+	
+	// End of DC, proceed with AC.
+	DC.done:action ==>
+	guard (to_read = 0)
+	var
+		int dc
+	do
+		to_read := code & 15;
+		cur_len := to_read;
+		dc := cur_val >> (16 - to_read);	
+		if (dc < (1 << (cur_len - 1)))
+		then
+			dc := dc + (-1 << cur_len) + 1;
+		end
+		dc := dc + lastDC[comp];
+		lastDC[comp] := dc;
+		cur_len := 0;
+		cur_HT := actab[comp];
+		foreach int i in 0 .. 63 do
+			block[i] := 0;
+		end
+		idx := 0;
+		block[0] := dc;
+	end
+	
+	AC.done_len:action ==>
+	guard (to_read = 0)
+	do
+	    get_HT_val(cur_HT, cur_val);
+		to_read := ht_lookup_codelen[cur_HT][code];
+	    cur_len := to_read;
+		idx := idx + (code >> 4) + 1;
+	end
+	
+	AC.done:action ==>
+	guard (to_read = 0)
+	var
+		int v
+	do
+		to_read := code & 15;
+		cur_len := to_read;
+		v := cur_val >> (15 - to_read + 1);
+		if v < (1 << (cur_len - 1)) then
+			v := v + (-1 << cur_len) + 1;
+		end
+		block[idx] := v;
+	end
+	
+	EOB:action ==> Block:[block] repeat 64
+	guard ((to_read = 0) and (code = 0 or idx = 63))
+	var
+		int v
+	do
+		cur_count := cur_count + 1;
+		if (cur_count = subsampling[comp])
+		then
+			cur_count := 0;
+			comp := comp + 1;
+			if comp = 3 then 
+				comp := 0;
+			end
+		end
+		cur_HT := dctab[comp];
+		cur_len := 0;
+		to_read := 0;
+		if (idx = 63 and code != 0)
+		then
+			to_read := code & 15;
+			cur_len := to_read;
+			v := cur_val >> (15 - to_read + 1);
+	
+			if (v < (1 << (cur_len - 1))) then
+				v := v + (-1 << cur_len) + 1;
+			end
+			block[idx] := v;
+			cur_len := 0;
+		end
+		count := count + 1;
+	end
+	
+	EOI: action ==>
+	guard count = mbcount
+	do
+	count := 0;
+	bit_pos := 0;
+	mbcount := 0;
+	v_read_HT := 0;
+	cur_val := 0;
+	
+	cur_len := 0;
+	to_read := 0;
+	lastDC := [0, 0, 0];
+	end
+		
+	// Schedule FSM
+	schedule fsm waitSOI:
+		waitSOI(getSOI) --> wait_HT;
+		
+		wait_HT(receive_HT_len)-->wait_code;
+		wait_HT(done_HT)-->wait_DC_len;
+		
+		wait_code(receive_code)-->wait_code;
+		wait_code(build_HT)-->wait_HT;
+		
+		wait_DC_len(EOI) --> waitSOI;
+		wait_DC_len(getbit) --> wait_DC_len;
+		wait_DC_len(DC.done_len)-->wait_DC;
+
+		wait_DC(getbit) --> wait_DC;
+		wait_DC(DC.done)-->wait_AC_len;
+
+		wait_AC_len(getbit) --> wait_AC_len;
+		wait_AC_len(AC.done_len)-->wait_AC;
+
+		wait_AC(EOB)-->wait_DC_len;
+		wait_AC(getbit) --> wait_AC;
+		wait_AC(AC.done)-->wait_AC_len;
+	end
+	
+	priority
+		done_HT > receive_HT_len;
+		EOI > getbit > DC;
+		getbit > EOB > AC.done;
+	end
+
+end
+
+end

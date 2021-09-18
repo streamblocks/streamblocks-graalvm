@@ -7,7 +7,9 @@ import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.source.SourceSection;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -37,9 +39,9 @@ public class EntityVisitor extends CALParserBaseVisitor<Object> {
 
         public List<EntityParameter> parameters;
 
-        public List<CALExpressionNode> inputs;
+        public List<Pair<String, CALExpressionNode>> inputs;
 
-        public List<CALExpressionNode> outputs;
+        public List<Pair<String, CALExpressionNode>> outputs;
 
         public SourceSection sourceSection;
 
@@ -108,7 +110,7 @@ public class EntityVisitor extends CALParserBaseVisitor<Object> {
 
         if (ctx.attributeSection() != null) {
             // TODO Add support for attribute section
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(CALLanguage.showWarnings)) {
+            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Entity attributes are not yet supported");
             }
         }
