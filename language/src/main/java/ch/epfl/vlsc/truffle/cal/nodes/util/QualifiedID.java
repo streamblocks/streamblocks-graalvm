@@ -1,15 +1,11 @@
 package ch.epfl.vlsc.truffle.cal.nodes.util;
 
-import se.lth.cs.tycho.ir.AbstractIRNode;
-import se.lth.cs.tycho.ir.IRNode;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 public final class QualifiedID {
     private final List<String> parts;

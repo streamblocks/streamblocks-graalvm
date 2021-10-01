@@ -1,12 +1,9 @@
 package ch.epfl.vlsc.truffle.cal.parser.utils;
 
-import ch.epfl.vlsc.truffle.cal.ast.ActionTransformer;
-import ch.epfl.vlsc.truffle.cal.ast.ActorTransformer;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
-import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
+import ch.epfl.vlsc.truffle.cal.parser.visitor.ActionVisitor;
 import ch.epfl.vlsc.truffle.cal.parser.visitor.ActorVisitor;
-import com.oracle.truffle.api.frame.FrameSlot;
 
 import java.util.*;
 
@@ -24,9 +21,9 @@ public class ActorNodeUtils {
         int i = 0;
 
         // Move all the unnamed actions to the front of the list to give them maximum priority
-        while(i < actions.length && actions[i].getName().equals(ActionTransformer.UNNAMED_ACTION)) ++i;
+        while(i < actions.length && actions[i].getName().equals(ActionVisitor.UNNAMED_ACTION)) ++i;
         for(int j = i+1; j < actions.length; ++j){
-            if(actions[j].getName().equals(ActionTransformer.UNNAMED_ACTION)){
+            if(actions[j].getName().equals(ActionVisitor.UNNAMED_ACTION)){
                 ActionNode temp = actions[i];
                 actions[i++] = actions[j];
                 actions[j] = temp;
