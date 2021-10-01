@@ -1,6 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
-import ch.epfl.vlsc.truffle.cal.ast.TransformException;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;

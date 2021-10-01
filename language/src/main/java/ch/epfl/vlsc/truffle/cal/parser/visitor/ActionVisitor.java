@@ -24,7 +24,6 @@ import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.source.SourceSection;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.lang3.tuple.Triple;
-import se.lth.cs.tycho.ir.QID;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,6 +1,5 @@
 package ch.epfl.vlsc.truffle.cal.nodes;
 
-import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -10,7 +9,6 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import se.lth.cs.tycho.ir.QID;
 
 public class ActorNode extends CALRootNode {
     @Child private ActorInstantiateNode instantiateNode;

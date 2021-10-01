@@ -45,13 +45,6 @@ jobs:
       - name: Install native-image component
         run: |
           gu install native-image
-      - name: Install Streamblocks-Tycho if not present
-        if: steps.mavencache.outputs.cache-hit != 'true'
-        run: |
-          git clone --depth=1 https://github.com/streamblocks/streamblocks-tycho/
-          cd streamblocks-tycho
-          mvn -DskipTests install
-          cd ..
       - name: Run build
         run: mvn --batch-mode --update-snapshots verify
       - name: Upload calnative
