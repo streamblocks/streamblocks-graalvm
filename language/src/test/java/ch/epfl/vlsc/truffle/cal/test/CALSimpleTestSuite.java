@@ -299,4 +299,10 @@ public class CALSimpleTestSuite extends CALTestSuite {
     public void jpegSingleImageTest() throws IOException {
         runTest(TestCase.newBuilder("jpeg/SingleImageTest").setIterations(-1).setActorName("jpeg.SingleImagePrinter").setDirLookup(true).build());
     }
+
+    @Test
+    @Ignore
+    public void filtersTest() throws IOException {
+        runTest(TestCase.newBuilder("filters/fir/src/TopFIRThroughput").setIterations(-1).setActorName("fir.TopFIRThroughput").setDirLookup(true).build());
+    }
 }

@@ -1,0 +1,8 @@
+namespace fir:
+
+	actor ConstantMultiply (float c) float  In ==> float Out :
+
+	action In:[a] ==> Out:[c * a] end
+	end
+
+end

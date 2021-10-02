@@ -1,0 +1,21 @@
+namespace fir:
+
+	actor Print() float In  ==> :
+	
+		action In:[token]==>
+		do
+			println("Value: " + token);	
+		end
+	
+	end
+	
+	actor Compare() float Golden, float Folded  ==> :
+	
+		action Golden:[g], Folded:[f] ==>
+		do
+			println("g: " + g + ", f: " + f);	
+		end
+	
+	end
+
+end

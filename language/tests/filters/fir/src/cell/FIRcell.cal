@@ -1,0 +1,36 @@
+namespace fir:
+
+
+	network FIRcell (List(type:float) taps) float Sample, float AccLineIn ==> float AccLineOut :
+	
+	var
+		int nTaps = #taps;
+		
+	entities
+		up = Upsample(n = nTaps);
+		merge = MergeLast(n = nTaps);
+		split = SplitFirst(n = nTaps);
+		consts = Constants(constants = taps);
+		z = Z(tokens = [0 : for int i in taps]);
+		mul = Multiply();
+		add = Add();
+	
+	structure
+		Sample --> up.In;
+		up.Out --> mul.A;
+		up.Out --> consts.Trigger;
+		consts.Out --> mul.B;
+		
+		mul.Out --> add.A;
+		
+		AccLineIn --> merge.A;
+		merge.Out --> z.In;
+		z.Out --> add.B;
+		add.Out --> split.In;
+		split.Y --> merge.B;
+		
+		split.X --> AccLineOut;
+	end
+		
+
+end

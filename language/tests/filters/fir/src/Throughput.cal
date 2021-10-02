@@ -1,0 +1,48 @@
+namespace fir:
+
+import var std.counters.timeMSec;
+
+
+	actor ThroughputInMbit(uint seconds) float In ==> :
+
+        uint(size=32) relativeStartTime;
+
+        uint(size=64) tokenCounter;
+        uint(size=64) lastTokenCounter;
+
+        initialize ==> 
+        do
+            relativeStartTime := timeMSec();
+            tokenCounter := 0;
+            lastTokenCounter := 0;
+        end
+
+        action In:[_] ==>
+        var
+            uint(size=32) currentTime
+        do
+            // -- Increase the token Counter
+            tokenCounter := tokenCounter + 1;
+
+            // -- Get the current time
+            currentTime := timeMSec();
+            
+            // -- Display the Throuhgput every defined seconds
+            if (currentTime - relativeStartTime > seconds * 1000) then
+                begin
+                var 
+                    float throuhgput
+                do
+                    throuhgput := 1000 * (tokenCounter - lastTokenCounter) / (currentTime - relativeStartTime);
+                    relativeStartTime := currentTime;
+                    lastTokenCounter := tokenCounter;
+
+                    println("Throughput : " + 32 * throuhgput / (1024*1024) + " Mbit/s");
+                end    
+            end
+        end
+
+    end
+
+
+end

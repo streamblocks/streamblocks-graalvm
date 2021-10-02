@@ -1,0 +1,15 @@
+namespace fir:
+
+	actor Z (List(type:double) tokens) float In ==> float Out :
+
+	    A:  action ==> Out:[tokens] repeat #tokens end
+	
+	    B:  action In:[a] ==> Out:[a] end
+	
+	    schedule fsm s0 :
+	 		s0 (A) --> s1;
+	 		s1 (B) --> s1;
+	 	end
+	 end
+	        
+end

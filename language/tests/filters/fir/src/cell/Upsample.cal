@@ -1,0 +1,15 @@
+namespace fir:
+
+
+	actor  Upsample(int n) float In ==> float Out:
+	
+		invariant
+			n > 0
+		end
+	
+		action In:[a] ==> Out:[[a : for int i in 1 .. n]] repeat n end
+	
+	end
+
+
+end

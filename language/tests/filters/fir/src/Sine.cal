@@ -1,0 +1,15 @@
+namespace fir:
+
+import var System.math.sin;
+
+	actor Sine (float d) float In ==> float Out: 
+	
+		float x := 0.0;
+		
+		action In:[_] ==> Out:[(sin(old x) as float)]
+		do
+			x := x + d;
+		end
+	end
+	
+end 
