@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
+import ch.epfl.vlsc.truffle.cal.nodes.CALActorInvariantNode;
 import ch.epfl.vlsc.truffle.cal.nodes.FsmStateCheckNode;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -221,6 +222,10 @@ public class CALActorInstance extends CALValue {
         @Specialization
         protected static Object doIndirect(CALActorInstance function, Object[] arguments,
                                            @Cached IndirectCallNode callNode) {
+            // Check Actor Invariant
+            CALActorInvariantNode inv = function.actorDecl.getActorInvariant();
+            if (inv != null) inv.executeVoid(function.frameDecl);
+
             // Return true if any action was executed, otherwise false
 
             // Loop over all actions till one of the actions is executed.

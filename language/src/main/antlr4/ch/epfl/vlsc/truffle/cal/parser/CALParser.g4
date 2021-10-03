@@ -328,11 +328,17 @@ actorDeclaration:
     isExternal='external'? 'actor' name=ID '(' formalParameters? ')' inputPorts=portDeclarations? '==>' outputPorts=portDeclarations? ('time' time=type)?
     (
         ':'
-        (localVariableDeclaration | actionDefinition | initializationActionDefinition | priorityOrder | actionSchedule | processDescription)*
+        (localVariableDeclaration | actionDefinition | initializationActionDefinition | priorityOrder | actionSchedule | processDescription | invariantDeclaration)*
         ('end' | 'endactor')
         |
         ';'
     )
+;
+
+invariantDeclaration:
+    'invariant'
+    expression (',' expression)*
+    'end'
 ;
 
 portDeclarations:

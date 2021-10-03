@@ -3,6 +3,8 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
@@ -19,7 +21,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.State;
-import dk.brics.automaton.Transition;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -109,6 +110,23 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 headStatementNodes.add(VariableVisitor.getInstance().visitLocalVariableDeclaration(localVariableCtx));
             }
         }
+
+        CALActorInvariantNode actorInvariantNode = null;
+        if (ctx.invariantDeclaration().size() > 1) {
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.invariantDeclaration(1), "There can only be a maximum of 1 invariant statement specified in the actor");
+        } else if (ctx.invariantDeclaration().size() == 1 && ctx.invariantDeclaration(0).expression().size() > 0) {
+            CALExpressionNode invariantCondition;
+            List<CALParser.ExpressionContext> exprs = ctx.invariantDeclaration(0).expression();
+            invariantCondition = ExpressionVisitor.getInstance().visit(exprs.remove(exprs.size() - 1));
+            for (int i = exprs.size() - 1; i >= 0; --i) {
+                CALExpressionNode condition = ExpressionVisitor.getInstance().visit(exprs.remove(i));
+                invariantCondition = new CALBinaryLogicalAndNode(condition, invariantCondition);
+                invariantCondition.setUnavailableSourceSection();
+                invariantCondition.addExpressionTag();
+            }
+            actorInvariantNode = new CALActorInvariantNode(invariantCondition);
+        }
+
         StmtBlockNode headNode = new StmtBlockNode(headStatementNodes.toArray(new CALStatementNode[0]));
         headNode.setUnavailableSourceSection();
         headNode.addStatementTag();
@@ -180,7 +198,8 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 fsmStateCheckNode,
                 fsmStateTransitionNode,
                 actorIndSlot,
-                currStateSlot
+                currStateSlot,
+                actorInvariantNode
         );
         // TODO Add RootTag / CallTag for actorNode
 

@@ -2,6 +2,9 @@ package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
 
+import ch.epfl.vlsc.truffle.cal.nodes.InvariantViolationException;
+import org.graalvm.polyglot.PolyglotException;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -176,6 +179,22 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void networkLoopConnectionTest() throws IOException {
         runTest(TestCase.newBuilder("network-loop-connection").setIterations(-1).setActorName("test.Sum").build());
+    }
+
+    @Test
+    public void networkLoopConnectionInvariantTest() throws IOException {
+        try {
+            runTest(TestCase.newBuilder("network-loop-connection-invariant").setIterations(-1).setActorName("test.Sum").build());
+        } catch (PolyglotException e) {
+            Assert.assertTrue(e.getMessage().contains("InvariantViolationException"));
+            return;
+        }
+        Assert.fail("Excpected InvariantViolationException, but it was not raised");
+    }
+
+    @Test
+    public void networkLoopConnectionInvariantInitializeTest() throws IOException {
+        runTest(TestCase.newBuilder("network-loop-connection-invariant-initialize").setIterations(-1).setActorName("test.Sum").build());
     }
 
     @Test

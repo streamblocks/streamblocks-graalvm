@@ -94,6 +94,7 @@ IF:             'if';
 IMPORT:         'import';
 IN:             'in';
 INITIALIZE:     'initialize';
+INVARIANT:      'invariant';
 LAMBDA:         'lambda';
 LET:            'let';
 MAP:            'map';
