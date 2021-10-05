@@ -397,6 +397,8 @@ patterns:
 ;
 
 pattern:
+    '_' # IgnoredToken
+    |
     variable # SimplePattern
     |
     variable '(' subPatterns? ')' # ComplexPattern

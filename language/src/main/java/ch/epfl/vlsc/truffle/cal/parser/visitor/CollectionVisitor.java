@@ -105,7 +105,7 @@ public class CollectionVisitor extends CALParserBaseVisitor<Collection<?>> {
         if (ctx.inputPattern().stream().allMatch(inpExp -> inpExp.port == null)) {
             List<String> inputPorts = ActorVisitor.getActorInputPorts(ActorVisitor.getCurrentlyProcessingActor());
             if (ctx.inputPattern().size() != inputPorts.size()) {
-                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit port mapping in action input does not have same number of output ports as actor");
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Implicit port mapping in action input does not have same number of input ports as actor");
             }
             for(int i = 0; i < ctx.inputPattern().size(); ++i) {
                 ActionVisitor.setPortName(inputPorts.get(i));

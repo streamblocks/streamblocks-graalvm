@@ -151,6 +151,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void multipleInputExpressionsIgnoreTokenTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-input-expressions-ignoretoken").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void multipleInputPortsTest() throws IOException {
         runTest(TestCase.newBuilder("network-multiple-input-ports").setActorName("simple.dwf.SourceSink").build());
     }
@@ -169,6 +174,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void multipleInputExpressionsRepeatTest() throws IOException {
         runTest(TestCase.newBuilder("network-input-multiple-input-expressions-repeat").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
+    public void multipleInputExpressionsRepeatIgnoreTokenTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-input-expressions-repeat-ignoretoken").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test

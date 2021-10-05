@@ -207,7 +207,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             );
         }
 
-        if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext)) {
+        if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext || x instanceof CALParser.IgnoredTokenContext)) {
             CALFifoTransactionCommit commit = new CALFifoTransactionCommit(portQueue);
             CALFifoTransactionRollback rollback = new CALFifoTransactionRollback(portQueue);
 
@@ -219,6 +219,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 StmtBlockNode readBlock = new StmtBlockNode(ctx.patterns().pattern().stream().map(x -> {
                     CALExpressionNode valueNode = new CALReadFIFONode(portQueue);
                     valueNode.setUnavailableSourceSection();
+                    if (x instanceof CALParser.IgnoredTokenContext) return valueNode;
                     valueNode.addExpressionTag();
                     return ScopeEnvironment.getInstance().createNewVariableWriteNode(
                             ((CALParser.SimplePatternContext) x).variable().name.getText(),
@@ -248,7 +249,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 CALStatementNode[] inputPatternStatementNodes = new CALStatementNode[3];
 
                 // inputPatterns.forEach(varName: varName = [])
-                inputPatternStatementNodes[0] = new StmtBlockNode(ctx.patterns().pattern().stream().map(x ->
+                inputPatternStatementNodes[0] = new StmtBlockNode(ctx.patterns().pattern().stream().filter(x -> x instanceof CALParser.SimplePatternContext).map(x ->
                     ScopeEnvironment.getInstance().createNewVariableWriteNode(
                             ((CALParser.SimplePatternContext) x).variable().name.getText(),
                             new UnknownSizeListInitNode(),
@@ -276,7 +277,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 portQueueNode.addExpressionTag();
 
                 loopStatementNodes[0] = new StmtBlockNode(ctx.patterns().pattern().stream().map(x ->
-                    ListWriteNodeGen.create(
+                    x instanceof CALParser.IgnoredTokenContext ? portQueueNode : ListWriteNodeGen.create(
                         ScopeEnvironment.getInstance().createReadNode(((CALParser.SimplePatternContext) x).variable().name.getText(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                         ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                         portQueueNode
