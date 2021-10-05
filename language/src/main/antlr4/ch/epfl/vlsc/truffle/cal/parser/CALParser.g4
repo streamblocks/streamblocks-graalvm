@@ -743,7 +743,8 @@ expression:
     |
     variableExpression # VariableExprExpression
     |
-    symbolReferenceExpression # SymbolReferenceExprExpression
+    // Symbol Reference (CAL Specification Extension)
+    expression ('::' | 'as') type # SymbolReferenceExprExpression
     |
     '(' expression ')' # ExprExpression
     |
@@ -786,11 +787,6 @@ literalExpression:
 // Variable reference (CLR §6.2)
 variableExpression:
     isOld='old'? variable
-;
-
-// Symbol Reference (CAL Specification Extension)
-symbolReferenceExpression:
-    variable '::' ID ('(' expressions? ')')?
 ;
 
 // Conditionals (CLR §6.7)

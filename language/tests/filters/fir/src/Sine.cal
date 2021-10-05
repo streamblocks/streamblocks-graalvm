@@ -11,5 +11,5 @@ import var System.math.sin;
 			x := x + d;
 		end
 	end
-	
-end 
+
+end

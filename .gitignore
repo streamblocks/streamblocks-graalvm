@@ -53,3 +53,4 @@ processed
 .PROCESSING
 .PROCESSED
 language/src/main/java/ch/epfl/vlsc/truffle/cal/nodes/util/IRNodeTreePrinterConsumer.java
+language/gen/

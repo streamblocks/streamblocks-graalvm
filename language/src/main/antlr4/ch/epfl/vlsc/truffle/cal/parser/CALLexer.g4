@@ -60,6 +60,7 @@ ACTOR:          'actor';
 ALL:            'all';
 AND:            'and';
 ANY:            'any';
+AS:             'as';
 AT:             'at';
 AT_STAR:        'at*';
 BEGIN:          'begin';

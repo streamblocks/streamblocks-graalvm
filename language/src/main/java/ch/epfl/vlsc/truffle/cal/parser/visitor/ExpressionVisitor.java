@@ -12,6 +12,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen
 import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -122,7 +123,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitSymbolReferenceExprExpression(CALParser.SymbolReferenceExprExpressionContext ctx) {
-        return visitSymbolReferenceExpression(ctx.symbolReferenceExpression());
+        return TypeCastVisitor.getInstance().visitType(ctx.type()).create(ExpressionVisitor.getInstance().visit(ctx.expression()));
     }
 
     /**
@@ -365,14 +366,6 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
         }
 
         return ScopeEnvironment.getInstance().createReadNode(ctx.variable().getText(), ScopeEnvironment.getInstance().createSourceSection(ctx));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override public CALExpressionNode visitSymbolReferenceExpression(CALParser.SymbolReferenceExpressionContext ctx) {
-        // TODO Create Symbol Reference expression node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Symbol Reference expression is not yet supported");
     }
 
     /**
