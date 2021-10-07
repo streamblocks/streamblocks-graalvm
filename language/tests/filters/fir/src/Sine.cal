@@ -6,7 +6,7 @@ import var System.math.sin;
 	
 		float x := 0.0;
 		
-		action In:[_] ==> Out:[(sin(old x) as float)]
+		action In:[_] ==> Out:[(sin(old x)::float)]
 		do
 			x := x + d;
 		end

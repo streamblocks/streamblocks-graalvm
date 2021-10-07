@@ -744,7 +744,7 @@ expression:
     variableExpression # VariableExprExpression
     |
     // Symbol Reference (CAL Specification Extension)
-    expression ('::' | 'as') type # SymbolReferenceExprExpression
+    expression '::' type # SymbolReferenceExprExpression
     |
     '(' expression ')' # ExprExpression
     |
