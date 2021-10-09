@@ -360,9 +360,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
     @Override public CALExpressionNode visitVariableExpression(CALParser.VariableExpressionContext ctx) {
         if (ctx.isOld != null) {
             // TODO Add support for old variable
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Old variable expression is not yet supported");
-            }
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Old variable expression is not yet supported");
         }
 
         return ScopeEnvironment.getInstance().createReadNode(ctx.variable().getText(), ScopeEnvironment.getInstance().createSourceSection(ctx));

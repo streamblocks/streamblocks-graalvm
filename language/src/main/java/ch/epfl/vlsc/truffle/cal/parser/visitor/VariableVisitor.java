@@ -6,6 +6,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ProcNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigDecimalLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
@@ -21,6 +22,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Comparator;
@@ -164,8 +166,10 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             return new BigIntegerLiteralNode(new BigInteger("0"));
         } else if (ctx.name.getText().equals("uint")) {
             return new BigIntegerLiteralNode(new BigInteger("0"));
+        } else if (ctx.name.getText().equals("float")) {
+            return new BigDecimalLiteralNode(new BigDecimal(0));
         } else
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for type unknows type " + ctx.name.getText());
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for unknown type " + ctx.name.getText());
     }
 
     /**
