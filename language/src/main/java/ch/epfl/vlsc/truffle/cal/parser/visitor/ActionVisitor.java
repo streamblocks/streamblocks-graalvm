@@ -59,10 +59,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
      */
     @Override public ActionNode visitActionDefinition(CALParser.ActionDefinitionContext ctx) {
         if (ctx.delay != null) {
-            // TODO Add support for action delay
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Action delay is not yet supported");
-            }
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Action delay is not yet supported");
         }
 
         ScopeEnvironment.getInstance().pushScope();
@@ -94,6 +91,18 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 transactionRollbacks.add(x.getRight());
             });
         }
+
+        // Create bindings for all variables whose "old" values are referred. Refer CLR 6.2.1
+        List<String> oldVariablesUser = ActionBodyOldReferenceFindVisitor.getInstance().visitActionDefinition(ctx);
+        oldVariablesUser.forEach(varName -> {
+            actionStatements.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    "$old" + varName,
+                    ScopeEnvironment.getInstance().createReadNode(varName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    DefaultValueCastNodeCreator.getInstance(),
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+            ));
+        });
+
         if (ctx.localVariables != null) {
             actionStatements.addAll(CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables));
         }
