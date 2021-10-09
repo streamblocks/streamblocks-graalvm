@@ -64,7 +64,9 @@ public class TypeCastVisitor extends CALParserBaseVisitor<ValueCastNodeCreator> 
             return DefaultValueCastNodeCreator.getInstance();
         } else if (ctx.name.getText().equals("float")) {
             return DefaultValueCastNodeCreator.getInstance();
+        } else if (ctx.name.getText().equals("double")) {
+            return DefaultValueCastNodeCreator.getInstance();
         } else
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for type unknows type " + ctx.name.getText());
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for unknown type " + ctx.name.getText());
     }
 }

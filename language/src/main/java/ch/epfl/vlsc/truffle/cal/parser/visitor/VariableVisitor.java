@@ -168,6 +168,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             return new BigIntegerLiteralNode(new BigInteger("0"));
         } else if (ctx.name.getText().equals("float")) {
             return new BigDecimalLiteralNode(new BigDecimal(0));
+        } else if (ctx.name.getText().equals("double")) {
+            return new BigDecimalLiteralNode(new BigDecimal(0));
         } else
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for unknown type " + ctx.name.getText());
     }

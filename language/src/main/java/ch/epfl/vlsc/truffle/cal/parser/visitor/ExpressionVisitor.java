@@ -20,6 +20,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -310,7 +311,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      */
     @Override public CALExpressionNode visitFloatingPointLiteralExpression(CALParser.FloatingPointLiteralExpressionContext ctx) {
         // TODO Create Float Literal node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Float literal expression is not yet supported");
+        return new BigDecimalLiteralNode(new BigDecimal(ctx.getText()));
     }
 
     /**
