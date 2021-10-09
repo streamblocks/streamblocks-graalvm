@@ -22,9 +22,13 @@ namespace fir:
 	        
 	        data[n-1] := a;
 	        
-	        foreach uint i in 0 .. n -1 do
-	        	b := b + taps[i] * data[i];
-	        end
+	        // foreach uint i in 0 .. n -1 do
+	        //	b := b + taps[i] * data[i];
+	        // end
+
+	        foreach uint k in 0 .. n -1 do
+                b := b + taps[k] * data[k];
+            end
 	    end
 	end
 
