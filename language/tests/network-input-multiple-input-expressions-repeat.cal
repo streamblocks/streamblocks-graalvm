@@ -19,8 +19,8 @@ namespace simple.dwf:
 
     end
 
-    actor Split4() int IN ==> Seq[int] OUT:
-        action IN: [input1, input2] repeat 2 ==> OUT:[[output1, output2, output3, output4]]
+    actor Split4() int IN2 ==> Seq[int] OUT:
+        action IN2: [input1, input2] repeat 2 ==> OUT:[[output1, output2, output3, output4]]
         var
             int output1 = input1[0], int output2 = input2[0], int output3 = input1[1], int output4 = input2[1]
         do
@@ -28,8 +28,8 @@ namespace simple.dwf:
         end
     end
 
-    actor Print() IN ==> :
-        action IN:[tokens] ==>
+    actor Print() IN3 ==> :
+        action IN3:[tokens] ==>
         do
             println("print starts");
             foreach int i in tokens do
@@ -44,14 +44,14 @@ namespace simple.dwf:
      * and prints the tokens to the standart output.
      */
     network Sink()
-        int IN ==> :
+        int IN4 ==> :
 
         entities
             source = Split4();
             sink = Print();
         structure
-            IN --> source.IN;
-            source.OUT --> sink.IN;
+            source.OUT --> sink.IN3;
+            IN4 --> source.IN2;
     end
 
     /*
@@ -65,7 +65,7 @@ namespace simple.dwf:
             source = Source();
             sink = Sink();
         structure
-            source.OUT --> sink.IN;
+            source.OUT --> sink.IN4;
     end
 
 end

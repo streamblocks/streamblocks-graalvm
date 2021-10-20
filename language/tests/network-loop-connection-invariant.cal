@@ -1,12 +1,12 @@
 // This test is obtained from Chapter 4 of "Tokens, What Tokens: A gentle introduction to dataflow programming"
 namespace test:
 
-    actor Source() ==> int OUT:
+    actor Source() ==> int Out:
         int Counter := 0;
         invariant
             Counter < 16
         end
-        action ==> OUT:[token]
+        action ==> Out:[token]
         guard
             Counter < 16
         var
@@ -26,8 +26,8 @@ namespace test:
         end
     end
 
-    actor Sink() int IN ==> :
-        action IN:[token] ==>
+    actor Sink() int In ==> :
+        action In:[token] ==>
         do
             println(token);
         end

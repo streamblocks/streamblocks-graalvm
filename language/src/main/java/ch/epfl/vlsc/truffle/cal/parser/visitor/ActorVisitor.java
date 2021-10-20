@@ -6,6 +6,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
@@ -87,18 +88,25 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         }
 
         if (ctx.inputPorts != null) {
-            ctx.inputPorts.portDeclaration().forEach(inpPort -> inputPortNames.add(inpPort.name.getText()));
-            VariableVisitor.setPortDeclarationStartIndex(startIndex);
-            Collection<InitializeArgNode> inputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.inputPorts);
-            headStatementNodes.addAll(inputPortNodes);
-            startIndex += ctx.inputPorts.portDeclaration().size();
+            ctx.inputPorts.portDeclaration().forEach(inpPort -> {
+                inputPortNames.add(inpPort.name.getText());
+                ScopeEnvironment.getInstance().createFrameSlot(
+                        inpPort.name.getText(),
+                        DefaultValueCastNodeCreator.getInstance());
+            });
         }
+
         if (ctx.outputPorts != null) {
-            ctx.outputPorts.portDeclaration().forEach(outPort -> outputPortNames.add(outPort.name.getText()));
-            VariableVisitor.setPortDeclarationStartIndex(startIndex);
-            Collection<InitializeArgNode> outputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.outputPorts);
-            headStatementNodes.addAll(outputPortNodes);
+            ctx.outputPorts.portDeclaration().forEach(port -> {
+                outputPortNames.add(port.name.getText());
+                headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                        port.name.getText(),
+                        new CALFifoFanoutNode(),
+                        DefaultValueCastNodeCreator.getInstance(),
+                        ScopeEnvironment.getInstance().createSourceSection(port)));
+            });
         }
+
         if (ctx.time != null) {
             // TODO Add support for actor time
             if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {

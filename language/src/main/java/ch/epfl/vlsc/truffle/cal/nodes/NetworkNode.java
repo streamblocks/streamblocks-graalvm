@@ -6,7 +6,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
-public class NetworkNode extends CALRootNode {
+public class NetworkNode extends EntityNode {
 
     @Child NetworkInstantiateNode instantiateNode;
     private final String name;

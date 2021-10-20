@@ -284,7 +284,7 @@ structureStatement:
 ;
 
 structureConnectorStatement:
-    connector '-->' connector attributeSection? ';'
+    source=connector '-->' dest=connector attributeSection? ';'
 ;
 
 structureForeachStatement:

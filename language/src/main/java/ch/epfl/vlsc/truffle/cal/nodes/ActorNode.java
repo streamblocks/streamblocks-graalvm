@@ -10,7 +10,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
-public class ActorNode extends CALRootNode {
+public class ActorNode extends EntityNode {
     @Child private CALActorInvariantNode actorInvariant;
     @Child private ActorInstantiateNode instantiateNode;
     @Children private ActionNode[] actions;
