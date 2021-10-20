@@ -46,12 +46,13 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
         String networkName = ctx.name.getText();
 
         List<CALStatementNode> headStatementNodes = new ArrayList<>();
+        List<CALExpressionNode> bodyStatementNodes = new LinkedList<>();
+
         int startIndex = 0;
         if (ctx.formalParameters() != null) {
             VariableVisitor.setPortDeclarationStartIndex(startIndex);
             Collection<CALStatementNode> formalParameterNodes = CollectionVisitor.getInstance().visitFormalParameters(ctx.formalParameters());
             headStatementNodes.addAll(formalParameterNodes);
-            startIndex += ctx.formalParameters().formalParameter().size();
         }
 
         if (ctx.inputPorts != null) {
@@ -63,6 +64,7 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                         ScopeEnvironment.getInstance().createSourceSection(port)));
             });
         }
+
         if (ctx.outputPorts != null) {
             ctx.outputPorts.portDeclaration().forEach(port -> {
                 headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
@@ -72,45 +74,18 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                         ScopeEnvironment.getInstance().createSourceSection(port)));
             });
         }
+
         if (ctx.localVariableDeclaration() != null) {
             for (CALParser.LocalVariableDeclarationContext localVariableCtx: ctx.localVariableDeclaration()) {
                 headStatementNodes.add(VariableVisitor.getInstance().visitLocalVariableDeclaration(localVariableCtx));
             }
         }
 
-        Map<String, EntityVisitor.EntityInstance> entities = new HashMap<>();
-        if (ctx.entityDeclaration() != null) {
-            for (CALParser.EntityDeclarationContext entityCtx: ctx.entityDeclaration()) {
-                EntityVisitor.EntityInstance instance = EntityVisitor.getInstance().visitEntityDeclaration(entityCtx);
-                entities.put(instance.name, instance);
-            }
-        }
-
-        // Instantiate actors
-        for (Map.Entry<String, EntityVisitor.EntityInstance> entry : entities.entrySet()) {
-            EntityVisitor.EntityInstance instance = entry.getValue();
-
-            CALExpressionNode actorLiteralNode = new ActorLiteralNode(ScopeEnvironment.getInstance().getEntityFullName(instance.actor));
-            actorLiteralNode.setSourceSection(instance.sourceSection);
-            actorLiteralNode.addExpressionTag();
-
-            List<CALExpressionNode> argumentNodes = new ArrayList<>();
-            // TODO Add support for named parameters
-            argumentNodes.addAll(instance.parameters.stream().map(parameter -> parameter.valueNode).collect(Collectors.toList()));
-
-            CALExpressionNode valueNode = new CALInvokeNode(actorLiteralNode, argumentNodes.toArray(new CALExpressionNode[0]));
-            valueNode.setSourceSection(instance.sourceSection);
-            valueNode.addExpressionTag();
-
-            CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
-                    instance.name,
-                    valueNode,
-                    DefaultValueCastNodeCreator.getInstance(),
-                    instance.sourceSection);
-            headStatementNodes.add(instanceNode);
-        }
-
-        Map<String, String> outputPortToFanoutMapping = new HashMap<>();
+        ctx.entityDeclaration().forEach(entityCtx -> {
+            Pair<CALStatementNode, CALExpressionNode> p = EntityVisitor.getInstance().visitEntityDeclaration(entityCtx);
+            headStatementNodes.add(p.getLeft());
+            bodyStatementNodes.add(p.getRight());
+        });
 
         // In CAL, the output from one entity can be input for multiple entities,
         // in which case the output token is copied to all the entities input ports.
@@ -123,20 +98,6 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
             });
         }
 
-        ScopeEnvironment.getInstance().getCurrentScope().increaseDepth();
-
-        // Run actors
-        List<CALExpressionNode> bodyStatementNodes = new LinkedList<>();
-        for (String instanceName : entities.keySet()) {
-            CALExpressionNode entityNode = ScopeEnvironment.getInstance().createReadNode(instanceName, entities.get(instanceName).sourceSection);
-
-            CALInvokeNode entityInvokeNode = new CALInvokeNode(entityNode, new CALExpressionNode[0]);
-            entityInvokeNode.setSourceSection(entities.get(instanceName).sourceSection);
-            entityInvokeNode.addStatementTag();
-
-            bodyStatementNodes.add(entityInvokeNode);
-        }
-
         StmtBlockNode headNode = new StmtBlockNode(headStatementNodes.toArray(new CALStatementNode[0]));
         headNode.setUnavailableSourceSection();
         headNode.addStatementTag();
@@ -144,7 +105,6 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
         CALExpressionNode bodyNode = new NetworkBodyNode(bodyStatementNodes.toArray(new CALExpressionNode[0]));
         headNode.setUnavailableSourceSection();
         headNode.addStatementTag();
-
 
         CALRootNode bodyRootNode = new CALRootNode(
                 ScopeEnvironment.getInstance().getLanguage(),
@@ -154,8 +114,6 @@ public class NetworkVisitor extends CALParserBaseVisitor<NetworkNode> {
                 networkName
         );
         // TODO Add RootTag / CallTag for bodyRootNode
-
-        ScopeEnvironment.getInstance().getCurrentScope().decreaseDepth();
 
         NetworkNode networkNode = new NetworkNode(
                 ScopeEnvironment.getInstance().getLanguage(),

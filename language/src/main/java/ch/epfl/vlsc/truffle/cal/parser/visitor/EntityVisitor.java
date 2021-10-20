@@ -2,6 +2,10 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
@@ -14,6 +18,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Singleton class that provides an implementation for an entity sub-tree.
@@ -70,12 +76,38 @@ public class EntityVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public EntityInstance visitEntityDeclaration(CALParser.EntityDeclarationContext ctx) {
+    @Override public Pair<CALStatementNode, CALExpressionNode> visitEntityDeclaration(CALParser.EntityDeclarationContext ctx) {
         // TODO Change after implementing complex expressions (if/list)
         EntityInstance instance = (EntityInstance) visitEntityExpression(ctx.entityExpression());
         instance.name = ctx.name.getText();
 
-        return instance;
+        CALExpressionNode actorLiteralNode = new ActorLiteralNode(ScopeEnvironment.getInstance().getEntityFullName(instance.actor));
+        actorLiteralNode.setSourceSection(instance.sourceSection);
+        actorLiteralNode.addExpressionTag();
+
+        List<CALExpressionNode> argumentNodes = new ArrayList<>();
+        // TODO Add support for named parameters
+        argumentNodes.addAll(instance.parameters.stream().map(parameter -> parameter.valueNode).collect(Collectors.toList()));
+
+        CALExpressionNode valueNode = new CALInvokeNode(actorLiteralNode, argumentNodes.toArray(new CALExpressionNode[0]));
+        valueNode.setSourceSection(instance.sourceSection);
+        valueNode.addExpressionTag();
+
+        CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                instance.name,
+                valueNode,
+                DefaultValueCastNodeCreator.getInstance(),
+                instance.sourceSection);
+
+        ScopeEnvironment.getInstance().getCurrentScope().increaseDepth();
+        CALExpressionNode entityNode = ScopeEnvironment.getInstance().createReadNode(instance.name, instance.sourceSection);
+
+        CALInvokeNode entityInvokeNode = new CALInvokeNode(entityNode, new CALExpressionNode[0]);
+        entityInvokeNode.setSourceSection(instance.sourceSection);
+        entityInvokeNode.addStatementTag();
+        ScopeEnvironment.getInstance().getCurrentScope().decreaseDepth();
+
+        return Pair.of(instanceNode, entityInvokeNode);
     }
 
     /**
