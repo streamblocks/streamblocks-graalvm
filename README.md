@@ -1,3 +1,4 @@
+[![Coverage Status](https://coveralls.io/repos/github/streamblocks/streamblocks-graalvm/badge.svg?branch=master)](https://coveralls.io/github/streamblocks/streamblocks-graalvm?branch=master)
 # StreamBlock graalvm
 
 ## Usage
