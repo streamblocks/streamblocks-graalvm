@@ -6,11 +6,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 @ExportLibrary(ListLibrary.class)
-public final class GenericArrayListList {
+public final class GenericArrayListList implements TruffleObject {
     private List<Object> list;
 
     public GenericArrayListList(int length) {

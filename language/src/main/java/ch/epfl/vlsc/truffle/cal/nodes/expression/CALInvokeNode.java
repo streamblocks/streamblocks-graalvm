@@ -83,11 +83,7 @@ public abstract class CALInvokeNode extends CALExpressionNode {
         }
 
         try {
-            if (function instanceof GenericBufferList) {
-                GenericBufferList entityList = (GenericBufferList) function;
-                return false;
-            } else
-                return library.execute(function, argumentValues);
+            return library.execute(function, argumentValues);
         } catch (ArityException | UnsupportedTypeException | UnsupportedMessageException e) {
             /* Execute was not successful. */
             throw CALUndefinedNameException.undefinedFunction(this, function);

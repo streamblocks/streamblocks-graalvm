@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.binary;
 
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigDecimal;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -19,6 +20,12 @@ public abstract class CALBinaryMulNode extends CALBinaryNode {
     @CompilerDirectives.TruffleBoundary
     protected CALBigNumber mul(CALBigNumber left, CALBigNumber right) {
         return new CALBigNumber(left.getValue().multiply(right.getValue()));
+    }
+
+    @Specialization
+    @CompilerDirectives.TruffleBoundary
+    protected CALBigDecimal add(CALBigDecimal left, CALBigDecimal right) {
+        return new CALBigDecimal(left.getValue().multiply(right.getValue()));
     }
 
     @Fallback

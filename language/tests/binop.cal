@@ -23,6 +23,13 @@ namespace test:
             println(15 - 5 + 10);
             println(63 :: int(size=6));
             println(64 :: int(size=6));
+            println(20.0/30.0);
+            println(20.0+32.1);
+            println(21.2*25.76);
+            println(21000.2-25.7614365);
+            println(22.01234 == 22.01234);
+            println(22.01234 != 22.01234);
+            println(25845.2327 >= 1392834.323);
 		end
 	end
 end
