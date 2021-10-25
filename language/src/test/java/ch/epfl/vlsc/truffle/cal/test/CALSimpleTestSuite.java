@@ -218,9 +218,13 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void networkLanguageFibsTest() throws IOException {
-        runTest(TestCase.newBuilder("network-language-fibs").setActorName("test.Fibs").build());
+        runTest(TestCase.newBuilder("network-language-fibs").setActorName("test.Fibs5").build());
+    }
+
+    @Test
+    public void networkLanguagePow2Test() throws IOException {
+        runTest(TestCase.newBuilder("network-language-power-of-two").setActorName("test.Pow2_3").build());
     }
 
     @Test

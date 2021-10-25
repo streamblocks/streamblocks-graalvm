@@ -5,7 +5,7 @@ import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
@@ -72,7 +72,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         RootCallTarget startNode = actors.get(actorName);
         assert startNode != null;
         CALExpressionNode actor = new ActorLiteralNode(actorName);
-        CALExpressionNode call = new CALInvokeNode(actor, new CALExpressionNode[0]);
+        CALExpressionNode call = CALInvokeNodeGen.create(new CALExpressionNode[0], actor);
         // Assign
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         String actorInstanceName = "testActorInstance";
@@ -105,7 +105,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             bodyNodes[2] = new StmtWhileNode(
                     CALBinaryLessThanNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(new BigInteger(String.valueOf(iterations)))),
                     new StmtBlockNode(new CALStatementNode[]{
-                        new CALInvokeNode(instance, new CALExpressionNode[0]),
+                        CALInvokeNodeGen.create(new CALExpressionNode[0], instance),
                         iterationNumExistingSlot.createWriteNode(CALBinaryAddNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(BigInteger.ONE)), new StringLiteralNode(iterationNumVarName), false, 0)
                     }));
         } else {
@@ -119,9 +119,9 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, DefaultValueCastNodeCreator.getInstance(), FrameSlotKind.Boolean);
             FrameSlotAndDepthRW executionStatusExistingSlot = new FrameSlotAndDepthRW(executionStatusFrameSlot, 0);
             // Execute once and store execution result to a variable
-            bodyNodes[1] = executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), true, 0);
+            bodyNodes[1] = executionStatusExistingSlot.createWriteNode(CALInvokeNodeGen.create(new CALExpressionNode[0], instance), new StringLiteralNode(executionStatusVarName), true, 0);
             // Loop until the execution status variable is true
-            bodyNodes[2] = new StmtWhileNode(executionStatusExistingSlot.createReadNode(0), executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), false, 0));
+            bodyNodes[2] = new StmtWhileNode(executionStatusExistingSlot.createReadNode(0), executionStatusExistingSlot.createWriteNode(CALInvokeNodeGen.create(new CALExpressionNode[0], instance), new StringLiteralNode(executionStatusVarName), false, 0));
         }
         CALStatementNode body = new StmtBlockNode(bodyNodes);
         RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body),

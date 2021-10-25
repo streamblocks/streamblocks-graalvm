@@ -283,27 +283,31 @@ structureStatement:
     (structureConnectorStatement | structureForeachStatement | structureIfStatement)
 ;
 
+structureStatements:
+    structureStatement (structureStatement)*
+;
+
 structureConnectorStatement:
     source=connector '-->' dest=connector attributeSection? ';'
 ;
 
 structureForeachStatement:
     foreachGenerators 'do'
-    structureStatement*
+    structureStatements
     ('end' | 'endforeach')
 ;
 
 structureIfStatement:
-    'if' expression 'then'
-    structureStatement*
-    (structureElseIfStatement | 'else' structureStatement*)?
+    'if' condition=expression 'then'
+    thenPart=structureStatements
+    (structureElseIfStatement | 'else' elsePart=structureStatements)?
     ('end' | 'endif')
 ;
 
 structureElseIfStatement:
-    'elsif' expression 'then'
-    expression
-    (structureElseIfStatement | 'else' expression)?
+    'elsif' condition=expression 'then'
+    thenPart=structureStatements
+    (structureElseIfStatement | 'else' elsePart=structureStatements)?
 ;
 
 connector:

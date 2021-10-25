@@ -684,7 +684,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             argumentNodes = new CALExpressionNode[0];
         }
 
-        CALInvokeNode callNode = new CALInvokeNode(functionNode, argumentNodes);
+        CALInvokeNode callNode = CALInvokeNodeGen.create(argumentNodes, functionNode);
         callNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
         callNode.addExpressionTag();
 
