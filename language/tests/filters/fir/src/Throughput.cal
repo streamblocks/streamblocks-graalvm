@@ -1,14 +1,13 @@
 namespace fir:
 
-import var std.counters.timeMSec;
-
-
 	actor ThroughputInMbit(uint seconds) float In ==> :
 
         uint(size=32) relativeStartTime;
 
         uint(size=64) tokenCounter;
         uint(size=64) lastTokenCounter;
+
+        function timeMSec () : 0 end
 
         initialize ==> 
         do

@@ -10,10 +10,13 @@ namespace fir:
 	end
 	
 	actor Compare() float Golden, float Folded  ==> :
-	
+	    int i := 0;
 		action Golden:[g], Folded:[f] ==>
 		do
-			println("g: " + g + ", f: " + f);	
+		    if g != f then
+			    println("Token " + i + " differ: " + "g: " + g + ", f: " + f);
+			end
+			i := i + 1;
 		end
 	
 	end

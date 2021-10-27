@@ -345,8 +345,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void filtersTest() throws IOException {
-        runTest(TestCase.newBuilder("filters/fir/src/TopFIRThroughput").setIterations(-1).setActorName("fir.TopFIRThroughput").setDirLookup(true).build());
+        runTest(TestCase.newBuilder("filters/fir/src/TopCompare").setIterations(-1).setActorName("fir.TopFIRCompare").setDirLookup(true).build());
     }
 }
