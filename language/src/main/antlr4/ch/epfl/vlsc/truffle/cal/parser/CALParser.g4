@@ -723,6 +723,8 @@ expression:
     |
     operator='!' operand=expression # UnaryOperationExpression
     |
+    operator='~' operand=expression # UnaryOperationExpression
+    |
     operand1=expression operator=('*' | '/' | '%' | 'div' | 'mod') operand2=expression # BinaryOperationExpression
     |
     operand1=expression operator=('+' | '-') operand2=expression # BinaryOperationExpression

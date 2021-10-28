@@ -4,6 +4,9 @@ namespace test:
 		var l := [1,2,3]
 		do
 		    println(#l);
+		    println(0x12);
+		    println(-0xFF);
+		    println(0XFFF);
 		end
 	end
 end

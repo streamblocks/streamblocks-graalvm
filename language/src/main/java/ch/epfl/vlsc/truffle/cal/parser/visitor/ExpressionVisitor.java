@@ -7,9 +7,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
@@ -91,18 +89,20 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             case "-":
                 unaryOperationNode = CALUnaryMinusNodeGen.create(operand);
                 break;
-            case "!":
-                // TODO: Change to CALUnaryBitNotNode
             case "not":
                 unaryOperationNode = CALUnaryLogicalNotNodeGen.create(operand);
                 break;
+            case "#":
+                unaryOperationNode = CALUnaryListSizeNodeGen.create(operand);
+                break;
+            case "~":
+                // TODO: Correct and add to CALUnaryBitNotNode
+            case "!":
+                // TODO: Change to CALUnaryBitNotNode
             case "rng":
                 // TODO: Create CALUnaryMapRangeNode
             case "dom":
                 // TODO: Create CALUnaryMapDomainNode
-            case "#":
-                unaryOperationNode = CALUnaryListSizeNodeGen.create(operand);
-                break;
             default:
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unary operator \"" + operator + "\" is not yet supported");
         }
@@ -298,7 +298,11 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
             return literalNode;
         } catch (NumberFormatException e) {
-            BigIntegerLiteralNode literalNode = new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral().getText()));
+            BigIntegerLiteralNode literalNode;
+            if (ctx.IntegerLiteral().getText().startsWith("0x") || ctx.IntegerLiteral().getText().startsWith("0X")) {
+                literalNode = new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral().getText().substring(2), 16));
+            } else
+                literalNode = new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral().getText()));
             literalNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
             literalNode.addExpressionTag();
 
