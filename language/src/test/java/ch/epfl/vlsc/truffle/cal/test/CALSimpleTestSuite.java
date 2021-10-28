@@ -202,6 +202,26 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void actorMissingInputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("actor-missing-input-port").setIterations(-1).setActorName("test.ActorMissingInputPort").build());
+    }
+
+    @Test
+    public void actorMissingInputAndOutputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("actor-missing-input-and-output-port").setIterations(-1).setActorName("test.ActorMissingInputAndOutputPort").build());
+    }
+
+    @Test
+    public void networkMissingInputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("network-missing-input-port").setIterations(-1).setActorName("test.NetworkMissingInputPort").build());
+    }
+
+    @Test
+    public void networkMissingInputAndOutputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("network-missing-input-and-output-port").setIterations(-1).setActorName("test.NetworkMissingInputAndOutputPort").build());
+    }
+
+    @Test
     public void networkLoopConnectionInvariantTest() throws IOException {
         try {
             runTest(TestCase.newBuilder("network-loop-connection-invariant").setIterations(-1).setActorName("test.Sum").build());

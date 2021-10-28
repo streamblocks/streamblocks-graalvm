@@ -5,6 +5,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.StringLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNodeSizeExpression;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
@@ -66,7 +67,9 @@ public class TypeCastVisitor extends CALParserBaseVisitor<ValueCastNodeCreator> 
             return DefaultValueCastNodeCreator.getInstance();
         } else if (ctx.name.getText().equals("double")) {
             return DefaultValueCastNodeCreator.getInstance();
+        } else if (ctx.name.getText().equals("String")) {
+            return DefaultValueCastNodeCreator.getInstance();
         } else
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for unknown type " + ctx.name.getText());
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default typecast value for unknown type " + ctx.name.getText());
     }
 }

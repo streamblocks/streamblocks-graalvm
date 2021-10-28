@@ -6,6 +6,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
 import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
@@ -90,9 +91,11 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         if (ctx.inputPorts != null) {
             ctx.inputPorts.portDeclaration().forEach(inpPort -> {
                 inputPortNames.add(inpPort.name.getText());
-                ScopeEnvironment.getInstance().createFrameSlot(
+                headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
                         inpPort.name.getText(),
-                        DefaultValueCastNodeCreator.getInstance());
+                        new CALCreateFIFONode(),
+                        DefaultValueCastNodeCreator.getInstance(),
+                        ScopeEnvironment.getInstance().createSourceSection(inpPort)));
             });
         }
 

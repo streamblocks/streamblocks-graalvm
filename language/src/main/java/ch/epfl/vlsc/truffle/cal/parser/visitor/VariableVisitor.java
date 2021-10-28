@@ -6,10 +6,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ProcNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigDecimalLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNodeSizeExpression;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
@@ -170,6 +167,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             return new BigDecimalLiteralNode(new BigDecimal(0));
         } else if (ctx.name.getText().equals("double")) {
             return new BigDecimalLiteralNode(new BigDecimal(0));
+        } else if (ctx.name.getText().equals("String")) {
+            return new StringLiteralNode("");
         } else
             throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for unknown type " + ctx.name.getText());
     }
