@@ -1,0 +1,11 @@
+namespace mdp:
+
+	actor Print(String msg) int In ==> :
+	
+		action In:[x] ==>
+		do
+			println(msg + x);
+		end
+	end
+
+end

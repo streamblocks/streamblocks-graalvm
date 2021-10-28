@@ -1,0 +1,319 @@
+/* 
+BEGINCOPYRIGHT X
+	
+	Copyright (c) 2007, Xilinx Inc.
+	All rights reserved.
+	
+	Redistribution and use in source and binary forms, 
+	with or without modification, are permitted provided 
+	that the following conditions are met:
+	- Redistributions of source code must retain the above 
+	  copyright notice, this list of conditions and the 
+	  following disclaimer.
+	- Redistributions in binary form must reproduce the 
+	  above copyright notice, this list of conditions and 
+	  the following disclaimer in the documentation and/or 
+	  other materials provided with the distribution.
+	- Neither the name of the copyright holder nor the names 
+	  of its contributors may be used to endorse or promote 
+	  products derived from this software without specific 
+	  prior written permission.
+	
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+	CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR 
+	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+	SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
+	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+	HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+	OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+ENDCOPYRIGHT
+*/
+
+/**
+	Instruction decoder component for the Mini Dataflow Processor
+	
+	@author JWJ
+*/
+
+namespace mdp:
+
+import all System.bitops;
+
+	actor InstructionDecoder () 
+	  int I,  bool Reset ==> 
+	  bool W, int Offset, 
+	  int PcOp, int PcVal,
+	  int AluOp,
+	  int RfOp, int R1, int R2, int RfVal,
+	  int SinOp, int SinChn,
+	  int SoutOp, int SoutChn:
+	  
+	  function opcode1 (int n) --> int:
+	    bitand(rshift(n, 26), 0x3f)
+	  end
+	
+	  function opcode2 (int n) --> int: 
+	    bitand(n, 0x3f)
+	  end
+	
+	  function immediate(int n) --> int:
+	    bitand(n, 0xffff)
+	  end
+	
+	  function channel(int n) --> int:
+	    bitand(n, 0x3)
+	  end
+	
+	  function jvalue(int n) --> int:
+	    bitand(n, 0xffffff)
+	  end
+	
+	  function extend16to32(int n) --> int:
+	    if bitand(n, 0x8000) = 0 then bitand(n, 0x7FFF) else bitand(n, 0x7FFF) - 0x8000 end
+	  end
+	
+	  function extend24to32(int n) --> int:
+	    if bitand(n, 0x800000) = 0 then bitand(n, 0x7FFFFF) else bitand(n, 0x7FFFFF) - 0x800000 end
+	  end
+	
+	  function r1(int n) --> int:
+	    bitand(rshift(n, 21), 0x1f)
+	  end  
+	
+	  function r2(int n) --> int:
+	    bitand(rshift(n, 16), 0x1f)
+	  end  
+	
+	  function rd(int n) --> int:
+	    bitand(rshift(n, 11), 0x1f)
+	  end  
+	
+	  function val(int n) --> int:
+	    bitand(n, 0x3ffffff)
+	  end
+	
+	  function rfcmd(int op, int a, int b) --> int 
+	  var 
+	    int h1 = lshift(bitand(op, 0xf), 10), 
+	    int h2 = lshift(bitand(a, 0x1f), 5), 
+	    int h3 = bitand(b, 0x1f) 
+	   :
+	    	bitor(bitor(h1, h2), h3)
+	  end
+	  
+	
+	
+	  Init: action ==> RfOp: [0], PcOp: [0] end
+	
+	  Reset: action Reset: [_] ==> RfOp: [0], PcOp: [0] end
+	
+	  // STOP -- I
+	  Stop: action I: [op] ==> 
+		guard
+		  opcode1(op) = 0x3f
+		end 
+	
+	  // ADD 
+	  Op.ADD: action I:[op] ==> PcOp: [1],   // NEXT
+	                             AluOp: [1],  // ADD
+	                             RfOp: [2, 9],  // READ-AB, STORE2
+	                             R1: [r1(op), rd(op)],
+	                             R2: [r2(op)]
+      guard 
+      	oc1 = 0 and oc2 = 0x20   // ADD
+      var 
+        int oc1 = opcode1(op), int oc2 = opcode2(op)
+      end
+	
+	  // ADDI -- I
+	  Op.ADDI: action I: [op] ==> PcOp: [1],   // NEXT
+	                              AluOp: [1],  // ADD
+	                              RfOp: [1, 9], // READ-A, STORE2
+	                              RfVal: [n],
+	                              R1: [r1(op), r2(op)]
+      guard 
+      	oc1 = 0x08   // ADDI
+      var 
+        int oc1 = opcode1(op),
+        int n = extend16to32(immediate(op))
+      end
+	
+	  // SUB -- R
+	  Op.SUB: action I: [op] ==> PcOp: [1],   // NEXT
+	                             AluOp: [2],  // SUB
+	                             RfOp: [2, 9],  // READ-AB, STORE2
+	                             R1: [r1(op), rd(op)],
+	                             R2: [r2(op)]
+	      guard oc1 = 0 and oc2 = 0x22   // SUB
+	      var 
+	        int oc1 = opcode1(op), int oc2 = opcode2(op)
+	      end
+	
+	  // SUBI -- I
+	  Op.SUBI: action I: [op] ==> PcOp: [1],   // NEXT
+	                              AluOp: [2],  // SUB
+	                              RfOp: [1, 9], // READ-A, STORE2
+	                              RfVal: [n],
+	                              R1: [r1(op), r2(op)]
+	      guard oc1 = 0x0A   // SUBI
+	      var 
+	        int oc1 = opcode1(op),
+	        int n = extend16to32(immediate(op))
+	      end
+	
+	  // AND -- R
+	  Op.AND: action I: [op] ==> PcOp: [1],   // NEXT
+	                             AluOp: [3],  // AND
+	                             RfOp: [2, 9],  // READ-AB, STORE2
+	                             R1: [r1(op), rd(op)],
+	                             R2: [r2(op)]
+	      guard oc1 = 0 and oc2 = 0x24   // ADD
+	      var 
+	        int oc1 = opcode1(op), int oc2 = opcode2(op)
+	      end
+	
+	  // ANDI -- I
+	  Op.ANDI: action I: [op] ==> PcOp: [1],   // NEXT
+	                              AluOp: [3],  // AND
+	                              RfOp: [1, 9], // READ-A, STORE2
+	                              RfVal: [n],
+	                              R1: [r1(op), r2(op)]
+	      guard oc1 = 0x0C   // ADDI
+	      var 
+	        int oc1 = opcode1(op),
+	        int n = extend16to32(immediate(op))
+	      end
+	
+	  // SW -- I
+	  Op.SW: action I: [op] ==> PcOp: [1],   // NEXT
+	                            RfOp: [5], // SENDMEMDATA
+	                            Offset: [n],
+	                            R1: [r1(op)],
+	                            R2: [r2(op)],
+	                            W: [true]                            
+	      guard oc1 = 0x2B   // SW
+	      var 
+	        int oc1 = opcode1(op),
+	        int n = extend16to32(immediate(op))
+	      end
+	
+	  // LW -- I
+	  Op.LW: action I: [op] ==> PcOp: [1],   // NEXT
+	                            RfOp: [4, 10], // SENDMEM, STORE3
+	                            Offset: [n],
+	                            R1: [r1(op), r2(op)],
+	                            W: [false]
+	      guard oc1 = 0x23   // SW
+	      var 
+	        int oc1 = opcode1(op),
+	        int n = extend16to32(immediate(op))
+	      end
+	
+	  // BEQZ -- I
+	  Op.BEQZ:  action I:[op] ==> PcOp: [6],  // B0-TRUE
+	                              RfOp: [3], // TEST
+	                              R1: [r1(op)],
+	                              PcVal: [n]
+	      guard oc1 = 0x04   // BEQZ
+	      var 
+	        int oc1 = opcode1(op),
+	        int n = extend16to32(immediate(op))
+	      end
+	
+	  // BNEZ -- I
+	  Op.BNEZ:  action I:[op] ==> PcOp: [7],  // B0-FALSE
+	                              RfOp: [3],  // TEST
+	                              R1: [r1(op)],
+	                              PcVal: [n]
+	      guard oc1 = 0x05   // BNEZ
+	      var 
+	        int oc1 = opcode1(op),
+	        int n = extend16to32(immediate(op))
+	      end
+	
+	  // J -- J
+	  Op.J: action I:[op] ==> PcOp: [2],  // JUMP
+	                          PcVal: [n]
+	      guard oc1 = 0x02   // J
+	      var 
+	        int oc1 = opcode1(op),
+	      	int n = extend24to32(jvalue(op))
+	      end
+	      
+		
+	
+	  // BAVAIL -- I
+	  Op.BAVAIL: action I: [op] ==> PcOp: [8],   // B1-TRUE
+	                                SinOp: [2],  // TEST0
+	                                SinChn: [channel(r1(op))],
+	                                PcVal: [n]
+	      guard oc1 = 0x2f   // BAVAIL -- FIXME??? is that opcode free?
+	      var 
+	        int oc1 = opcode1(op),
+	        int n = extend16to32(immediate(op))
+	      end
+	
+	  // RCV -- R
+	  
+	  Op.RCV: action I: [op] ==> PcOp: [1],   // NEXT
+	                             SinOp: [0],  // RCV0
+	                             SinChn: [channel(r1(op))],
+	                             
+	                             RfOp: [12],  // STORE5
+	                             R1: [rd(op)]
+	      guard oc1 = 0 and oc2 = 0x30   // RCV -- FIXME??? is that opcode free?
+	      var 
+	        int oc1 = opcode1(op), int oc2 = opcode2(op)
+	      end
+	
+	  // SND -- R
+	
+	  Op.SND: action I: [op] ==> PcOp: [1],   // NEXT
+	                             SoutOp: [0],  // SND0
+	                             SoutChn: [channel(r1(op))],
+	                             
+	                             RfOp: [15],  // SEND
+	                             R1: [rd(op)]
+	      guard oc1 = 0 and oc2 = 0x31   // SND -- FIXME??? is that opcode free?
+	      var 
+	        int oc1 = opcode1(op), int oc2 = opcode2(op)
+	      end
+	
+	
+	
+	
+	  Error: action I: [op] ==> 
+	         do
+	           println("DLX ERROR: " + op + " :: " + opcode1(op) + "-" + rshift(op, 26) + "---" + opcode2(op));
+	         end
+	
+	  
+	
+	  schedule fsm Initializing:
+	    Initializing (Init) --> Running;
+	    Running (Op, Reset) --> Running;
+	    Running (Stop) --> Stopped;
+	    Stopped (Reset) --> Running;
+	    Running (Error) --> Crashed;
+	  end
+	  
+	
+		priority 
+			Reset > Stop;
+			Reset > Op;
+			Stop > Error;
+			Op > Error;
+		end
+	  
+	end
+end
+
+
+

@@ -1,0 +1,19 @@
+namespace System.bitops:
+
+	
+		function bitnot(int x) --> int: ~x end
+		
+		function bitand(int x, int y) --> int: x & y end
+		
+		function bitor(int x, int y) --> int: x | y end
+		
+		function rshift(int x, int y) --> int: x >> y end
+		
+		function bitxor(int x, int y) --> int: x ^ y end
+		
+		function urshift(int x, int y) --> int: x >> y end
+	
+		function lshift(int x, int y) --> int : x << y end
+	
+	
+end

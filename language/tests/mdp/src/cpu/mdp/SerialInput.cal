@@ -1,0 +1,123 @@
+/* 
+BEGINCOPYRIGHT X
+	
+	Copyright (c) 2007, Xilinx Inc.
+	All rights reserved.
+	
+	Redistribution and use in source and binary forms, 
+	with or without modification, are permitted provided 
+	that the following conditions are met:
+	- Redistributions of source code must retain the above 
+	  copyright notice, this list of conditions and the 
+	  following disclaimer.
+	- Redistributions in binary form must reproduce the 
+	  above copyright notice, this list of conditions and 
+	  the following disclaimer in the documentation and/or 
+	  other materials provided with the distribution.
+	- Neither the name of the copyright holder nor the names 
+	  of its contributors may be used to endorse or promote 
+	  products derived from this software without specific 
+	  prior written permission.
+	
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+	CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR 
+	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+	SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
+	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+	HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+	OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+ENDCOPYRIGHT
+*/
+
+/**
+	Serial input interface for MDP.
+	
+	@author JWJ
+*/
+
+namespace mdp:
+
+	actor SerialInput () 
+					int Op, int C0, int C1, 
+					int I0, int I1, int I2, int I3 
+				==>
+					int D, bool Test :
+					
+		
+		List(type: bool, size = 4)  avail := [false : for uint i in 0 ..3 ];
+	
+		List(type: int, size = 4)  d := [0 : for uint i in  0 .. 3 ];
+	
+	
+	
+		Op.Rcv0:	action Op: [op], C0: [c] ==> D: [d[c]]
+					guard
+						op = 0x00,	// RVC0
+						avail[c]
+					do
+						avail[c] := false;
+					end
+			
+		Op.Rcv1:	action Op: [op], C1: [c] ==> D: [d[c]]
+					guard
+						op = 0x01,	// RVC1
+						avail[c]
+					do
+						avail[c] := false;
+					end
+					
+		Op.Test0:	action Op: [op], C0: [c] ==> Test: [avail[c]]
+					guard
+						op = 0x02	// TEST0
+					end
+			
+		Op.Test1:	action Op: [op], C1: [c] ==> Test: [avail[c]]
+					guard
+						op = 0x01	// TEST1
+					end
+					
+		
+		//
+		//
+		//
+		
+		Read.I0:	action I0: [a] ==>
+					guard not avail[0]
+					do
+						d[0] := a;
+						avail[0] := true;
+					end
+					
+		Read.I1:	action I1: [a] ==>
+					guard not avail[1]
+					do
+						d[1] := a;
+						avail[1] := true;
+					end
+					
+		Read.I2:	action I2: [a] ==>
+					guard not avail[2]
+					do
+						d[2] := a;
+						avail[2] := true;
+					end
+					
+		Read.I3:	action I3: [a] ==>
+					guard not avail[3]
+					do
+						d[3] := a;
+						avail[3] := true;
+					end
+					
+		priority Read > Op; end
+	end	
+					
+end
+

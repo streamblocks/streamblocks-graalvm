@@ -348,4 +348,10 @@ public class CALSimpleTestSuite extends CALTestSuite {
     public void filtersTest() throws IOException {
         runTest(TestCase.newBuilder("filters/fir/src/TopCompare").setIterations(-1).setActorName("fir.TopFIRCompare").setDirLookup(true).build());
     }
+
+    @Test
+    @Ignore
+    public void mdpFibonacciTest() throws IOException {
+        runTest(TestCase.newBuilder("mdp/src/TopFibonacci").setIterations(-1).setActorName("mdp.TopFibonacci").setDirLookup(true).build());
+    }
 }
