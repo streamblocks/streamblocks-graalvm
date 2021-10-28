@@ -258,6 +258,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void networkNestedRightTokenPassthroughTest() throws IOException {
+        runTest(TestCase.newBuilder("network-nested-right-token-passthrough").setActorName("test.Test").build());
+    }
+
+    @Test
     public void networkReduntantConnectionTest() throws IOException {
         runTest(TestCase.newBuilder("network-redundant-connection").setActorName("test.NumPrinter").build());
     }

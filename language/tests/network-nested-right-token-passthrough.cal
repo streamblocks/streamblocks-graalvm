@@ -1,0 +1,39 @@
+namespace test:
+    actor Sink () int In ==> :
+        action [token] ==>
+        do
+            println(token);
+        end
+    end
+
+    actor L3 () ==> Out:
+        int s := 0;
+        action ==> [[0, 1, 2]] repeat 3
+        guard s = 0
+        do
+            s := 1;
+        end
+    end
+
+    network L2 () ==> Out:
+    entities
+        l3 = L3();
+    structure
+        l3.Out --> Out;
+    end
+
+    network L1 () ==> Out:
+    entities
+        l2 = L2();
+    structure
+        l2.Out --> Out;
+    end
+
+    network Test () ==> :
+    entities
+        l1 = L1();
+        sink = Sink();
+    structure
+        l1.Out --> sink.In;
+    end
+end
