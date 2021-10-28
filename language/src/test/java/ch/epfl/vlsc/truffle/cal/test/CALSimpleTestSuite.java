@@ -197,6 +197,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void networkLocalConnectionTest() throws IOException {
+        runTest(TestCase.newBuilder("network-local-connection").setIterations(-1).setActorName("test.Sum").build());
+    }
+
+    @Test
     public void networkLoopConnectionInvariantTest() throws IOException {
         try {
             runTest(TestCase.newBuilder("network-loop-connection-invariant").setIterations(-1).setActorName("test.Sum").build());
@@ -233,7 +238,6 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
     public void networkReduntantConnectionTest() throws IOException {
         runTest(TestCase.newBuilder("network-redundant-connection").setActorName("test.NumPrinter").build());
     }

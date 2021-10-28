@@ -136,8 +136,12 @@ public class StructureVisitor extends CALParserBaseVisitor<Object> {
                     ctx.source.portReference().name.getText(),
                     visitEntityReference(ctx.source.entityReference()),
                     ScopeEnvironment.getInstance().createReadNode(ctx.dest.portReference().name.getText(), ScopeEnvironment.getInstance().getSource().createUnavailableSection())));
-        } else
-            throw new RuntimeException("Network Local Fifos not supported");
+        } else {
+            stmts.add(new CALFifoFanoutAddFifo(
+                    ScopeEnvironment.getInstance().createReadNode(ctx.source.portReference().name.getText(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    ScopeEnvironment.getInstance().createReadNode(ctx.dest.portReference().name.getText(), ScopeEnvironment.getInstance().getSource().createUnavailableSection())
+            ));
+        }
         CALStatementNode stmtBlock = new StmtBlockNode(stmts.toArray(new CALStatementNode[0]));
         stmtBlock.addStatementTag();
         stmtBlock.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
