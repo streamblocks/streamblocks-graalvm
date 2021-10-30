@@ -177,6 +177,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void networkActionselectionGuardLocalVariable() throws IOException {
+        runTest(TestCase.newBuilder("network-actionselection-guard-localvariable").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void multipleInputExpressionsRepeatTest() throws IOException {
         runTest(TestCase.newBuilder("network-input-multiple-input-expressions-repeat").setActorName("simple.dwf.SourceSink").build());
     }
