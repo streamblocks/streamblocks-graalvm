@@ -158,7 +158,10 @@ public class ScopeEnvironment {
 		if (slot != null) {
 			variableExpression = slot.createReadNode(currentScope.getDepth(), sourceSection);
 		} else {
-			variableExpression = new FunctionLiteralNode(name);
+			if (imports.containsKey(name))
+				variableExpression = new FunctionLiteralNode(imports.get(name));
+			else
+				variableExpression = new FunctionLiteralNode(name);
 		}
 		variableExpression.addExpressionTag();
 

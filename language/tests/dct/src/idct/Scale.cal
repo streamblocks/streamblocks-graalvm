@@ -36,8 +36,6 @@
 
 namespace RVC:
 
-import System.bitops.lshift;
-
 @pipeline(flushing=true)
 actor Scale (int SIN_SZ, int SOUT_SZ) int (size=SIN_SZ) SIn ==> int (size=SOUT_SZ) SOut :
 

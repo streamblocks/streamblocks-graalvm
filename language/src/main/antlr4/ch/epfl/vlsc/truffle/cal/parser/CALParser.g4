@@ -62,6 +62,7 @@ import com.oracle.truffle.api.RootCallTarget;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
+import ch.epfl.vlsc.truffle.cal.parser.utils.NamespaceElementsToCallTarget;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.exception.ErrorListener;
 import ch.epfl.vlsc.truffle.cal.parser.visitor.*;
@@ -74,6 +75,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
 }
 
 @parser::members
@@ -99,10 +101,10 @@ import org.apache.commons.lang3.tuple.Pair;
             return new ImmutablePair(Map.of(), compilationUnitContext);
     }
 
-    public static Map<String, RootCallTarget> parseCAL(CALLanguage language, CompilationUnitContext compilationUnitContext, Source source, Map<List<String>, List<QualifiedID>> namespaceEntities) {
+    public static NamespaceElementsToCallTarget parseCAL(CALLanguage language, CompilationUnitContext compilationUnitContext, Source source, Map<List<String>, List<QualifiedID>> namespaceEntities) {
         ScopeEnvironment.createInstance(language, source);
         CompilationUnitVisitor.getInstance().setNamespaceEntitiesMap(namespaceEntities);
-        return (Map<String, RootCallTarget>) CompilationUnitVisitor.getInstance().visit(compilationUnitContext);
+        return (NamespaceElementsToCallTarget) CompilationUnitVisitor.getInstance().visit(compilationUnitContext);
     }
 }
 

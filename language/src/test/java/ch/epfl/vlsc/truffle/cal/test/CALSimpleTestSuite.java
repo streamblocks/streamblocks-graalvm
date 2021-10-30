@@ -383,4 +383,9 @@ public class CALSimpleTestSuite extends CALTestSuite {
     public void mdpFibonacciTest() throws IOException {
         runTest(TestCase.newBuilder("mdp/src/TopFibonacci").setIterations(-1).setActorName("mdp.TopFibonacci").setDirLookup(true).build());
     }
+
+    @Test
+    public void importFuncDeclTest() throws IOException {
+        runTest(TestCase.newBuilder("importFuncDecl/InstructionDecoder").setIterations(-1).setActorName("mdp.InstructionDecoder").setDirLookup(true).build());
+    }
 }

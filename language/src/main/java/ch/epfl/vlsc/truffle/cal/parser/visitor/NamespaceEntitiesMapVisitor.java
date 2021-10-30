@@ -3,6 +3,8 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
+import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import java.util.HashMap;
@@ -49,6 +51,18 @@ public class NamespaceEntitiesMapVisitor extends CALParserBaseVisitor<Map<List<S
             entities.add(QualifiedID.parse(network.name.getText()));
         }
 
+        for(CALParser.GlobalVariableDeclarationContext varDecl: ctx.namespaceBody().globalVariableDeclaration()) {
+            if (varDecl.isExternal != null) {
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), varDecl, "external namespace entities not supported yet");
+            }
+
+            if (varDecl.functionVariableDeclaration() != null) {
+                entities.add(QualifiedID.parse(varDecl.functionVariableDeclaration().name.getText()));
+            } else {
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), varDecl, "Only function variable declarations are supported at namespace level");
+            }
+        }
+
         namespaceEntities.put(QualifiedID.parse(ctx.name.getText()).parts(), entities);
 
         return namespaceEntities;
@@ -69,6 +83,7 @@ public class NamespaceEntitiesMapVisitor extends CALParserBaseVisitor<Map<List<S
                 if(!result.containsKey(namespaceParts)) result.put(namespaceParts, new LinkedList<>());
                 result.get(namespaceParts).addAll(nextResult.get(namespaceParts));
             }
+
         return result;
     }
 }

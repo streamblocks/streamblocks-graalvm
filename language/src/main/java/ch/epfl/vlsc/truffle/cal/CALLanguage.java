@@ -16,6 +16,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.utils.NamespaceElementsToCallTarget;
 import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.*;
@@ -157,6 +158,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             allFiles = Arrays.asList(entry);
 
         Map<String, RootCallTarget> entities = new HashMap<>();
+        Map<String, RootCallTarget> functions = new HashMap<>();
         Map<List<String>, List<QualifiedID>> namespaceEntities = new HashMap<>();
         List<ImmutablePair<Source, CALParser.CompilationUnitContext>> sourceParsers = new LinkedList<>();
         for (File file : allFiles) {
@@ -170,24 +172,12 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         }
 
         for(ImmutablePair<Source, CALParser.CompilationUnitContext> p : sourceParsers){
-            entities.putAll(CALParser.parseCAL(this, p.getRight(), p.getLeft(), namespaceEntities));
+            NamespaceElementsToCallTarget namespaceElementsToCallTarget = CALParser.parseCAL(this, p.getRight(), p.getLeft(), namespaceEntities);
+            entities.putAll(namespaceElementsToCallTarget.entities);
+            functions.putAll(namespaceElementsToCallTarget.functions);
         }
 
-        return Truffle.getRuntime().createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), entities));
-
-        /*Map<QID, RootCallTarget> entities = new HashMap<>();
-        for (File file : allFiles) {
-            CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
-            NamespaceDecl decl = parser.CompilationUnit();
-            Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
-            BlockTransformer astTransformer = new BlockTransformer(new TransformContext(this, iSource, decl), decl);
-            entities.putAll(astTransformer.transform());
-        }
-        Map<String, RootCallTarget> parsedEntities = new HashMap<>(entities.size());
-        for (Entry<QID, RootCallTarget> e : entities.entrySet())
-            parsedEntities.put(e.getKey().toString(), e.getValue());
-        return Truffle.getRuntime()
-                .createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), parsedEntities));*/
+        return Truffle.getRuntime().createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), functions, entities));
     }
 
     public RootCallTarget lookupBuiltin(NodeFactory<? extends CALBuiltinNode> factory) {

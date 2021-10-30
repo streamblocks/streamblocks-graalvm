@@ -220,6 +220,21 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitFunctionVariableDeclaration(CALParser.FunctionVariableDeclarationContext ctx) {
+        CALRootNode lambdaBodyRootNode = getFunctionRootNode(ctx);
+
+        LambdaNode valueNode = new LambdaNode(lambdaBodyRootNode);
+        valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        valueNode.addExpressionTag();
+
+
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                ctx.name.getText(),
+                valueNode,
+                DefaultValueCastNodeCreator.getInstance(),
+                ScopeEnvironment.getInstance().createSourceSection(ctx));
+    }
+
+    public CALRootNode getFunctionRootNode(CALParser.FunctionVariableDeclarationContext ctx) {
         StmtBlockNode headNode;
         CALExpressionNode bodyNode;
 
@@ -273,17 +288,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         );
         // TODO Add RootTag / CallTag for lambdaBodyRootNode
 
-        LambdaNode valueNode = new LambdaNode(lambdaBodyRootNode);
-        valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-        valueNode.addExpressionTag();
-
         ScopeEnvironment.getInstance().popScope();
-
-        return ScopeEnvironment.getInstance().createNewVariableWriteNode(
-                ctx.name.getText(),
-                valueNode,
-                DefaultValueCastNodeCreator.getInstance(),
-                ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return lambdaBodyRootNode;
     }
 
     /**
