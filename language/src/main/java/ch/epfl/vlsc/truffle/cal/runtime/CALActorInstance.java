@@ -47,7 +47,7 @@ public class CALActorInstance extends CALEntityInstance {
 
     @Override
     public void addInputPort(String portName, FifoConsumer fifo) {
-        frameDecl.setObject(frameDecl.getFrameDescriptor().findOrAddFrameSlot(portName), fifo);
+        frameDecl.setObject(frameDecl.getFrameDescriptor().findFrameSlot(portName), fifo);
     }
 
     @Override

@@ -1,7 +1,7 @@
 namespace System.bitops:
 
 	
-		function bitnot(int x) --> int: ~x end
+		// function bitnot(int x) --> int: ~x end
 		
 		function bitand(int x, int y) --> int: x & y end
 		

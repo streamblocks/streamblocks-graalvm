@@ -44,6 +44,11 @@ ENDCOPYRIGHT
 
 namespace mdp:
 
+    actor PassThrough () In ==> Out:
+        action [a] ==> [a]
+        end
+    end
+
 	network CPU (List(element : int) program, int memorySize, List(element: int) initialMemory)
 		int I0, int I1, int I2, int I3 
 		==> 
@@ -57,28 +62,31 @@ namespace mdp:
 		memory = Memory(size = memorySize, initialValues = initialMemory, defaultValue = 0);
 		
 		processor = MDP();
+
+		pass1 = PassThrough();
 		
 	structure
 		
 		rom.Data --> processor.I;
-	
-		processor.IAddr --> rom.Addr;
+
+		processor.IAddr --> pass1.In;
+		pass1.Out --> rom.Addr;
 		processor.Dout --> memory.DataIn;
 		processor.MemW --> memory.W;
 		processor.DAddr --> memory.Addr;
-		
+
 		memory.DataOut --> processor.Din;
-		
+
 		I0 --> processor.I0;
 		I1 --> processor.I1;
 		I2 --> processor.I2;
 		I3 --> processor.I3;
-		
+
 		processor.O0 --> O0;
 		processor.O1 --> O1;
 		processor.O2 --> O2;
 		processor.O3 --> O3;
-	
+
 	end
 end
 	
