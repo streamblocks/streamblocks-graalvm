@@ -125,7 +125,7 @@
         <dependency>
             <groupId>ch.epfl.vlsc</groupId>
             <artifactId>annotations</artifactId>
-            <version>21.2.0</version>
+            <version>${graalvm.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
