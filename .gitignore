@@ -1,3 +1,7 @@
+# Allow run configurations to be shared
+.idea/*
+!/.idea/runConfigurations
+
 *~
 *.cfg
 *.iml
@@ -7,7 +11,6 @@ graalvm/
 ./.project
 .factorypath
 .classpath
-.idea/
 .project
 /bin/
 /Coco.jar
@@ -47,7 +50,6 @@ native/calnative
 native/calnative.build_artifacts.txt
 language/src/main/java/ch/epfl/vlsc/truffle/cal/nodes/util/IRNodeTreePrinterConsumer.java
 commits_to_merge
-.gitignore
 merge_tools.bash
 processed
 .PROCESSING
