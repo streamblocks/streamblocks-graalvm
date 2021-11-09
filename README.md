@@ -62,3 +62,9 @@ To execute the test program ```language/tests/println.cal```:
 ### Network
  - [x] Simple execution
 
+## Development
+The Development environment can be setup by installing [IntelliJ](https://www.jetbrains.com/idea/). Once installed, import the project as Maven project on IntelliJ. To be able to execute the testsuite from within IntelliJ:
+1. Open IntelliJ
+2. Goto Run > Edit Configurations
+3. Select "CALSimpleTestSuite"
+4. Under "Build and Run", select an appropriate JRE

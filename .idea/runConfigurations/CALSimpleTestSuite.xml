@@ -1,7 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="CALSimpleTestSuite" type="JUnit" factoryName="JUnit">
     <module name="cal" />
-    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="ALTERNATIVE_JRE_PATH" value="$USER_HOME$/Software/Java/graalvm-ce-java11-21.2.0" />
     <option name="PACKAGE_NAME" value="ch.epfl.vlsc.truffle.cal.test" />
     <option name="MAIN_CLASS_NAME" value="ch.epfl.vlsc.truffle.cal.test.CALSimpleTestSuite" />
