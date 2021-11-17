@@ -18,16 +18,18 @@ public class NetworkBodyNode extends CALExpressionNode {
         // The return value of the actor is true iff the actor
         // could run an action
         boolean remaining = true;
+        boolean executed = false;
         while (remaining) {
             remaining = false;
             for (CALExpressionNode actor : actors) {
                 try {
                     remaining |= actor.executeBoolean(frame);
+                    executed |= remaining;
                 } catch (UnexpectedResultException e) {
                     throw new Error("internal error");
                 }
             }
         }
-        return remaining;
+        return executed;
     }
 }
