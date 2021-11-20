@@ -2,6 +2,9 @@ package ch.epfl.vlsc.truffle.cal.test;
 
 import java.io.IOException;
 
+import ch.epfl.vlsc.truffle.cal.nodes.InvariantViolationException;
+import org.graalvm.polyglot.PolyglotException;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -138,6 +141,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void networkOldVariableReferenceTest() throws IOException {
+        runTest(TestCase.newBuilder("network-old-variable-reference").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void simpleNestedNetworkTest() throws IOException {
         runTest(TestCase.newBuilder("network-input").setActorName("simple.dwf.SourceSink").setIterations(-1).build());
     }
@@ -145,6 +153,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void multipleInputExpressionsTest() throws IOException {
         runTest(TestCase.newBuilder("network-input-multiple-input-expressions").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
+    public void multipleInputExpressionsIgnoreTokenTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-input-expressions-ignoretoken").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test
@@ -164,8 +177,18 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void networkActionselectionGuardLocalVariable() throws IOException {
+        runTest(TestCase.newBuilder("network-actionselection-guard-localvariable").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
     public void multipleInputExpressionsRepeatTest() throws IOException {
         runTest(TestCase.newBuilder("network-input-multiple-input-expressions-repeat").setActorName("simple.dwf.SourceSink").build());
+    }
+
+    @Test
+    public void multipleInputExpressionsRepeatIgnoreTokenTest() throws IOException {
+        runTest(TestCase.newBuilder("network-input-multiple-input-expressions-repeat-ignoretoken").setActorName("simple.dwf.SourceSink").build());
     }
 
     @Test
@@ -179,8 +202,59 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
+    public void networkLocalConnectionTest() throws IOException {
+        runTest(TestCase.newBuilder("network-local-connection").setIterations(-1).setActorName("test.Sum").build());
+    }
+
+    @Test
+    public void actorMissingInputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("actor-missing-input-port").setIterations(-1).setActorName("test.ActorMissingInputPort").build());
+    }
+
+    @Test
+    public void actorMissingInputAndOutputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("actor-missing-input-and-output-port").setIterations(-1).setActorName("test.ActorMissingInputAndOutputPort").build());
+    }
+
+    @Test
+    public void networkMissingInputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("network-missing-input-port").setIterations(-1).setActorName("test.NetworkMissingInputPort").build());
+    }
+
+    @Test
+    public void networkMissingInputAndOutputPortTest() throws IOException {
+        runTest(TestCase.newBuilder("network-missing-input-and-output-port").setIterations(-1).setActorName("test.NetworkMissingInputAndOutputPort").build());
+    }
+
+    @Test
+    public void networkLoopConnectionInvariantTest() throws IOException {
+        try {
+            runTest(TestCase.newBuilder("network-loop-connection-invariant").setIterations(-1).setActorName("test.Sum").build());
+        } catch (PolyglotException e) {
+            Assert.assertTrue(e.getMessage().contains("InvariantViolationException"));
+            return;
+        }
+        Assert.fail("Excpected InvariantViolationException, but it was not raised");
+    }
+
+    @Test
+    public void networkLoopConnectionInvariantInitializeTest() throws IOException {
+        runTest(TestCase.newBuilder("network-loop-connection-invariant-initialize").setIterations(-1).setActorName("test.Sum").build());
+    }
+
+    @Test
     public void networkLoopConnectionFibsTest() throws IOException {
         runTest(TestCase.newBuilder("network-loop-connection-fibs").setActorName("test.Fibs").build());
+    }
+
+    @Test
+    public void networkLanguageFibsTest() throws IOException {
+        runTest(TestCase.newBuilder("network-language-fibs").setActorName("test.Fibs5").build());
+    }
+
+    @Test
+    public void networkLanguagePow2Test() throws IOException {
+        runTest(TestCase.newBuilder("network-language-power-of-two").setActorName("test.Pow2_3").build());
     }
 
     @Test
@@ -189,7 +263,11 @@ public class CALSimpleTestSuite extends CALTestSuite {
     }
 
     @Test
-    @Ignore
+    public void networkNestedRightTokenPassthroughTest() throws IOException {
+        runTest(TestCase.newBuilder("network-nested-right-token-passthrough").setActorName("test.Test").build());
+    }
+
+    @Test
     public void networkReduntantConnectionTest() throws IOException {
         runTest(TestCase.newBuilder("network-redundant-connection").setActorName("test.NumPrinter").build());
     }
@@ -298,5 +376,20 @@ public class CALSimpleTestSuite extends CALTestSuite {
     @Test
     public void jpegSingleImageTest() throws IOException {
         runTest(TestCase.newBuilder("jpeg/SingleImageTest").setIterations(-1).setActorName("jpeg.SingleImagePrinter").setDirLookup(true).build());
+    }
+
+    @Test
+    public void filtersTest() throws IOException {
+        runTest(TestCase.newBuilder("filters/fir/src/TopCompare").setIterations(-1).setActorName("fir.TopFIRCompare").setDirLookup(true).build());
+    }
+
+    @Test
+    public void mdpFibonacciTest() throws IOException {
+        runTest(TestCase.newBuilder("mdp/src/TopFibonacci").setIterations(-1).setActorName("mdp.TopFibonacci").setDirLookup(true).build());
+    }
+
+    @Test
+    public void importFuncDeclTest() throws IOException {
+        runTest(TestCase.newBuilder("importFuncDecl/InstructionDecoder").setIterations(-1).setActorName("mdp.InstructionDecoder").setDirLookup(true).build());
     }
 }

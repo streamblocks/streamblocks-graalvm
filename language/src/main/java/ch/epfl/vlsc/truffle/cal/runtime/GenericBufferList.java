@@ -4,6 +4,8 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.stream.Collectors;
 
 @ExportLibrary(ListLibrary.class)
@@ -37,6 +39,35 @@ public final class GenericBufferList implements com.oracle.truffle.api.interop.T
             buffer[index] = value;
         else
             throw new IndexOutOfBoundsException(); // TODO custom exception
+    }
+
+    @ExportMessage public DFSIterator iterator() {
+        DFSIterator it = new DFSIterator() {
+            int i = 0;
+            DFSIterator it = null;
+            @Override
+            public boolean hasNext() {
+                while(i < buffer.length) {
+                    Object curr = buffer[i];
+                    if(curr instanceof GenericBufferList) {
+                        it = ((GenericBufferList) curr).iterator();
+                        if(it.hasNext()) return true;
+                        else ++i;
+                    } else {
+                        it = null;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public Object next() {
+                if (it != null) return it.next();
+                else return buffer[i++];
+            }
+        };
+        return it;
     }
 
     @Override

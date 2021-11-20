@@ -1,0 +1,140 @@
+/* 
+BEGINCOPYRIGHT X
+	
+	Copyright (c) 2007, Xilinx Inc.
+	All rights reserved.
+	
+	Redistribution and use in source and binary forms, 
+	with or without modification, are permitted provided 
+	that the following conditions are met:
+	- Redistributions of source code must retain the above 
+	  copyright notice, this list of conditions and the 
+	  following disclaimer.
+	- Redistributions in binary form must reproduce the 
+	  above copyright notice, this list of conditions and 
+	  the following disclaimer in the documentation and/or 
+	  other materials provided with the distribution.
+	- Neither the name of the copyright holder nor the names 
+	  of its contributors may be used to endorse or promote 
+	  products derived from this software without specific 
+	  prior written permission.
+	
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+	CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR 
+	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+	SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
+	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+	HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+	OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+ENDCOPYRIGHT
+*/
+
+/**
+	Register file component for the Mini Dataflow Processor
+	
+	@author JWJ
+*/
+
+namespace mdp:
+
+	actor RegisterFile () int Op, int R1, int R2, int D1, int D2, int D3, int D4, int D5
+                  ==> int MemBase, int MemData, int PcAddr, int A, int B, bool Test,
+                  	  int SendVal :
+
+	
+		List(type: int, size=32) R := [0 : for uint i in 0 .. 31];
+		//R := [0 : for i in Integers(1, 32)];
+			  	
+		Op.RESET: 		action Op: [op] ==> 
+						guard
+							op = 0  // RESET
+						do
+							R := [0 : for uint i in 0 .. 31];
+						end
+						
+		Op.READA:		action Op: [op], R1: [a], D1: [b] ==> A: [R[a]], B: [b]
+						guard
+							op = 1   // READ-A
+						end
+						
+		Op.READAB:		action Op: [op], R1: [a], R2: [b] ==> A: [R[a]], B: [R[b]]
+						guard
+							op = 2   // READ-AB
+						end
+						
+		Op.TEST:		action Op: [op], R1: [a] ==> Test: [R[a] = 0]
+						guard
+							op = 3   // TEST
+						end
+						
+		Op.SENDMEM:		action Op: [op], R1: [a] ==> MemBase: [R[a]]
+						guard
+							op = 4   // SENDMEM
+						end
+						
+		Op.SENDMEMDATA:	action Op: [op], R1: [a], R2: [b] ==> MemBase: [R[a]], MemData: [R[b]]
+						guard
+							op = 5   // SENDMEMDATA
+						end
+						
+		Op.SENDPCADDR:	action Op: [op], R1: [a] ==> PcAddr: [R[a]]
+						guard
+							op = 6  // SENDPCADDR
+						end
+						
+						
+						
+						
+		Op.STORE1:		action Op: [op], R1: [a], D1: [d] ==> 
+						guard
+							op = 8  // STORE1
+						do
+							R[a] := d;
+						end
+						
+		Op.STORE2:		action Op: [op], R1: [a], D2: [d] ==> 
+						guard
+							op = 9  // STORE2
+						do
+							R[a] := d;
+						end
+						
+		Op.STORE3:		action Op: [op], R1: [a], D3: [d] ==> 
+						guard
+							op = 10  // STORE3
+						do
+							R[a] := d;
+						end
+						
+		Op.STORE4:		action Op: [op], R1: [a], D4: [d] ==> 
+						guard
+							op = 11  // STORE4
+						do
+							R[a] := d;
+						end
+						  
+		Op.STORE5:		action Op: [op], R1: [a], D5: [d] ==> 
+						guard
+							op = 12  // STORE5
+						do
+							R[a] := d;
+						end
+						  
+						  
+						  
+		Op.SEND:		action Op: [op], R1: [a] ==> SendVal: [R[a]] 
+						guard
+							op = 15  // SEND
+						end
+						  	
+	end
+
+end
+  

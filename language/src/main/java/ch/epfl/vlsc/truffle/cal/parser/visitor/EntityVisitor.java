@@ -1,60 +1,32 @@
 package ch.epfl.vlsc.truffle.cal.parser.visitor;
 
-import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
-import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
-import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
+import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
+import ch.epfl.vlsc.truffle.cal.nodes.ReturnsLastBodyNode;
+import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.ExprIfNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNode;
+import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
+import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
-import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
-import com.oracle.truffle.api.source.SourceSection;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Singleton class that provides an implementation for an entity sub-tree.
  */
 public class EntityVisitor extends CALParserBaseVisitor<Object> {
-
-    public static class EntityInstance {
-
-        public static class EntityParameter {
-            public String name;
-
-            public CALExpressionNode valueNode;
-
-            public EntityParameter(String name, CALExpressionNode valueNode) {
-                this.name = name;
-                this.valueNode = valueNode;
-            }
-        }
-
-        public String name;
-
-        public String actor;
-
-        public List<EntityParameter> parameters;
-
-        public List<Pair<String, CALExpressionNode>> inputs;
-
-        public List<Pair<String, CALExpressionNode>> outputs;
-
-        public SourceSection sourceSection;
-
-        public EntityInstance(String actor, List<EntityParameter> parameters, SourceSection sourceSection) {
-            this.actor = actor;
-            this.parameters = parameters;
-            this.sourceSection = sourceSection;
-            this.inputs = new LinkedList<>();
-            this.outputs = new LinkedList<>();
-        }
-
-    }
-
     private static EntityVisitor instance;
 
     private EntityVisitor() {}
@@ -70,18 +42,28 @@ public class EntityVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public EntityInstance visitEntityDeclaration(CALParser.EntityDeclarationContext ctx) {
-        // TODO Change after implementing complex expressions (if/list)
-        EntityInstance instance = (EntityInstance) visitEntityExpression(ctx.entityExpression());
-        instance.name = ctx.name.getText();
+    @Override public Pair<CALStatementNode, CALExpressionNode> visitEntityDeclaration(CALParser.EntityDeclarationContext ctx) {
+        CALExpressionNode instanceNode = ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                ctx.name.getText(),
+                visitEntityExpression(ctx.entityExpression()),
+                DefaultValueCastNodeCreator.getInstance(),
+                ScopeEnvironment.getInstance().createSourceSection(ctx));
 
-        return instance;
+        ScopeEnvironment.getInstance().getCurrentScope().increaseDepth();
+        CALExpressionNode entityNode = ScopeEnvironment.getInstance().createReadNode(ctx.name.getText(), ScopeEnvironment.getInstance().createSourceSection(ctx));
+
+        CALInvokeNode entityInvokeNode = CALInvokeNodeGen.create(new CALExpressionNode[0], entityNode);
+        entityInvokeNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        entityInvokeNode.addStatementTag();
+        ScopeEnvironment.getInstance().getCurrentScope().decreaseDepth();
+
+        return Pair.of(instanceNode, entityInvokeNode);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitEntityExpression(CALParser.EntityExpressionContext ctx) {
+    @Override public CALExpressionNode visitEntityExpression(CALParser.EntityExpressionContext ctx) {
         if (ctx.entityInstanceExpression() != null) {
             return visitEntityInstanceExpression(ctx.entityInstanceExpression());
         } else if (ctx.entityIfExpression() != null) {
@@ -96,42 +78,78 @@ public class EntityVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public EntityInstance visitEntityInstanceExpression(CALParser.EntityInstanceExpressionContext ctx) {
-        String actor = ctx.actor.getText();
+    @Override public CALExpressionNode visitEntityInstanceExpression(CALParser.EntityInstanceExpressionContext ctx) {
+        CALExpressionNode actorLiteralNode = new ActorLiteralNode(ScopeEnvironment.getInstance().getEntityFullName(ctx.actor.getText()));
+        actorLiteralNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        actorLiteralNode.addExpressionTag();
 
-        List<EntityInstance.EntityParameter> parameters = new ArrayList<>();
-        if (ctx.entityParameters() != null) {
-            for (CALParser.EntityParameterContext parameterCtx: ctx.entityParameters().entityParameter()) {
-                String name = parameterCtx.name.getText();
-                CALExpressionNode valueNode = ExpressionVisitor.getInstance().visit(parameterCtx.value);
-                parameters.add(new EntityInstance.EntityParameter(name, valueNode));
-            }
-        }
+        List<CALExpressionNode> argumentNodes = new ArrayList<>();
+        // TODO Add support for named parameters
+        if (ctx.entityParameters() != null)
+            argumentNodes.addAll(ctx.entityParameters().entityParameter().stream().map(parameterCtx -> ExpressionVisitor.getInstance().visit(parameterCtx.value)).collect(Collectors.toList()));
 
-        if (ctx.attributeSection() != null) {
-            // TODO Add support for attribute section
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Entity attributes are not yet supported");
-            }
-        }
-
-        return new EntityInstance(actor, parameters, ScopeEnvironment.getInstance().createSourceSection(ctx));
+        CALExpressionNode valueNode = CALInvokeNodeGen.create(argumentNodes.toArray(new CALExpressionNode[0]), actorLiteralNode);
+        valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        valueNode.addExpressionTag();
+        return valueNode;
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitEntityIfExpression(CALParser.EntityIfExpressionContext ctx) {
-        // TODO Create Entity If expression
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Entity conditional expression is not yet supported");
+    @Override public CALExpressionNode visitEntityIfExpression(CALParser.EntityIfExpressionContext ctx) {
+        CALExpressionNode exprIf = new ExprIfNode(ExpressionVisitor.getInstance().visit(ctx.expression()), visitEntityExpression(ctx.entityExpression(0)), visitEntityExpression(ctx.entityExpression(1)));
+        exprIf.addExpressionTag();
+        exprIf.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return exprIf;
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public Object visitEntityListExpression(CALParser.EntityListExpressionContext ctx) {
-        // TODO Create Entity List expression
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Entity list expression is not yet supported");
+    @Override public CALExpressionNode visitEntityListExpression(CALParser.EntityListExpressionContext ctx) {
+        if (ctx.generators() == null)
+            return visitSimpleEntityListComprehension(ctx);
+        else
+            return visitEntityListComprehensionWithGenerators(ctx);
+    }
+
+    private CALExpressionNode visitSimpleEntityListComprehension(CALParser.EntityListExpressionContext ctx) {
+        // Simple list collection expression
+        CALExpressionNode[] valueNodes;
+        if (ctx.entityExpressions() != null) {
+            valueNodes = ctx.entityExpressions().entityExpression().stream().map(entityCtx -> visitEntityExpression(entityCtx)).collect(Collectors.toList()).toArray(new CALExpressionNode[0]);
+        } else {
+            valueNodes = new CALExpressionNode[0];
+        }
+
+        ListInitNode simpleComprehensionNode = new ListInitNode(valueNodes);
+        simpleComprehensionNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        simpleComprehensionNode.addExpressionTag();
+
+        return simpleComprehensionNode;
+    }
+
+    private CALExpressionNode visitEntityListComprehensionWithGenerators(CALParser.EntityListExpressionContext ctx) {
+        CALStatementNode[] init = new CALStatementNode[3];
+        // tempList=[]
+        String tempListName = ScopeEnvironment.generateVariableName();
+        init[0] = ScopeEnvironment.getInstance().createNewVariableWriteNode(tempListName, new UnknownSizeListInitNode(), DefaultValueCastNodeCreator.getInstance(), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+
+        // i=0
+        String listIndexVarName = ScopeEnvironment.generateVariableName();
+        init[1] = ScopeEnvironment.getInstance().createNewVariableWriteNode(listIndexVarName, new BigIntegerLiteralNode(new BigInteger("0")), DefaultValueCastNodeCreator.getInstance(), ScopeEnvironment.getInstance().getSource().createUnavailableSection());
+
+        // The Comprehension nodes will generate the content into the above list
+        init[2] = (new EntityListComprehensionVisitor(tempListName, listIndexVarName)).visitEntityListComprehension(ctx);
+        ReturnsLastBodyNode list = new ReturnsLastBodyNode(
+                new StmtBlockNode(init),
+                ScopeEnvironment.getInstance().createReadNode(tempListName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()));
+
+        list.addExpressionTag();
+        list.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+
+        return list;
     }
 
     /**

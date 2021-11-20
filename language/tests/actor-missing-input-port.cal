@@ -1,0 +1,26 @@
+// This test is obtained from Chapter 4 of "Tokens, What Tokens: A gentle introduction to dataflow programming"
+namespace test:
+    actor InitialTokens (tokens) In ==> Out:
+        A: action ==> [tokens] repeat #tokens end
+        B: action [a] ==> [a] do end
+        schedule fsm s0:
+            s0 (A) --> s1;
+            s1 (B) --> s1;
+        end
+    end
+
+    actor Sink() int IN ==> :
+        action IN:[token] ==>
+        do
+            println(token);
+        end
+    end
+
+    network ActorMissingInputPort () ==>:
+    entities
+        init1 = InitialTokens(tokens = [0,1,2]);
+        sink = Sink();
+    structure
+        init1.Out --> sink.IN;
+    end
+end

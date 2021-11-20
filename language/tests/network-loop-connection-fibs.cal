@@ -37,6 +37,6 @@ namespace test:
         init1.Out --> add.A;
         init2.Out --> add.B;
         add.Result --> init1.In;
-        add.Result --> sink.In;
+        add.Result --> sink.IN;
     end
 end

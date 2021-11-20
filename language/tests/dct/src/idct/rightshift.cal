@@ -36,8 +36,6 @@
 
 namespace RVC:
 
-import System.bitops.rshift;
-
 	@pipeline(flushing=true)
 	actor rightshift () int In ==> int Out :
 	

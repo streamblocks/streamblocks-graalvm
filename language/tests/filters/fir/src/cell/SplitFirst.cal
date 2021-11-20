@@ -1,0 +1,38 @@
+namespace fir:
+
+
+	actor SplitFirst (int n) float In ==> float X, float Y :
+
+		int k := 0;
+	
+		
+		invariant
+			k >= 0,
+			k < n
+		end
+		
+		procedure incrK() 
+		begin
+			k := k + 1;
+			if k >= n then
+				k := 0;
+			end
+		end
+		
+		action In:[a] ==> X:[a]
+		guard 
+			k = 0
+		do
+			incrK();
+		end
+		
+		action In:[a] ==> Y:[a]
+		guard 
+			k > 0
+		do
+			incrK();
+		end
+			
+	end
+
+end

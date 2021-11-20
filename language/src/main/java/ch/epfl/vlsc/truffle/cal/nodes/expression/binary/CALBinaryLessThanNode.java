@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.binary;
 
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigDecimal;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -18,6 +19,12 @@ public abstract class CALBinaryLessThanNode extends CALBinaryNode {
     @Specialization
     @CompilerDirectives.TruffleBoundary
     protected boolean lessThan(CALBigNumber left, CALBigNumber right) {
+        return left.compareTo(right) < 0;
+    }
+
+    @Specialization
+    @CompilerDirectives.TruffleBoundary
+    protected boolean lessThan(CALBigDecimal left, CALBigDecimal right) {
         return left.compareTo(right) < 0;
     }
 

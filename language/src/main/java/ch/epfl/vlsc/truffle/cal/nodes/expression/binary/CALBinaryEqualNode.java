@@ -2,6 +2,7 @@ package ch.epfl.vlsc.truffle.cal.nodes.expression.binary;
 
 import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigDecimal;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -23,6 +24,12 @@ public abstract class CALBinaryEqualNode  extends CALBinaryNode {
     @Specialization
     @CompilerDirectives.TruffleBoundary
     protected boolean doBigNumber(CALBigNumber left, CALBigNumber right) {
+        return left.equals(right);
+    }
+
+    @Specialization
+    @CompilerDirectives.TruffleBoundary
+    protected boolean doBigDecimal(CALBigDecimal left, CALBigDecimal right) {
         return left.equals(right);
     }
 

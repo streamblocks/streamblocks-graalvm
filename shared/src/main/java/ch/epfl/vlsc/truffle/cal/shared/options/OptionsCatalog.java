@@ -13,6 +13,8 @@ public class OptionsCatalog {
 
     public static final OptionKey<Integer> BITLENGTH_KEY = new OptionKey<>(32);
 
+    public static final OptionKey<Integer> DIVISIONSCALE_KEY = new OptionKey<>(32);
+
     public static final OptionKey<Boolean> DIRECTORY_LOOKUP_KEY = new OptionKey<>(false);
 
     public static final OptionKey<String[]> IMPORT_PATHS_KEY = new OptionKey<>(StringArrayOptionType.EMPTY_STRING_ARRAY, StringArrayOptionType.INSTANCE);
@@ -52,6 +54,13 @@ public class OptionsCatalog {
     public static final OptionDescriptor BITLENGTH = OptionDescriptor
             .newBuilder(BITLENGTH_KEY, "cal.bitlength")
             .help("Sets the default bit length used for int/uint variables without size parameter specified. Default: 32")
+            .category(OptionCategory.EXPERT)
+            .stability(OptionStability.EXPERIMENTAL)
+            .build();
+
+    public static final OptionDescriptor DIVISIONSCALE = OptionDescriptor
+            .newBuilder(DIVISIONSCALE_KEY, "cal.divisionscale")
+            .help("Sets the Division scale used for BigDecimal Division. Default: 10")
             .category(OptionCategory.EXPERT)
             .stability(OptionStability.EXPERIMENTAL)
             .build();
@@ -143,6 +152,8 @@ public class OptionsCatalog {
                 return ITERATIONS;
             case "cal.bitlength":
                 return BITLENGTH;
+            case "cal.divisionscale":
+                return DIVISIONSCALE;
             case "cal.directory-lookup":
                 return DIRECTORY_LOOKUP;
             case "cal.import-paths":
@@ -172,6 +183,7 @@ public class OptionsCatalog {
                 ENTITY_QID,
                 ITERATIONS,
                 BITLENGTH,
+                DIVISIONSCALE,
                 DIRECTORY_LOOKUP,
                 IMPORT_PATHS,
                 LAUNCHER,

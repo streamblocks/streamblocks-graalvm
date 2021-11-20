@@ -1,0 +1,46 @@
+namespace simple.dwf:
+    actor Source()
+        ==> int OUT:
+
+        int Counter := 1;
+
+        action ==> OUT:[token]
+        guard
+            Counter < 17
+        var
+            int token = Counter
+        do
+            Counter := Counter + 1;
+        end
+
+    end
+
+    actor oldActor () int IN ==> int OUT :
+        sum := 0;
+        action [a] ==> [sum - old sum]
+        do
+            sum := sum + a;
+        end
+    end
+
+    actor Sink()
+        int IN ==> :
+        action IN:[token] ==>
+        do
+            println(token);
+        end
+    end
+
+    network SourceSink()
+        ==> :
+
+        entities
+            source = Source();
+            ac = oldActor();
+            sink = Sink();
+        structure
+            source.OUT --> ac.IN;
+            ac.OUT --> sink.IN;
+    end
+
+end

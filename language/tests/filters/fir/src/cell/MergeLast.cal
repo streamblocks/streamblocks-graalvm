@@ -1,0 +1,26 @@
+namespace fir:
+
+	actor MergeLast (int n) float A,  float B ==> float Out:
+		int k := 1;
+		
+		invariant
+			k > 0,
+			k <= n
+		end
+		
+		action B: [a] ==> Out:[a]
+		guard 
+			k < n
+		do
+			k := k + 1;
+		end
+		
+		action A: [a] ==> Out: [a]
+		guard 
+			k = n
+		do
+			k := 1;
+		end
+	end
+
+end

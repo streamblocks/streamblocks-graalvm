@@ -7,11 +7,10 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryListSizeNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryLogicalNotNodeGen;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.CALUnaryMinusNodeGen;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.unary.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
+import ch.epfl.vlsc.truffle.cal.nodes.util.ValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseError;
 import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
@@ -19,6 +18,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,18 +89,20 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             case "-":
                 unaryOperationNode = CALUnaryMinusNodeGen.create(operand);
                 break;
-            case "!":
-                // TODO: Change to CALUnaryBitNotNode
             case "not":
                 unaryOperationNode = CALUnaryLogicalNotNodeGen.create(operand);
                 break;
+            case "#":
+                unaryOperationNode = CALUnaryListSizeNodeGen.create(operand);
+                break;
+            case "~":
+                // TODO: Correct and add to CALUnaryBitNotNode
+            case "!":
+                // TODO: Change to CALUnaryBitNotNode
             case "rng":
                 // TODO: Create CALUnaryMapRangeNode
             case "dom":
                 // TODO: Create CALUnaryMapDomainNode
-            case "#":
-                unaryOperationNode = CALUnaryListSizeNodeGen.create(operand);
-                break;
             default:
                 throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unary operator \"" + operator + "\" is not yet supported");
         }
@@ -122,7 +124,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitSymbolReferenceExprExpression(CALParser.SymbolReferenceExprExpressionContext ctx) {
-        return visitSymbolReferenceExpression(ctx.symbolReferenceExpression());
+        return TypeCastVisitor.getInstance().visitType(ctx.type()).create(ExpressionVisitor.getInstance().visit(ctx.expression()));
     }
 
     /**
@@ -296,7 +298,11 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
 
             return literalNode;
         } catch (NumberFormatException e) {
-            BigIntegerLiteralNode literalNode = new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral().getText()));
+            BigIntegerLiteralNode literalNode;
+            if (ctx.IntegerLiteral().getText().startsWith("0x") || ctx.IntegerLiteral().getText().startsWith("0X")) {
+                literalNode = new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral().getText().substring(2), 16));
+            } else
+                literalNode = new BigIntegerLiteralNode(new BigInteger(ctx.IntegerLiteral().getText()));
             literalNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
             literalNode.addExpressionTag();
 
@@ -309,7 +315,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      */
     @Override public CALExpressionNode visitFloatingPointLiteralExpression(CALParser.FloatingPointLiteralExpressionContext ctx) {
         // TODO Create Float Literal node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Float literal expression is not yet supported");
+        return new BigDecimalLiteralNode(new BigDecimal(ctx.getText()));
     }
 
     /**
@@ -358,21 +364,9 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
      */
     @Override public CALExpressionNode visitVariableExpression(CALParser.VariableExpressionContext ctx) {
         if (ctx.isOld != null) {
-            // TODO Add support for old variable
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Old variable expression is not yet supported");
-            }
-        }
-
-        return ScopeEnvironment.getInstance().createReadNode(ctx.variable().getText(), ScopeEnvironment.getInstance().createSourceSection(ctx));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override public CALExpressionNode visitSymbolReferenceExpression(CALParser.SymbolReferenceExpressionContext ctx) {
-        // TODO Create Symbol Reference expression node
-        throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Symbol Reference expression is not yet supported");
+            return ScopeEnvironment.getInstance().createReadNode("$old" + ctx.variable().name.getText(), ScopeEnvironment.getInstance().createSourceSection(ctx));
+        } else
+            return ScopeEnvironment.getInstance().createReadNode(ctx.variable().getText(), ScopeEnvironment.getInstance().createSourceSection(ctx));
     }
 
     /**
@@ -694,7 +688,7 @@ public class ExpressionVisitor extends CALParserBaseVisitor<CALExpressionNode> {
             argumentNodes = new CALExpressionNode[0];
         }
 
-        CALInvokeNode callNode = new CALInvokeNode(functionNode, argumentNodes);
+        CALInvokeNode callNode = CALInvokeNodeGen.create(argumentNodes, functionNode);
         callNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
         callNode.addExpressionTag();
 

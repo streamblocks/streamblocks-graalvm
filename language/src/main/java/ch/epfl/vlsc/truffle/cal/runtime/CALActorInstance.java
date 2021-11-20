@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.runtime;
 
+import ch.epfl.vlsc.truffle.cal.nodes.CALActorInvariantNode;
 import ch.epfl.vlsc.truffle.cal.nodes.FsmStateCheckNode;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -12,6 +13,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -29,9 +31,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
 
 // An actor instance
 @ExportLibrary(InteropLibrary.class)
-public class CALActorInstance extends CALValue {
-    public @CompilationFinal ActorNode actorDecl;
-    public @CompilationFinal MaterializedFrame frameDecl;
+public class CALActorInstance extends CALEntityInstance {
+    public @CompilationFinal ActorNode entityDecl;
 
     public static final int INLINE_CACHE_SIZE = 2;
     // FIXME
@@ -39,15 +40,35 @@ public class CALActorInstance extends CALValue {
     private final CyclicAssumption callTargetStable;
 
     public CALActorInstance(ActorNode actorDecl, MaterializedFrame frame) {
-        this.actorDecl = actorDecl;
+        this.entityDecl = actorDecl;
         this.frameDecl = frame;
         this.callTargetStable = new CyclicAssumption(name);
+    }
+
+    @Override
+    public void addInputPort(String portName, FifoConsumer fifo) {
+        frameDecl.setObject(frameDecl.getFrameDescriptor().findFrameSlot(portName), fifo);
+    }
+
+    @Override
+    public void addOutputPort(String portName, FifoConsumer fifo) {
+        try {
+            Object receiver = frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
+            if (receiver instanceof CALFifoFanout) {
+                CALFifoFanout fanout = (CALFifoFanout) receiver;
+                fanout.addFifo(fifo);
+                fifo.setFanout(fanout);
+            } else
+                throw new RuntimeException("Unexpected type for " + receiver);
+        } catch (FrameSlotTypeException e) {
+            throw new RuntimeException("Unexpected frameslot type: " + e.toString());
+        }
     }
 
     // TODO how to get called?
     // TODO add child annotation
     protected RootCallTarget getCallTarget() {
-        ActionNode[] actions = actorDecl.getActions();
+        ActionNode[] actions = entityDecl.getActions();
         // TODO do FSM-thingy here and invalidate callTargetStable when
         // the action changes
         // For new we assume actions.length == 1, so we never invalidate
@@ -221,17 +242,21 @@ public class CALActorInstance extends CALValue {
         @Specialization
         protected static Object doIndirect(CALActorInstance function, Object[] arguments,
                                            @Cached IndirectCallNode callNode) {
+            // Check Actor Invariant
+            CALActorInvariantNode inv = function.entityDecl.getActorInvariant();
+            if (inv != null) inv.executeVoid(function.frameDecl);
+
             // Return true if any action was executed, otherwise false
 
             // Loop over all actions till one of the actions is executed.
             // The order of actions in the array is based on decreasing order of priorities
-            for(int i = 0; i < function.actorDecl.getActions().length; ++i){
-                FsmStateCheckNode fsmTarget = function.actorDecl.getFsmStateCheckNode();
-                ActionNode action = function.actorDecl.getActions()[i];
+            for(int i = 0; i < function.entityDecl.getActions().length; ++i){
+                FsmStateCheckNode fsmTarget = function.entityDecl.getFsmStateCheckNode();
+                ActionNode action = function.entityDecl.getActions()[i];
                 Boolean actionFsmFireable = true;
-                if(function.actorDecl.getFsmStateCheckNode() != null) {
+                if(function.entityDecl.getFsmStateCheckNode() != null) {
                     // FSM present
-                    function.frameDecl.setLong(function.actorDecl.getActorIndexSlot(), i);
+                    function.frameDecl.setLong(function.entityDecl.getActorIndexSlot(), i);
                     try {
                         actionFsmFireable = !action.isQidTagged() || ((Boolean) fsmTarget.executeBoolean(function.frameDecl));
                     } catch (UnexpectedResultException e) {
@@ -246,7 +271,7 @@ public class CALActorInstance extends CALValue {
                 // Attempt to execute the action: Guard expressions and token bindings are checked by the action and returns true if it fires, otherwise false
                 Boolean executed = (Boolean) callNode.call(target, /*CALArguments.pack(*/function.frameDecl/*, arguments)*/);
                 if (executed) {
-                    if(function.actorDecl.getFsmStateCheckNode() != null) function.actorDecl.getFsmStateTransitionNode().executeVoid(function.frameDecl);
+                    if(function.entityDecl.getFsmStateCheckNode() != null) function.entityDecl.getFsmStateTransitionNode().executeVoid(function.frameDecl);
                     return true;
                 }
             }

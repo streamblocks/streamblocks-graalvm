@@ -25,10 +25,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -59,10 +56,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
      */
     @Override public ActionNode visitActionDefinition(CALParser.ActionDefinitionContext ctx) {
         if (ctx.delay != null) {
-            // TODO Add support for action delay
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Action delay is not yet supported");
-            }
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Action delay is not yet supported");
         }
 
         ScopeEnvironment.getInstance().pushScope();
@@ -79,6 +73,8 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
 
         List<CALStatementNode> actionStatements = new ArrayList<>();
         List<CALExpressionNode> inputTokenBindings = new LinkedList<>();
+        // Firing condition = Sufficient number of input tokens + Bind Tokens + Guards
+        List<CALExpressionNode> firingConditions = new LinkedList<>();
 
         // The fifos provide a mechanism similar to databases transaction-rollback-commit API
         // The guards first ensure the number of required tokens are available in the FIFO
@@ -94,26 +90,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 transactionRollbacks.add(x.getRight());
             });
         }
-        if (ctx.localVariables != null) {
-            actionStatements.addAll(CollectionVisitor.getInstance().visitBlockVariableDeclarations(ctx.localVariables));
-        }
-        if (ctx.body != null) {
-            actionStatements.addAll(StatementVisitor.getInstance().visitStatements(ctx.body).getStatements());
-        }
-        if (ctx.outputExpressions() != null) {
-            actionStatements.addAll(CollectionVisitor.getInstance().visitOutputExpressions(ctx.outputExpressions()));
-        }
 
-        StmtBlockNode bodyNode = new StmtBlockNode(actionStatements.toArray(new CALStatementNode[0]));
-        bodyNode.setUnavailableSourceSection();
-        bodyNode.addStatementTag();
-
-        ActionBodyNode actionBodyNode = new ActionBodyNode(bodyNode);
-        actionBodyNode.setUnavailableSourceSection();
-        actionBodyNode.addStatementTag();
-
-        // Firing condition = Sufficient number of input tokens + Bind Tokens + Guards
-        List<CALExpressionNode> firingConditions = new LinkedList<>();
         if (ctx.inputPatterns() != null) {
             int i = 0;
             for (CALParser.InputPatternContext patternCtx: ctx.inputPatterns().inputPattern()) {
@@ -147,8 +124,101 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             firingConditions.addAll(inputTokenBindings);
         }
 
+        // Create bindings for all variables whose "old" values are referred. Refer CLR 6.2.1
+        List<String> oldVariablesUser = ActionBodyOldReferenceFindVisitor.getInstance().visitActionDefinition(ctx);
+        oldVariablesUser.forEach(varName -> {
+            actionStatements.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                    "$old" + varName,
+                    ScopeEnvironment.getInstance().createReadNode(varName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
+                    DefaultValueCastNodeCreator.getInstance(),
+                    ScopeEnvironment.getInstance().getSource().createUnavailableSection()
+            ));
+        });
+
+        Set<String> varNamesUsedInGuard = new HashSet<>();
+        Set<String> varNamesDeclaredInLocalVars = new HashSet<>();
+
+        // Find the names of all local variables declared
+        if (ctx.localVariables != null) {
+            CALParserBaseVisitor<Set<String>> varDeclVisitor = new CALParserBaseVisitor<Set<String>>(){
+                @Override
+                public Set<String> visitExplicitVariableDeclaration(CALParser.ExplicitVariableDeclarationContext ctx) {
+                    return Set.of(ctx.name.getText());
+                }
+
+                @Override
+                public Set<String> visitFunctionVariableDeclaration(CALParser.FunctionVariableDeclarationContext ctx) {
+                    return Set.of(ctx.name.getText());
+                }
+
+                @Override
+                public Set<String> visitProcedureVariableDeclaration(CALParser.ProcedureVariableDeclarationContext ctx) {
+                    return Set.of(ctx.name.getText());
+                }
+
+                @Override
+                protected Set<String> aggregateResult(Set<String> aggregate, Set<String> nextResult) {
+                    if (aggregate == null && nextResult == null) return Set.of();
+                    else if (nextResult == null) return aggregate;
+                    else if (aggregate == null) return nextResult;
+                    else {
+                        Set<String> ret = new HashSet<>();
+                        ret.addAll(aggregate);
+                        ret.addAll(nextResult);
+                        return ret;
+                    }
+                }
+            };
+            varNamesDeclaredInLocalVars.addAll(varDeclVisitor.visit(ctx.localVariables));
+        }
+
+        // Find the names of all variables used in guard expressions
+        if (ctx.guards != null) {
+            CALParserBaseVisitor<Set<String>> varUseVisitor = new CALParserBaseVisitor<Set<String>>(){
+                @Override
+                public Set<String> visitVariableExpression(CALParser.VariableExpressionContext ctx) {
+                    return Set.of(ctx.variable().name.getText());
+                }
+
+                @Override
+                protected Set<String> aggregateResult(Set<String> aggregate, Set<String> nextResult) {
+                    if (aggregate == null && nextResult == null) return Set.of();
+                    else if (nextResult == null) return aggregate;
+                    else if (aggregate == null) return nextResult;
+                    else {
+                        Set<String> ret = new HashSet<>();
+                        ret.addAll(aggregate);
+                        ret.addAll(nextResult);
+                        return ret;
+                    }
+                }
+            };
+            varNamesUsedInGuard.addAll(varUseVisitor.visit(ctx.guards));
+        }
+
+        // Find the variables which are defined as local variables and used in guard expressions
+        Set<String> varNamesDeclaredBeforeGuardEvaluation = new HashSet<>(varNamesDeclaredInLocalVars);
+        varNamesDeclaredBeforeGuardEvaluation.retainAll(varNamesUsedInGuard);
+
+        // Bind the local variables which are used in guard expressions, before evaluating the guard expression
+        if (ctx.localVariables != null) {
+            firingConditions.add(
+                    new ReturnsLastBodyNode(
+                            new StmtBlockNode(
+                                    ctx.localVariables.blockVariableDeclaration().stream().filter(x -> varDeclContainsName(x, varNamesDeclaredBeforeGuardEvaluation)).map(x -> VariableVisitor.getInstance().visitBlockVariableDeclaration(x)).collect(Collectors.toList()).toArray(new CALStatementNode[0])), new BooleanLiteralNode(true)));
+        }
+
+        // Add all the guard conditions
         if (ctx.guards != null) {
             firingConditions.addAll(CollectionVisitor.getInstance().visitExpressions(ctx.guards));
+        }
+
+        // Bind the remaining local variables
+        if (ctx.localVariables != null) {
+            firingConditions.add(
+                    new ReturnsLastBodyNode(
+                            new StmtBlockNode(
+                                    ctx.localVariables.blockVariableDeclaration().stream().filter(x -> !varDeclContainsName(x, varNamesDeclaredBeforeGuardEvaluation)).map(x -> VariableVisitor.getInstance().visitBlockVariableDeclaration(x)).collect(Collectors.toList()).toArray(new CALStatementNode[0])), new BooleanLiteralNode(true)));
         }
 
         CALExpressionNode firingCondition;
@@ -166,6 +236,22 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             firingCondition.addExpressionTag();
         }
 
+        if (ctx.body != null) {
+            actionStatements.addAll(StatementVisitor.getInstance().visitStatements(ctx.body).getStatements());
+        }
+
+        if (ctx.outputExpressions() != null) {
+            actionStatements.addAll(CollectionVisitor.getInstance().visitOutputExpressions(ctx.outputExpressions()));
+        }
+
+        StmtBlockNode bodyNode = new StmtBlockNode(actionStatements.toArray(new CALStatementNode[0]));
+        bodyNode.setUnavailableSourceSection();
+        bodyNode.addStatementTag();
+
+        ActionBodyNode actionBodyNode = new ActionBodyNode(bodyNode);
+        actionBodyNode.setUnavailableSourceSection();
+        actionBodyNode.addStatementTag();
+
         ActionNode actionNode = new ActionNode(
                 ScopeEnvironment.getInstance().getLanguage(),
                 ScopeEnvironment.getInstance().getCurrentScope().getFrame(),
@@ -182,6 +268,17 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
         ScopeEnvironment.getInstance().popScope();
 
         return actionNode;
+    }
+
+    private boolean varDeclContainsName(CALParser.BlockVariableDeclarationContext ctx, Set<String> varNames) {
+        if (ctx.explicitVariableDeclaration() != null) {
+            return varNames.contains(ctx.explicitVariableDeclaration().name.getText());
+        } else if (ctx.functionVariableDeclaration() != null) {
+            return varNames.contains(ctx.functionVariableDeclaration().name.getText());
+        } else if (ctx.procedureVariableDeclaration() != null) {
+            return varNames.contains(ctx.procedureVariableDeclaration().name.getText());
+        } else
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Unexpected child node type in BlockVariableDeclaration");
     }
 
     /**
@@ -207,7 +304,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
             );
         }
 
-        if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext)) {
+        if (ctx.patterns().pattern().stream().allMatch(x -> x instanceof CALParser.SimplePatternContext || x instanceof CALParser.IgnoredTokenContext)) {
             CALFifoTransactionCommit commit = new CALFifoTransactionCommit(portQueue);
             CALFifoTransactionRollback rollback = new CALFifoTransactionRollback(portQueue);
 
@@ -219,6 +316,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 StmtBlockNode readBlock = new StmtBlockNode(ctx.patterns().pattern().stream().map(x -> {
                     CALExpressionNode valueNode = new CALReadFIFONode(portQueue);
                     valueNode.setUnavailableSourceSection();
+                    if (x instanceof CALParser.IgnoredTokenContext) return valueNode;
                     valueNode.addExpressionTag();
                     return ScopeEnvironment.getInstance().createNewVariableWriteNode(
                             ((CALParser.SimplePatternContext) x).variable().name.getText(),
@@ -248,7 +346,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 CALStatementNode[] inputPatternStatementNodes = new CALStatementNode[3];
 
                 // inputPatterns.forEach(varName: varName = [])
-                inputPatternStatementNodes[0] = new StmtBlockNode(ctx.patterns().pattern().stream().map(x ->
+                inputPatternStatementNodes[0] = new StmtBlockNode(ctx.patterns().pattern().stream().filter(x -> x instanceof CALParser.SimplePatternContext).map(x ->
                     ScopeEnvironment.getInstance().createNewVariableWriteNode(
                             ((CALParser.SimplePatternContext) x).variable().name.getText(),
                             new UnknownSizeListInitNode(),
@@ -276,7 +374,7 @@ public class ActionVisitor extends CALParserBaseVisitor<Object> {
                 portQueueNode.addExpressionTag();
 
                 loopStatementNodes[0] = new StmtBlockNode(ctx.patterns().pattern().stream().map(x ->
-                    ListWriteNodeGen.create(
+                    x instanceof CALParser.IgnoredTokenContext ? portQueueNode : ListWriteNodeGen.create(
                         ScopeEnvironment.getInstance().createReadNode(((CALParser.SimplePatternContext) x).variable().name.getText(), ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                         ScopeEnvironment.getInstance().createReadNode(counterVariableName, ScopeEnvironment.getInstance().getSource().createUnavailableSection()),
                         portQueueNode

@@ -1,0 +1,55 @@
+namespace test:
+    actor InitialTokens (tokens) In ==> Out:
+        A: action ==> [tokens] repeat #tokens end
+        B: action [a] ==> [a] do end
+        schedule fsm s0:
+            s0 (A) --> s1;
+            s1 (B) --> s1;
+        end
+    end
+
+    actor Add () A, B ==> Result:
+        Counter := 0;
+
+        action [a], [b] ==> [a + b]
+        guard Counter < 15
+        do
+            Counter := Counter + 1;
+        end
+    end
+
+    actor Sink() int In ==> :
+        action In:[token] ==>
+        do
+            println(token);
+        end
+    end
+
+    network FibsN (N) ==> Out:
+        entities
+            init = [InitialTokens(tokens = [1]) : for i in 1 .. N];
+            add = [Add() : for i in 2 .. N];
+        structure
+            foreach i in 1 .. N-1 do
+                init[i-1].Out --> init[i].In;
+            end
+            foreach j in 0 .. N-2 do
+                if j = 0 then
+                    init[0].Out --> add[j].A;
+                else
+                    add[j-1].Result --> add[j].A;
+                end
+                init[j+1].Out --> add[j].B;
+            end
+            add[N-2].Result --> init[0].In;
+            add[N-2].Result --> Out;
+    end
+
+    network Fibs5 () ==> :
+        entities
+            fibs = FibsN(N = 5);
+            sink = Sink();
+        structure
+            fibs.Out --> sink.In;
+    end
+end

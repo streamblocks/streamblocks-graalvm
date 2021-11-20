@@ -1,5 +1,6 @@
 package ch.epfl.vlsc.truffle.cal.nodes.expression.unary;
 
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigDecimal;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -20,6 +21,12 @@ public abstract class CALUnaryMinusNode extends ExprUnaryNode {
     @CompilerDirectives.TruffleBoundary
     protected CALBigNumber minus(CALBigNumber value) {
         return new CALBigNumber(value.getValue().negate());
+    }
+
+    @Specialization
+    @CompilerDirectives.TruffleBoundary
+    protected CALBigDecimal minus(CALBigDecimal value) {
+        return new CALBigDecimal(value.getValue().negate());
     }
 
     @Fallback

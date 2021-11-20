@@ -40,8 +40,10 @@
  */
 package ch.epfl.vlsc.truffle.cal.nodes;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import ch.epfl.vlsc.truffle.cal.runtime.CALBigDecimal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeCast;
@@ -99,5 +101,23 @@ public abstract class CALTypes {
     @TruffleBoundary
     public static CALBigNumber castBigNumber(int value) {
         return new CALBigNumber(BigInteger.valueOf(value));
+    }
+
+    @ImplicitCast
+    @TruffleBoundary
+    public static CALBigDecimal castBigDecimal(int value) {
+        return new CALBigDecimal(new BigDecimal(value));
+    }
+
+    @ImplicitCast
+    @TruffleBoundary
+    public static CALBigDecimal castBigDecimal(long value) {
+        return new CALBigDecimal(new BigDecimal(value));
+    }
+
+    @ImplicitCast
+    @TruffleBoundary
+    public static CALBigDecimal castBigDecimal(CALBigNumber value) {
+        return new CALBigDecimal(new BigDecimal(value.getValue().longValue()));
     }
 }

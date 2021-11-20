@@ -3,7 +3,11 @@ package ch.epfl.vlsc.truffle.cal.parser.visitor;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLogicalAndNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BooleanLiteralNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALCreateFIFONode;
+import ch.epfl.vlsc.truffle.cal.nodes.fifo.CALFifoFanoutNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
@@ -19,7 +23,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.State;
-import dk.brics.automaton.Transition;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -86,18 +89,27 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
         }
 
         if (ctx.inputPorts != null) {
-            ctx.inputPorts.portDeclaration().forEach(inpPort -> inputPortNames.add(inpPort.name.getText()));
-            VariableVisitor.setPortDeclarationStartIndex(startIndex);
-            Collection<InitializeArgNode> inputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.inputPorts);
-            headStatementNodes.addAll(inputPortNodes);
-            startIndex += ctx.inputPorts.portDeclaration().size();
+            ctx.inputPorts.portDeclaration().forEach(inpPort -> {
+                inputPortNames.add(inpPort.name.getText());
+                headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                        inpPort.name.getText(),
+                        new CALCreateFIFONode(),
+                        DefaultValueCastNodeCreator.getInstance(),
+                        ScopeEnvironment.getInstance().createSourceSection(inpPort)));
+            });
         }
+
         if (ctx.outputPorts != null) {
-            ctx.outputPorts.portDeclaration().forEach(outPort -> outputPortNames.add(outPort.name.getText()));
-            VariableVisitor.setPortDeclarationStartIndex(startIndex);
-            Collection<InitializeArgNode> outputPortNodes = CollectionVisitor.getInstance().visitPortDeclarations(ctx.outputPorts);
-            headStatementNodes.addAll(outputPortNodes);
+            ctx.outputPorts.portDeclaration().forEach(port -> {
+                outputPortNames.add(port.name.getText());
+                headStatementNodes.add(ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                        port.name.getText(),
+                        new CALFifoFanoutNode(),
+                        DefaultValueCastNodeCreator.getInstance(),
+                        ScopeEnvironment.getInstance().createSourceSection(port)));
+            });
         }
+
         if (ctx.time != null) {
             // TODO Add support for actor time
             if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
@@ -109,6 +121,23 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 headStatementNodes.add(VariableVisitor.getInstance().visitLocalVariableDeclaration(localVariableCtx));
             }
         }
+
+        CALActorInvariantNode actorInvariantNode = null;
+        if (ctx.invariantDeclaration().size() > 1) {
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx.invariantDeclaration(1), "There can only be a maximum of 1 invariant statement specified in the actor");
+        } else if (ctx.invariantDeclaration().size() == 1 && ctx.invariantDeclaration(0).expression().size() > 0) {
+            CALExpressionNode invariantCondition;
+            List<CALParser.ExpressionContext> exprs = ctx.invariantDeclaration(0).expression();
+            invariantCondition = ExpressionVisitor.getInstance().visit(exprs.remove(exprs.size() - 1));
+            for (int i = exprs.size() - 1; i >= 0; --i) {
+                CALExpressionNode condition = ExpressionVisitor.getInstance().visit(exprs.remove(i));
+                invariantCondition = new CALBinaryLogicalAndNode(condition, invariantCondition);
+                invariantCondition.setUnavailableSourceSection();
+                invariantCondition.addExpressionTag();
+            }
+            actorInvariantNode = new CALActorInvariantNode(invariantCondition);
+        }
+
         StmtBlockNode headNode = new StmtBlockNode(headStatementNodes.toArray(new CALStatementNode[0]));
         headNode.setUnavailableSourceSection();
         headNode.addStatementTag();
@@ -180,7 +209,8 @@ public class ActorVisitor extends CALParserBaseVisitor<Object> {
                 fsmStateCheckNode,
                 fsmStateTransitionNode,
                 actorIndSlot,
-                currStateSlot
+                currStateSlot,
+                actorInvariantNode
         );
         // TODO Add RootTag / CallTag for actorNode
 

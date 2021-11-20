@@ -62,6 +62,7 @@ import com.oracle.truffle.api.RootCallTarget;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
+import ch.epfl.vlsc.truffle.cal.parser.utils.NamespaceElementsToCallTarget;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.exception.ErrorListener;
 import ch.epfl.vlsc.truffle.cal.parser.visitor.*;
@@ -74,6 +75,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.fifo.*;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
 }
 
 @parser::members
@@ -99,10 +101,10 @@ import org.apache.commons.lang3.tuple.Pair;
             return new ImmutablePair(Map.of(), compilationUnitContext);
     }
 
-    public static Map<String, RootCallTarget> parseCAL(CALLanguage language, CompilationUnitContext compilationUnitContext, Source source, Map<List<String>, List<QualifiedID>> namespaceEntities) {
+    public static NamespaceElementsToCallTarget parseCAL(CALLanguage language, CompilationUnitContext compilationUnitContext, Source source, Map<List<String>, List<QualifiedID>> namespaceEntities) {
         ScopeEnvironment.createInstance(language, source);
         CompilationUnitVisitor.getInstance().setNamespaceEntitiesMap(namespaceEntities);
-        return (Map<String, RootCallTarget>) CompilationUnitVisitor.getInstance().visit(compilationUnitContext);
+        return (NamespaceElementsToCallTarget) CompilationUnitVisitor.getInstance().visit(compilationUnitContext);
     }
 }
 
@@ -283,27 +285,31 @@ structureStatement:
     (structureConnectorStatement | structureForeachStatement | structureIfStatement)
 ;
 
+structureStatements:
+    structureStatement (structureStatement)*
+;
+
 structureConnectorStatement:
-    connector '-->' connector attributeSection? ';'
+    source=connector '-->' dest=connector attributeSection? ';'
 ;
 
 structureForeachStatement:
     foreachGenerators 'do'
-    structureStatement*
+    structureStatements
     ('end' | 'endforeach')
 ;
 
 structureIfStatement:
-    'if' expression 'then'
-    structureStatement*
-    (structureElseIfStatement | 'else' structureStatement*)?
+    'if' condition=expression 'then'
+    thenPart=structureStatements
+    (structureElseIfStatement | 'else' elsePart=structureStatements)?
     ('end' | 'endif')
 ;
 
 structureElseIfStatement:
-    'elsif' expression 'then'
-    expression
-    (structureElseIfStatement | 'else' expression)?
+    'elsif' condition=expression 'then'
+    thenPart=structureStatements
+    (structureElseIfStatement | 'else' elsePart=structureStatements)?
 ;
 
 connector:
@@ -328,11 +334,17 @@ actorDeclaration:
     isExternal='external'? 'actor' name=ID '(' formalParameters? ')' inputPorts=portDeclarations? '==>' outputPorts=portDeclarations? ('time' time=type)?
     (
         ':'
-        (localVariableDeclaration | actionDefinition | initializationActionDefinition | priorityOrder | actionSchedule | processDescription)*
+        (localVariableDeclaration | actionDefinition | initializationActionDefinition | priorityOrder | actionSchedule | processDescription | invariantDeclaration)*
         ('end' | 'endactor')
         |
         ';'
     )
+;
+
+invariantDeclaration:
+    'invariant'
+    expression (',' expression)*
+    'end'
 ;
 
 portDeclarations:
@@ -391,6 +403,8 @@ patterns:
 ;
 
 pattern:
+    '_' # IgnoredToken
+    |
     variable # SimplePattern
     |
     variable '(' subPatterns? ')' # ComplexPattern
@@ -711,6 +725,8 @@ expression:
     |
     operator='!' operand=expression # UnaryOperationExpression
     |
+    operator='~' operand=expression # UnaryOperationExpression
+    |
     operand1=expression operator=('*' | '/' | '%' | 'div' | 'mod') operand2=expression # BinaryOperationExpression
     |
     operand1=expression operator=('+' | '-') operand2=expression # BinaryOperationExpression
@@ -735,7 +751,8 @@ expression:
     |
     variableExpression # VariableExprExpression
     |
-    symbolReferenceExpression # SymbolReferenceExprExpression
+    // Symbol Reference (CAL Specification Extension)
+    expression '::' type # SymbolReferenceExprExpression
     |
     '(' expression ')' # ExprExpression
     |
@@ -778,11 +795,6 @@ literalExpression:
 // Variable reference (CLR §6.2)
 variableExpression:
     isOld='old'? variable
-;
-
-// Symbol Reference (CAL Specification Extension)
-symbolReferenceExpression:
-    variable '::' ID ('(' expressions? ')')?
 ;
 
 // Conditionals (CLR §6.7)

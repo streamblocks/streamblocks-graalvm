@@ -1,0 +1,13 @@
+namespace fir:
+
+	actor Sine (float d) float In ==> float Out: 
+	
+		float x := 0.0;
+		
+		action In:[_] ==> Out:[(sin(old x)::float)]
+		do
+			x := x + d;
+		end
+	end
+
+end

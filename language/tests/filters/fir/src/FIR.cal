@@ -1,0 +1,53 @@
+namespace fir:
+
+import entity fir.FIRcell;
+import entity fir.Constants;
+
+
+	network FIR (List(type:float) taps, int nUnits) float In ==> float Out :
+	
+	var
+		int nTaps = #taps;
+		
+		function reverse (List(type:float) a) --> List(type:float) : [a[#a - i] : for int i in 1 .. #a] end
+	
+		function max (float a, float b) --> float : if a > b then a else b end end
+		 	
+		function fold (List(type:float) a, int n) --> List(type:float)
+		var
+			uint k = (#a + n - 1) / n 
+		 
+		:
+			[
+				[taps[k * i + j] : for uint j in 0 .. k - 1, (k * i + j) < nTaps]
+			:  
+				for uint i in 0 .. n - 1
+			]
+		end
+			 
+		List(type:double) tapSegments = fold(reverse(taps), nUnits); 
+		int nSegs = #tapSegments;
+		 
+		
+			
+	entities
+		c = [FIRcell(taps = segment) : for float segment in reverse(tapSegments)];
+		zeros = Constants(constants = [0]);
+		
+	structure
+		foreach uint i in 0 .. nSegs - 1 do
+			In --> c[i].Sample;
+			if i = 0 then
+				zeros.Out --> c[i].AccLineIn;
+			else
+				c[i - 1].AccLineOut --> c[i].AccLineIn;
+			end
+		end
+		
+		In --> zeros.Trigger;
+		c[nSegs - 1].AccLineOut --> Out;
+	end
+	
+	
+
+end

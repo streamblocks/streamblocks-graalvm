@@ -6,9 +6,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtFunctionBodyNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.LetExprNode;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.ProcNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.BigIntegerLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.LongLiteralNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.NullLiteralNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.*;
 import ch.epfl.vlsc.truffle.cal.nodes.local.InitializeArgNode;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.ListInitNodeSizeExpression;
 import ch.epfl.vlsc.truffle.cal.nodes.local.lists.UnknownSizeListInitNode;
@@ -21,6 +19,7 @@ import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Comparator;
@@ -164,8 +163,14 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
             return new BigIntegerLiteralNode(new BigInteger("0"));
         } else if (ctx.name.getText().equals("uint")) {
             return new BigIntegerLiteralNode(new BigInteger("0"));
+        } else if (ctx.name.getText().equals("float")) {
+            return new BigDecimalLiteralNode(new BigDecimal(0));
+        } else if (ctx.name.getText().equals("double")) {
+            return new BigDecimalLiteralNode(new BigDecimal(0));
+        } else if (ctx.name.getText().equals("String")) {
+            return new StringLiteralNode("");
         } else
-            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for type unknows type " + ctx.name.getText());
+            throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "No default value for unknown type " + ctx.name.getText());
     }
 
     /**
@@ -215,6 +220,21 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
      * {@inheritDoc}
      */
     @Override public CALExpressionNode visitFunctionVariableDeclaration(CALParser.FunctionVariableDeclarationContext ctx) {
+        CALRootNode lambdaBodyRootNode = getFunctionRootNode(ctx);
+
+        LambdaNode valueNode = new LambdaNode(lambdaBodyRootNode);
+        valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
+        valueNode.addExpressionTag();
+
+
+        return ScopeEnvironment.getInstance().createNewVariableWriteNode(
+                ctx.name.getText(),
+                valueNode,
+                DefaultValueCastNodeCreator.getInstance(),
+                ScopeEnvironment.getInstance().createSourceSection(ctx));
+    }
+
+    public CALRootNode getFunctionRootNode(CALParser.FunctionVariableDeclarationContext ctx) {
         StmtBlockNode headNode;
         CALExpressionNode bodyNode;
 
@@ -268,17 +288,8 @@ public class VariableVisitor extends CALParserBaseVisitor<CALStatementNode> {
         );
         // TODO Add RootTag / CallTag for lambdaBodyRootNode
 
-        LambdaNode valueNode = new LambdaNode(lambdaBodyRootNode);
-        valueNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
-        valueNode.addExpressionTag();
-
         ScopeEnvironment.getInstance().popScope();
-
-        return ScopeEnvironment.getInstance().createNewVariableWriteNode(
-                ctx.name.getText(),
-                valueNode,
-                DefaultValueCastNodeCreator.getInstance(),
-                ScopeEnvironment.getInstance().createSourceSection(ctx));
+        return lambdaBodyRootNode;
     }
 
     /**

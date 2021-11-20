@@ -167,7 +167,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
             argumentNodes = new CALExpressionNode[0];
         }
 
-        CALInvokeNode callNode = new CALInvokeNode(functionNode, argumentNodes);
+        CALInvokeNode callNode = CALInvokeNodeGen.create(argumentNodes, functionNode);
         callNode.setSourceSection(ScopeEnvironment.getInstance().createSourceSection(ctx));
         callNode.addStatementTag();
 
@@ -218,7 +218,7 @@ public class StatementVisitor extends CALParserBaseVisitor<CALStatementNode> {
 
         ScopeEnvironment.getInstance().popScope();
 
-        return new CALInvokeNode(procNode, new CALExpressionNode[0]);
+        return CALInvokeNodeGen.create(new CALExpressionNode[0], procNode);
     }
 
     /**

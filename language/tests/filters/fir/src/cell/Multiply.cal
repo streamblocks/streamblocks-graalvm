@@ -1,0 +1,9 @@
+namespace fir:
+
+
+	actor Multiply () float A, float B ==> float Out:
+
+		action A:[a], B:[b] ==> Out:[a * b] end
+	end
+
+end

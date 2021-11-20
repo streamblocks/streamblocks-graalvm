@@ -1,0 +1,51 @@
+namespace test:
+    actor InitialTokens (tokens) In ==> Out:
+        A: action ==> [tokens] repeat #tokens end
+        B: action [a] ==> [a] do end
+        schedule fsm s0:
+            s0 (A) --> s1;
+            s1 (B) --> s1;
+        end
+    end
+
+    actor Add () A, B ==> Out:
+        Counter := 0;
+
+        action [a], [b] ==> [a + b]
+        guard Counter < 10
+        do
+            Counter := Counter + 1;
+        end
+    end
+
+    actor Sink() int In ==> :
+        action In:[token] ==>
+        do
+            println(token);
+        end
+    end
+
+    network Pow2N (N) ==> Out:
+        entities
+            ent = [if i == 1 then [InitialTokens(tokens = [1]) : for j in 1 .. (1 << (N - 1))] else [Add() : for j in 1 .. (1 << (N - i))] end : for i in 1 .. N];
+        structure
+            foreach i in 1 .. N-1 do
+                foreach j in 0 .. ((1 << (N - 1 - i)) - 1) do
+                    ent[i-1][2*j].Out --> ent[i][j].A;
+                    ent[i-1][2*j+1].Out --> ent[i][j].B;
+                end
+            end
+            foreach k in 0 .. ((1 << (N - 1)) - 1) do
+                ent[N-1][0].Out --> ent[0][k].In;
+            end
+            ent[N-1][0].Out --> Out;
+    end
+
+    network Pow2_3 () ==> :
+        entities
+            pow = Pow2N(N = 3);
+            sink = Sink();
+        structure
+            pow.Out --> sink.In;
+    end
+end

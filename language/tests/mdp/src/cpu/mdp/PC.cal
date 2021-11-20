@@ -1,0 +1,140 @@
+/* 
+BEGINCOPYRIGHT X
+	
+	Copyright (c) 2007, Xilinx Inc.
+	All rights reserved.
+	
+	Redistribution and use in source and binary forms, 
+	with or without modification, are permitted provided 
+	that the following conditions are met:
+	- Redistributions of source code must retain the above 
+	  copyright notice, this list of conditions and the 
+	  following disclaimer.
+	- Redistributions in binary form must reproduce the 
+	  above copyright notice, this list of conditions and 
+	  the following disclaimer in the documentation and/or 
+	  other materials provided with the distribution.
+	- Neither the name of the copyright holder nor the names 
+	  of its contributors may be used to endorse or promote 
+	  products derived from this software without specific 
+	  prior written permission.
+	
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+	CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR 
+	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+	SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
+	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+	HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+	OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+ENDCOPYRIGHT
+*/
+
+/**
+	Program counter component for the Mini Dataflow Processor
+	
+	@author JWJ
+*/
+namespace mdp:
+
+	actor PC () int Op, int Val, int Reg, bool Test0, bool Test1 ==> int Addr, int Link :
+	
+	  int pc := 0;
+	  
+	
+	  action Op: [op] ==> Addr: [pc]
+	  guard
+	    op = 0 // RESET
+	  do
+	    pc := 0;
+	  end 
+	
+	  action Op: [op] ==> Addr: [pc]
+	  guard
+	    op = 1 // NEXT
+	  do
+	    pc := pc + 1;
+	  end
+	
+	  action Op: [op], Val: [val] ==> Addr: [pc]
+	  guard
+	    op = 2 // JUMP
+	  do
+	    pc := pc + val;
+	  end 
+	
+	  action Op: [op], Reg: [reg] ==> Addr: [pc]
+	  guard
+	    op = 3 // JUMP-REG
+	  do
+	    pc := reg;
+	  end 
+	
+	  action Op: [op], Val: [val] ==> Addr: [pc], Link: [old pc + 4]
+	  guard
+	    op = 4 // JAL
+	  do
+	    pc := pc + val;
+	  end 
+	
+	  action Op: [op], Reg: [reg] ==> Addr: [pc], Link: [old pc + 4]
+	  guard
+	    op = 5 // JAL-REG
+	  do
+	    pc := reg;
+	  end 
+	
+	  action Op: [op], Test0: [test], Val: [val] ==> Addr: [pc]
+	  guard
+	    op = 6   // B0-TRUE
+	  do
+	    if test then
+	      pc := pc + val;
+	    else
+	      pc := pc + 1;
+	    end
+	  end 
+	
+	  action Op: [op], Test0: [test], Val: [val] ==> Addr: [pc]
+	  guard
+	    op = 7   // B0-FALSE
+	  do
+	    if test then
+	      pc := pc + 1;
+	    else
+	      pc := pc + val;
+	    end
+	  end 
+	
+	  action Op: [op], Test1: [test], Val: [val] ==> Addr: [pc]
+	  guard
+	    op = 8   // B1-TRUE
+	  do
+	    if test then
+	      pc := pc + val;
+	    else
+	      pc := pc + 1;
+	    end
+	  end 
+	
+	  action Op: [op], Test1: [test], Val: [val] ==> Addr: [pc]
+	  guard
+	    op = 9   // B1-FALSE
+	  do
+	    if test then
+	      pc := pc + 1;
+	    else
+	      pc := pc + val;
+	    end
+	  end 
+	
+	
+	end
+end
+

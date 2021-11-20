@@ -12,6 +12,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -29,9 +30,8 @@ import ch.epfl.vlsc.truffle.cal.nodes.NetworkNode;
 
 // An network instance
 @ExportLibrary(InteropLibrary.class)
-public class CALNetworkInstance extends CALValue {
-    public @CompilationFinal NetworkNode networkDecl;
-    public @CompilationFinal MaterializedFrame frameDecl;
+public class CALNetworkInstance extends CALEntityInstance {
+    public @CompilationFinal NetworkNode entityDecl;
     public @CompilationFinal CALRootNode body;
 
     public static final int INLINE_CACHE_SIZE = 2;
@@ -39,11 +39,38 @@ public class CALNetworkInstance extends CALValue {
     private static String name = "Test";
     private final CyclicAssumption callTargetStable;
 
-    public CALNetworkInstance(NetworkNode networkDecl, MaterializedFrame frame, CALRootNode body) {
-        this.networkDecl = networkDecl;
+    public CALNetworkInstance(NetworkNode entityDecl, MaterializedFrame frame, CALRootNode body) {
+        this.entityDecl = entityDecl;
         this.frameDecl = frame;
         this.body = body;
         this.callTargetStable = new CyclicAssumption(name);
+    }
+
+    @Override
+    public void addInputPort(String portName, FifoConsumer fifo) {
+        CALFifoFanout fanout = fifo.getFanout();
+        try {
+            FifoConsumer receiver = (FifoConsumer) frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
+            fanout.addFifo(receiver);
+            receiver.setFanout(fanout);
+        } catch (FrameSlotTypeException e) {
+            throw new RuntimeException("Unexpected value for port " + portName);
+        }
+    }
+
+    @Override
+    public void addOutputPort(String portName, FifoConsumer fifo) {
+        try {
+            Object receiver = frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
+            if (receiver instanceof CALFifoFanout) {
+                CALFifoFanout fanout = (CALFifoFanout) receiver;
+                fanout.addFifo(fifo);
+                fifo.setFanout(fanout);
+            } else
+                throw new RuntimeException("Unexpected type for " + receiver);
+        } catch (FrameSlotTypeException e) {
+            throw new RuntimeException("Unexpected frameslot type: " + e.toString());
+        }
     }
 
     // TODO how to get called?

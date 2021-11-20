@@ -5,7 +5,7 @@ import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
 import ch.epfl.vlsc.truffle.cal.nodes.*;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtBlockNode;
 import ch.epfl.vlsc.truffle.cal.nodes.contorlflow.StmtWhileNode;
-import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNode;
+import ch.epfl.vlsc.truffle.cal.nodes.expression.CALInvokeNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryAddNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.binary.CALBinaryLessThanNodeGen;
 import ch.epfl.vlsc.truffle.cal.nodes.expression.literals.ActorLiteralNode;
@@ -16,6 +16,7 @@ import ch.epfl.vlsc.truffle.cal.nodes.util.DefaultValueCastNodeCreator;
 import ch.epfl.vlsc.truffle.cal.nodes.util.QualifiedID;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
+import ch.epfl.vlsc.truffle.cal.parser.utils.NamespaceElementsToCallTarget;
 import ch.epfl.vlsc.truffle.cal.runtime.CALContext;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.*;
@@ -72,7 +73,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         RootCallTarget startNode = actors.get(actorName);
         assert startNode != null;
         CALExpressionNode actor = new ActorLiteralNode(actorName);
-        CALExpressionNode call = new CALInvokeNode(actor, new CALExpressionNode[0]);
+        CALExpressionNode call = CALInvokeNodeGen.create(new CALExpressionNode[0], actor);
         // Assign
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         String actorInstanceName = "testActorInstance";
@@ -105,7 +106,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             bodyNodes[2] = new StmtWhileNode(
                     CALBinaryLessThanNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(new BigInteger(String.valueOf(iterations)))),
                     new StmtBlockNode(new CALStatementNode[]{
-                        new CALInvokeNode(instance, new CALExpressionNode[0]),
+                        CALInvokeNodeGen.create(new CALExpressionNode[0], instance),
                         iterationNumExistingSlot.createWriteNode(CALBinaryAddNodeGen.create(iterationNumExistingSlot.createReadNode(0), new BigIntegerLiteralNode(BigInteger.ONE)), new StringLiteralNode(iterationNumVarName), false, 0)
                     }));
         } else {
@@ -119,9 +120,9 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             FrameSlot executionStatusFrameSlot = frameDescriptor.findOrAddFrameSlot(executionStatusVarName, DefaultValueCastNodeCreator.getInstance(), FrameSlotKind.Boolean);
             FrameSlotAndDepthRW executionStatusExistingSlot = new FrameSlotAndDepthRW(executionStatusFrameSlot, 0);
             // Execute once and store execution result to a variable
-            bodyNodes[1] = executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), true, 0);
+            bodyNodes[1] = executionStatusExistingSlot.createWriteNode(CALInvokeNodeGen.create(new CALExpressionNode[0], instance), new StringLiteralNode(executionStatusVarName), true, 0);
             // Loop until the execution status variable is true
-            bodyNodes[2] = new StmtWhileNode(executionStatusExistingSlot.createReadNode(0), executionStatusExistingSlot.createWriteNode(new CALInvokeNode(instance, new CALExpressionNode[0]), new StringLiteralNode(executionStatusVarName), false, 0));
+            bodyNodes[2] = new StmtWhileNode(executionStatusExistingSlot.createReadNode(0), executionStatusExistingSlot.createWriteNode(CALInvokeNodeGen.create(new CALExpressionNode[0], instance), new StringLiteralNode(executionStatusVarName), false, 0));
         }
         CALStatementNode body = new StmtBlockNode(bodyNodes);
         RootNode toyRoot = new CALRootNode(this, frameDescriptor, new ReturnsLastBodyNode(body),
@@ -157,6 +158,7 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
             allFiles = Arrays.asList(entry);
 
         Map<String, RootCallTarget> entities = new HashMap<>();
+        Map<String, RootCallTarget> functions = new HashMap<>();
         Map<List<String>, List<QualifiedID>> namespaceEntities = new HashMap<>();
         List<ImmutablePair<Source, CALParser.CompilationUnitContext>> sourceParsers = new LinkedList<>();
         for (File file : allFiles) {
@@ -170,24 +172,12 @@ public class CALLanguage extends TruffleLanguage<CALContext> {
         }
 
         for(ImmutablePair<Source, CALParser.CompilationUnitContext> p : sourceParsers){
-            entities.putAll(CALParser.parseCAL(this, p.getRight(), p.getLeft(), namespaceEntities));
+            NamespaceElementsToCallTarget namespaceElementsToCallTarget = CALParser.parseCAL(this, p.getRight(), p.getLeft(), namespaceEntities);
+            entities.putAll(namespaceElementsToCallTarget.entities);
+            functions.putAll(namespaceElementsToCallTarget.functions);
         }
 
-        return Truffle.getRuntime().createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), entities));
-
-        /*Map<QID, RootCallTarget> entities = new HashMap<>();
-        for (File file : allFiles) {
-            CalParser parser = new CalParser(Files.newBufferedReader(file.toPath()));
-            NamespaceDecl decl = parser.CompilationUnit();
-            Source iSource = Source.newBuilder(CALLanguage.ID, new FileReader(file), file.getName()).build();
-            BlockTransformer astTransformer = new BlockTransformer(new TransformContext(this, iSource, decl), decl);
-            entities.putAll(astTransformer.transform());
-        }
-        Map<String, RootCallTarget> parsedEntities = new HashMap<>(entities.size());
-        for (Entry<QID, RootCallTarget> e : entities.entrySet())
-            parsedEntities.put(e.getKey().toString(), e.getValue());
-        return Truffle.getRuntime()
-                .createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), new HashMap<>(), parsedEntities));*/
+        return Truffle.getRuntime().createCallTarget(new CALEvalRootNode(this, getRootCall(entities, source), functions, entities));
     }
 
     public RootCallTarget lookupBuiltin(NodeFactory<? extends CALBuiltinNode> factory) {

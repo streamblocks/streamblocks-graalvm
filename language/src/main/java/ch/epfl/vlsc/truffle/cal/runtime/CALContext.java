@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.List;
 
+import ch.epfl.vlsc.truffle.cal.builtins.*;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
@@ -20,11 +21,6 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
-import ch.epfl.vlsc.truffle.cal.builtins.CALBuiltinNode;
-import ch.epfl.vlsc.truffle.cal.builtins.CALLshiftBuiltinFactory;
-import ch.epfl.vlsc.truffle.cal.builtins.CALPrintlnBuiltinFactory;
-import ch.epfl.vlsc.truffle.cal.builtins.CALPrintBuiltinFactory;
-import ch.epfl.vlsc.truffle.cal.builtins.CALRshiftBuiltinFactory;
 import ch.epfl.vlsc.truffle.cal.nodes.CALExpressionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALRootNode;
 import ch.epfl.vlsc.truffle.cal.nodes.CALStatementNode;
@@ -93,6 +89,7 @@ public class CALContext {
         installBuiltin(CALLshiftBuiltinFactory.getInstance());
         installBuiltin(CALPrintlnBuiltinFactory.getInstance());
         installBuiltin(CALPrintBuiltinFactory.getInstance());
+        installBuiltin(CALSinBuiltinFactory.getInstance());
     }
 
     public void installBuiltin(NodeFactory<? extends CALBuiltinNode> factory) {

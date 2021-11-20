@@ -10,7 +10,8 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 
-public class ActorNode extends CALRootNode {
+public class ActorNode extends EntityNode {
+    @Child private CALActorInvariantNode actorInvariant;
     @Child private ActorInstantiateNode instantiateNode;
     @Children private ActionNode[] actions;
     @Children private ActionNode[] initializeractions;
@@ -22,7 +23,7 @@ public class ActorNode extends CALRootNode {
     private final FrameSlot actorIndexSlot;
     private final FrameSlot currStateSlot;
 
-    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, ActionNode[] initactions, CALStatementNode head, SourceSection sourceSection, String name, FsmStateCheckNode fsmNodeLoc, FsmStateTransitionNode fsmStateTransitionNodeArg, FrameSlot actorIndSlot, FrameSlot currStateSlot) {
+    public ActorNode(CALLanguage language, FrameDescriptor frameDescriptor, ActionNode[] actions, ActionNode[] initactions, CALStatementNode head, SourceSection sourceSection, String name, FsmStateCheckNode fsmNodeLoc, FsmStateTransitionNode fsmStateTransitionNodeArg, FrameSlot actorIndSlot, FrameSlot currStateSlot, CALActorInvariantNode actorInvariantNode) {
         // FIXME null-hack
         super(language, frameDescriptor, null, sourceSection, name.toString());
         this.actions = actions;
@@ -34,6 +35,7 @@ public class ActorNode extends CALRootNode {
         this.actorIndexSlot = actorIndSlot;
         this.fsmStateTransitionNode = fsmStateTransitionNodeArg;
         this.currStateSlot = currStateSlot;
+        this.actorInvariant = actorInvariantNode;
     }
 
     @Override
@@ -93,5 +95,9 @@ public class ActorNode extends CALRootNode {
 
     public FsmStateTransitionNode getFsmStateTransitionNode() {
         return this.fsmStateTransitionNode;
+    }
+
+    public CALActorInvariantNode getActorInvariant() {
+        return actorInvariant;
     }
 }

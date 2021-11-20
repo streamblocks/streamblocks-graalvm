@@ -8,6 +8,7 @@ import ch.epfl.vlsc.truffle.cal.parser.exception.CALParseWarning;
 import ch.epfl.vlsc.truffle.cal.parser.scope.ScopeEnvironment;
 import ch.epfl.vlsc.truffle.cal.parser.CALParser;
 import ch.epfl.vlsc.truffle.cal.parser.CALParserBaseVisitor;
+import ch.epfl.vlsc.truffle.cal.parser.utils.NamespaceElementsToCallTarget;
 import ch.epfl.vlsc.truffle.cal.shared.options.OptionsCatalog;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -45,8 +46,8 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public Map<String, RootCallTarget> visitNamespaceCompilationUnit(CALParser.NamespaceCompilationUnitContext ctx) {
-        return (Map<String, RootCallTarget>) visit(ctx.namespaceDeclaration());
+    @Override public NamespaceElementsToCallTarget visitNamespaceCompilationUnit(CALParser.NamespaceCompilationUnitContext ctx) {
+        return (NamespaceElementsToCallTarget) visit(ctx.namespaceDeclaration());
     }
 
     /**
@@ -59,20 +60,23 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public Map<String, RootCallTarget> visitUnnamedNamespaceDeclaration(CALParser.UnnamedNamespaceDeclarationContext ctx) {
+    @Override public NamespaceElementsToCallTarget visitUnnamedNamespaceDeclaration(CALParser.UnnamedNamespaceDeclarationContext ctx) {
         return visitNamespaceBody(ctx.body);
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override public Map<String, RootCallTarget> visitNamedNamespaceDeclaration(CALParser.NamedNamespaceDeclarationContext ctx) {
+    @Override public NamespaceElementsToCallTarget visitNamedNamespaceDeclaration(CALParser.NamedNamespaceDeclarationContext ctx) {
         String name = CollectionVisitor.qualifiedIdToString(CollectionVisitor.getInstance().visitQualifiedID(ctx.name));
         ScopeEnvironment.getInstance().setName(name);
 
-        Map<String, RootCallTarget> entities = visitNamespaceBody(ctx.body);
+        NamespaceElementsToCallTarget namespaceElementsToCallTarget = visitNamespaceBody(ctx.body);
 
-        return entities.entrySet().stream().collect(Collectors.toMap(e -> name + "." + e.getKey(), Map.Entry::getValue));
+        NamespaceElementsToCallTarget completeQidElementsToCallTarget = new NamespaceElementsToCallTarget();
+        completeQidElementsToCallTarget.entities = namespaceElementsToCallTarget.entities.entrySet().stream().collect(Collectors.toMap(e -> name + "." + e.getKey(), Map.Entry::getValue));
+        completeQidElementsToCallTarget.functions = namespaceElementsToCallTarget.functions.entrySet().stream().collect(Collectors.toMap(e -> name + "." + e.getKey(), Map.Entry::getValue));
+        return completeQidElementsToCallTarget;
     }
 
     /**
@@ -86,7 +90,7 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
     /**
      * {@inheritDoc}
      */
-    @Override public Map<String, RootCallTarget> visitNamespaceBody(CALParser.NamespaceBodyContext ctx) {
+    @Override public NamespaceElementsToCallTarget visitNamespaceBody(CALParser.NamespaceBodyContext ctx) {
         for (CALParser.ImportDeclarationContext importCtx: ctx.importDeclaration()) {
             if (importCtx instanceof CALParser.SingleImportDeclarationContext) {
                 ScopeEnvironment.getInstance().addImport(visitSingleImportDeclaration((CALParser.SingleImportDeclarationContext) importCtx));
@@ -96,18 +100,24 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
         }
 
         Map<String, RootCallTarget> entities = new HashMap<>();
+        Map<String, RootCallTarget> functions = new HashMap<>();
         if (ctx.typeDefinition().size() > 0) {
             // TODO Add support for type definitions
             if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
                 throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Type definition is not yet supported");
             }
         }
-        if (ctx.globalVariableDeclaration().size() > 0) {
-            // TODO Add support for global variables
-            if (CALLanguage.getCurrentContext().getEnv().getOptions().get(OptionsCatalog.WARN_SHOW_KEY)) {
-                throw new CALParseWarning(ScopeEnvironment.getInstance().getSource(), ctx, "Global variable is not yet supported");
+
+        for(CALParser.GlobalVariableDeclarationContext varDecl: ctx.globalVariableDeclaration()) {
+            if (varDecl.functionVariableDeclaration() != null) {
+                CALRootNode entityNode = VariableVisitor.getInstance().getFunctionRootNode(varDecl.functionVariableDeclaration());
+                functions.put(varDecl.functionVariableDeclaration().name.getText(), Truffle.getRuntime().createCallTarget(entityNode));
+            } else {
+                // TODO Add support for non-function global variable declarations
+                throw new CALParseError(ScopeEnvironment.getInstance().getSource(), ctx, "Non function global variables are not supported yet");
             }
         }
+
         for (CALParser.ActorDeclarationContext actorCtx: ctx.actorDeclaration()) {
             CALRootNode entityNode = ActorVisitor.getInstance().visitActorDeclaration(actorCtx);
             entities.put(entityNode.getName(), Truffle.getRuntime().createCallTarget(entityNode));
@@ -117,7 +127,10 @@ public class CompilationUnitVisitor extends CALParserBaseVisitor<Object> {
             entities.put(entityNode.getName(), Truffle.getRuntime().createCallTarget(entityNode));
         }
 
-        return entities;
+        NamespaceElementsToCallTarget ret = new NamespaceElementsToCallTarget();
+        ret.entities = entities;
+        ret.functions = functions;
+        return ret;
     }
 
     /**

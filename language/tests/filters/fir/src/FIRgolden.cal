@@ -1,0 +1,36 @@
+namespace fir:
+
+
+	actor FIRgolden (List(type:float) taps) float In ==> float Out :
+	
+	    invariant
+	        n > 0
+	    end
+	
+	    uint  n = #taps;
+	    List(type:float, size=n) data := [0 : for int i in 0 .. n - 1];
+	
+	    action In:[a] ==> Out:[b]
+	    var
+	        float b := 0
+	    do
+	        //data := [data[i] : for int i in 1 .. n - 1] + [a];
+	     
+	        foreach uint i in 1 .. n - 1 do
+	        	data[i-1] := data[i];
+	        end
+	        
+	        data[n-1] := a;
+	        
+	        // foreach uint i in 0 .. n -1 do
+	        //	b := b + taps[i] * data[i];
+	        // end
+
+	        foreach uint k in 0 .. n -1 do
+                b := b + taps[k] * data[k];
+            end
+	    end
+	end
+
+
+end

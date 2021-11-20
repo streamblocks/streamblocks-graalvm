@@ -1,0 +1,23 @@
+namespace fir:
+
+
+	actor Constants (List(type:float) constants) float Trigger ==>  float Out :
+
+		uint i := 0;
+		uint n = #constants;
+		
+		invariant 
+			i >= 0,
+			i < n
+		end
+		
+		action Trigger: [_] ==> Out:[constants[old i]]
+		do
+			i := i + 1;
+			if i = n then
+				i := 0;
+			end
+		end
+	end
+		
+end

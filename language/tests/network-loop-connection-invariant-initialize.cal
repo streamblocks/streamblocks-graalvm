@@ -1,0 +1,56 @@
+// This test is obtained from Chapter 4 of "Tokens, What Tokens: A gentle introduction to dataflow programming"
+namespace test:
+
+    actor Source() ==> int Out:
+        int Counter := 1000;
+        invariant
+            Counter < 17
+        end
+        initialize ==>
+        do
+                Counter := 0;
+        end
+        action ==> Out:[token]
+        guard
+            Counter < 16
+        var
+            int token = Counter
+        do
+            Counter := Counter + 1;
+        end
+
+    end
+
+    actor InitialTokens (List(type:int, size=1) tokens) In ==> Out:
+        A: action ==> [tokens] repeat #tokens end
+        B: action [a] ==> [a] do end
+        schedule fsm s0:
+            s0 (A) --> s1;
+            s1 (B) --> s1;
+        end
+    end
+
+    actor Sink() int In ==> :
+        action In:[token] ==>
+        do
+            println(token);
+        end
+    end
+
+    actor Add () A, B ==> Result:
+        action [a], [b] ==> [a + b] do end
+    end
+
+    network Sum () ==>:
+    entities
+        source = Source();
+        init0 = InitialTokens(tokens=([0]));
+        add = Add();
+        sink = Sink();
+    structure
+        source.Out --> add.A;
+        init0.Out --> add.B;
+        add.Result --> init0.In;
+        add.Result --> sink.In;
+    end
+end

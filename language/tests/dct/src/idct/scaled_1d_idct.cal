@@ -27,8 +27,6 @@
  */
  
 namespace RVC:
-
-import System.bitops.rshift;
  
  @pipeline(flushing=true)
  actor scaled_1d_idct (int IN_SZ, int OUT_SZ) int (size=IN_SZ) In ==> int (size=OUT_SZ) Out : 

@@ -32,6 +32,10 @@ namespace test:
 		    println(m);
 		    println(n);
 		    println(o);
+		    println(1 + 2.0);
+		    println(1/2);
+		    println(1.0/2);
+		    println(1/2.0);
 		end
 	end
 end

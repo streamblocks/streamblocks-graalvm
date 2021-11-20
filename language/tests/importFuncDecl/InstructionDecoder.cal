@@ -1,0 +1,112 @@
+/* 
+BEGINCOPYRIGHT X
+	
+	Copyright (c) 2007, Xilinx Inc.
+	All rights reserved.
+	
+	Redistribution and use in source and binary forms, 
+	with or without modification, are permitted provided 
+	that the following conditions are met:
+	- Redistributions of source code must retain the above 
+	  copyright notice, this list of conditions and the 
+	  following disclaimer.
+	- Redistributions in binary form must reproduce the 
+	  above copyright notice, this list of conditions and 
+	  the following disclaimer in the documentation and/or 
+	  other materials provided with the distribution.
+	- Neither the name of the copyright holder nor the names 
+	  of its contributors may be used to endorse or promote 
+	  products derived from this software without specific 
+	  prior written permission.
+	
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+	CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+	MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR 
+	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+	SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
+	NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+	HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+	OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	
+ENDCOPYRIGHT
+*/
+
+/**
+	Instruction decoder component for the Mini Dataflow Processor
+	
+	@author JWJ
+*/
+
+namespace mdp:
+
+    import all System.bitops;
+
+	actor InstructionDecoder () ==> :
+	  
+	  function opcode1 (int n) --> int:
+	    bitand(rshift(n, 26), 0x3f)
+	  end
+	
+	  function opcode2 (int n) --> int: 
+	    bitand(n, 0x3f)
+	  end
+	
+	  function immediate(int n) --> int:
+	    bitand(n, 0xffff)
+	  end
+	
+	  function channel(int n) --> int:
+	    bitand(n, 0x3)
+	  end
+	
+	  function jvalue(int n) --> int:
+	    bitand(n, 0xffffff)
+	  end
+	
+	  function extend16to32(int n) --> int:
+	    if bitand(n, 0x8000) = 0 then bitand(n, 0x7FFF) else bitand(n, 0x7FFF) - 0x8000 end
+	  end
+	
+	  function extend24to32(int n) --> int:
+	    if bitand(n, 0x800000) = 0 then bitand(n, 0x7FFFFF) else bitand(n, 0x7FFFFF) - 0x800000 end
+	  end
+	
+	  function r1(int n) --> int:
+	    bitand(rshift(n, 21), 0x1f)
+	  end  
+	
+	  function r2(int n) --> int:
+	    bitand(rshift(n, 16), 0x1f)
+	  end  
+	
+	  function rd(int n) --> int:
+	    bitand(rshift(n, 11), 0x1f)
+	  end  
+	
+	  function val(int n) --> int:
+	    bitand(n, 0x3ffffff)
+	  end
+	
+	  function rfcmd(int op, int a, int b) --> int 
+	  var 
+	    int h1 = lshift(bitand(op, 0xf), 10), 
+	    int h2 = lshift(bitand(a, 0x1f), 5), 
+	    int h3 = bitand(b, 0x1f) 
+	   :
+	    	bitor(bitor(h1, h2), h3)
+	  end
+
+	  initialize ==>
+	  do
+	    println(opcode2(0xffffffffff));
+	  end
+	end
+end
+
+
+
