@@ -47,5 +47,5 @@ fi
 "$JAVA_HOME"/bin/native-image \
     --macro:truffle --no-fallback --allow-incomplete-classpath  --initialize-at-build-time --verbose \
     -cp ../language/target/cal.jar:../launcher/target/cal-launcher.jar \
-    ch.epfl.vlsc.truffle.cal.launcher.CalLauncher\
+    ch.epfl.vlsc.truffle.cal.launcher.CalLauncher \
     calnative
