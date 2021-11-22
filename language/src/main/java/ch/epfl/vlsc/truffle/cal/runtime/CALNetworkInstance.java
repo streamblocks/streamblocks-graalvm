@@ -50,6 +50,7 @@ public class CALNetworkInstance extends CALEntityInstance {
     public void addInputPort(String portName, FifoConsumer fifo) {
         CALFifoFanout fanout = fifo.getFanout();
         try {
+            CompilerDirectives.transferToInterpreter();
             FifoConsumer receiver = (FifoConsumer) frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
             fanout.addFifo(receiver);
             receiver.setFanout(fanout);
@@ -61,15 +62,12 @@ public class CALNetworkInstance extends CALEntityInstance {
     @Override
     public void addOutputPort(String portName, FifoConsumer fifo) {
         try {
-            Object receiver = frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
-            if (receiver instanceof CALFifoFanout) {
-                CALFifoFanout fanout = (CALFifoFanout) receiver;
-                fanout.addFifo(fifo);
-                fifo.setFanout(fanout);
-            } else
-                throw new RuntimeException("Unexpected type for " + receiver);
+            CompilerDirectives.transferToInterpreter();
+            CALFifoFanout fanout = (CALFifoFanout) frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
+            fanout.addFifo(fifo);
+            fifo.setFanout(fanout);
         } catch (FrameSlotTypeException e) {
-            throw new RuntimeException("Unexpected frameslot type: " + e.toString());
+            throw new RuntimeException("Unexpected frameslot type: " + e);
         }
     }
 

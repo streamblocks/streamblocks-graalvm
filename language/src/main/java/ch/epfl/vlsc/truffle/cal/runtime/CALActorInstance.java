@@ -27,6 +27,7 @@ import com.oracle.truffle.api.utilities.TriState;
 import ch.epfl.vlsc.truffle.cal.CALLanguage;
 import ch.epfl.vlsc.truffle.cal.nodes.ActionNode;
 import ch.epfl.vlsc.truffle.cal.nodes.ActorNode;
+import com.oracle.truffle.dsl.processor.java.compiler.Compiler;
 
 
 // An actor instance
@@ -47,21 +48,19 @@ public class CALActorInstance extends CALEntityInstance {
 
     @Override
     public void addInputPort(String portName, FifoConsumer fifo) {
+        CompilerDirectives.transferToInterpreter();
         frameDecl.setObject(frameDecl.getFrameDescriptor().findFrameSlot(portName), fifo);
     }
 
     @Override
     public void addOutputPort(String portName, FifoConsumer fifo) {
         try {
-            Object receiver = frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
-            if (receiver instanceof CALFifoFanout) {
-                CALFifoFanout fanout = (CALFifoFanout) receiver;
-                fanout.addFifo(fifo);
-                fifo.setFanout(fanout);
-            } else
-                throw new RuntimeException("Unexpected type for " + receiver);
+            CompilerDirectives.transferToInterpreter();
+            CALFifoFanout fanout = (CALFifoFanout) frameDecl.getObject(frameDecl.getFrameDescriptor().findFrameSlot(portName));
+            fanout.addFifo(fifo);
+            fifo.setFanout(fanout);
         } catch (FrameSlotTypeException e) {
-            throw new RuntimeException("Unexpected frameslot type: " + e.toString());
+            throw new RuntimeException("Unexpected frameslot type: " + e);
         }
     }
 

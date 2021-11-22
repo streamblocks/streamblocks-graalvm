@@ -251,5 +251,10 @@
       <version>${graalvm.version}</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
+      <version>4.9.2</version>
+    </dependency>
   </dependencies>
 </project>
