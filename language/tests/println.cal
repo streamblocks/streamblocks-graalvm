@@ -1,7 +1,7 @@
 namespace test:
 
 
-	actor test() ==> :
+	actor helloworld() ==> :
 	
 	
 		action ==> 

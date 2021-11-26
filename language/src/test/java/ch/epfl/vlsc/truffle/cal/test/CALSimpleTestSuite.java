@@ -127,7 +127,7 @@ public class CALSimpleTestSuite extends CALTestSuite {
 
     @Test
     public void printlnTest() throws IOException {
-        runTest(TestCase.newBuilder("println").build());
+        runTest(TestCase.newBuilder("println").setActorName("test.helloworld").build());
     }
 
     @Test
