@@ -169,64 +169,6 @@ Examples of programs in CAL demonstrating the various supported constructs are a
 ### ANTLR4 based Grammar
 The ANTLR4 based Grammar used for parsing CAL Programs is available at [language/src/main/antlr4/ch/epfl/vlsc/truffle/cal/parser](language/src/main/antlr4/ch/epfl/vlsc/truffle/cal/parser)
 
-## Project Status
-### Program Structure
-#### Namespace and Imports
- - [x] Multiple files
- - [x] Named imports
- - [x] Import all, currently we are parsing all the files but this need to be done with a DAG in order to have the entities to import with all
- - [x] Import functions and global variables
- - [ ] Time
-
-### Actions
- - [x] Basic support
- - [x] Simple, single-port input pattern
- - [X] repeat, lacking proper multiport support
- - [x] Other input patterns
- - [x] Simple, single-port output expressions
- - [ ] Delays
- - [x] Guards
- - [x] Priorities
-
-### Satements/Expressions
- - [x] Assignments
- - [x] Calls
- - [x] Lambdas
- - [x] most literals
- - [x] if
- - [x] for, doesn't support multiple var decls and probably othe little things, comprehensions lack filter support
- - [x] while
- - [ ] choose
- - [x] +, -, \*, /,
- - [x] # (list size)
-
-### Types
- - [x] Numbers, all implemented as BigNumbers
- - [x] List, room for improvements does not subtype Seq and Collection
- - [x] Strings, does not subtype List[Character] yet
- - [ ] Seq
- - [ ] Collection
- - [ ] Map
- - [ ] Set
- - [ ] Character
- - [ ] Boolean
- - [ ] Null
- - [ ] Custom types
-
-### Actor
- - [x] Simple execution
- - [x] FSM-action selection
-
-### Network
- - [x] Simple execution
-
-### Action Selection
- - [ ] Guards
- - [ ] Priorities
- - [ ] Schedules
-   - [ ] FSM
-   - [ ] Regex
-
 ## Development
 The Development environment can be setup by installing [IntelliJ](https://www.jetbrains.com/idea/). Once installed, import the project as Maven project on IntelliJ. To be able to execute the testsuite from within IntelliJ:
 1. Open IntelliJ
